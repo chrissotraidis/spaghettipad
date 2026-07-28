@@ -49,8 +49,8 @@ audited ROM-free unsigned IPA.
 | 2 | Patched libultraship iOS static library | Complete | arm64 iPhoneOS library, symbol audit, patch replay, macOS regression build |
 | 3 | Full unsigned iOS app links | Complete | iPhoneOS app, platform/min-OS/bundle audit |
 | 4 | Simulator title screen | Complete | Live Metal frame, logs, screenshot, no desktop dialog symbols |
-| 5 | Lifecycle and audio | In progress | Three-cycle continuity, config flush, paused simulation, audible resume |
-| 6 | Signed physical-iPad boot | Pending | Signed install, title screen, ten-minute stability run |
+| 5 | Lifecycle and audio | Complete | Three-cycle continuity, config flush, paused simulation, audible resume |
+| 6 | Signed physical-iPad boot | In progress | Signed install, title screen, ten-minute stability run |
 | 7 | On-device Files extraction | Pending | Clean-device extraction, failure recovery, measured time/RSS |
 | 8 | Grip-first full-analog touch controls | Pending | Full touch-only GP and analog/menu/lifecycle checks on hardware |
 | 9 | iPad UX and imported texture pack | Pending | Touch-complete UX plus Reloaded import/enable/full-GP hardware gate |
@@ -60,29 +60,41 @@ audited ROM-free unsigned IPA.
 
 ## Active gate
 
-**Phase 5b — close the Simulator audible-resume listening gate on the intended
-output device.**
+**Phase 6 — install a signed build on the physical iPad and prove stable
+title/demo runtime.**
 
 Expected:
 
-1. Route normal application audio to the output the listener can actually
-   hear; do not infer speaker output from the system-alert route.
-2. Hear Mario Kart title/demo audio before backgrounding and after each of
-   three foreground transitions, with no permanent mute or obvious stale
-   queued-audio burst.
+1. A signed arm64 iPhoneOS build installs on the connected physical iPad using
+   an available Apple development team and the SpaghettiPad bundle identifier.
+2. The user-supplied desktop-generated `mk64.o2r` reaches only the app's
+   Files-visible Documents container and retains its recorded hash.
+3. A cold hardware launch loads bundled `spaghetti.o2r` plus local
+   `mk64.o2r`, reaches the Mario Kart 64 title/demo sequence, and remains alive
+   for at least ten minutes without watchdog termination.
 
 Boundary:
 
-- The Phase 5 lifecycle slice below proves Simulator event delivery,
-  synchronous config flush, paused game/log work, same-PID resume, live Metal
-  continuation, and container integrity.
-- `Audio thread started` plus the SDL pause/resume implementation is objective
-  initialization/path evidence, not a human listening result. Phase 5 remains
-  in progress until audible output is accepted.
-- No physical-device runtime, touch, extraction, performance, controller,
-  texture-pack, or package behavior is claimed yet.
+- Phase 5 proves Simulator lifecycle continuity, durable config flush,
+  simulation/audio pause and resume, live rendering continuation, container
+  integrity, and human-confirmed audible music/audio.
+- Simulator evidence does not prove signing, installation, watchdog behavior,
+  or audio on physical hardware. Touch, extraction, performance, controller,
+  texture-pack, and package behavior also remain unclaimed.
 
 ## Evidence log
+
+### 2026-07-28 — Phase 5 audible resume accepted and gate closed
+
+- The maintainer confirmed that Mario Kart music and game audio were audible
+  through the active Jump Desktop output and that audio behavior was fine
+  after the lifecycle replay.
+- This human listening result closes the remaining subjective acceptance item
+  on top of the same-PID three-cycle, config-flush, paused-log, live-render,
+  integrity, and direct SDL pause/clear/resume/refill evidence recorded below.
+- Boundary: this closes Simulator lifecycle and audible-output behavior only.
+  It does not prove physical-iPad signing, install, watchdog survival, audio,
+  extraction, touch, performance, controllers, texture packs, or packaging.
 
 ### 2026-07-28 — Phase 5 lifecycle slice passed; audible resume pending
 
