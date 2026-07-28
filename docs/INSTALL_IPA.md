@@ -42,6 +42,11 @@ After installation:
 3. Return to SpaghettiPad and follow the import screen.
 4. Keep the app open while extraction runs.
 
+Maintainers validating a source-signed build should use the
+[physical-device acceptance workflow](HARDWARE_ACCEPTANCE.md) to capture
+device, signing, launch, stability, and hash evidence without confusing a
+successful install with a completed hardware gate.
+
 For an optional texture pack, follow the README's
 [visual-upgrade instructions](../README.md#bring-your-own-assets) only after
 the base game launches.

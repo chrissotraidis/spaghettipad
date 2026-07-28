@@ -97,6 +97,41 @@ Boundary:
 
 ## Evidence log
 
+### 2026-07-28 — Phase 6 hardware evidence harness ready; physical run pending
+
+- Remote boundary recheck: `xcrun devicectl list devices --timeout 5` on this
+  build Mac reports `No devices found`. The owner's physical iPad remains
+  attached to a different local Mac, so no install, launch, rendering, or
+  stability result is claimed here.
+- Reproducible device gate: `scripts/run-phase6-hardware-smoke.sh` now accepts
+  an explicit CoreDevice selector, refuses an unsigned build, records the
+  repository/app/Xcode/macOS identity, captures before/after device details,
+  installs without deleting the existing container, cold-launches the app,
+  and samples the SpaghettiPad process every 30 seconds for a default 600
+  seconds. It labels shorter runs diagnostic.
+- Evidence boundary: the runner writes CoreDevice JSON/logs, code-signing
+  metadata, executable SHA-256, operator title/demo confirmation, and a
+  manifest to ignored `ref/evidence/`. Process survival alone is explicitly
+  insufficient: Phase 6 still requires the owner to confirm the visible
+  title/demo, attach a device screenshot or recording, and enter the reviewed
+  device model/OS evidence in this log.
+- Signing hardening: `scripts/audit-ios-app.sh` now decodes the embedded
+  provisioning profile and signed-app entitlements, rejects an expired
+  profile, requires matching team identifiers, requires the code application
+  identifier to match the profile prefix plus bundle identifier, and verifies
+  that the profile authorizes it. The established unsigned app still passes
+  `REQUIRE_UNSIGNED=1`; `REQUIRE_SIGNED=1` rejects it, and an ad-hoc-signed
+  test copy with a dummy profile is rejected because the profile cannot be
+  decoded.
+- Operator handoff: `docs/HARDWARE_ACCEPTANCE.md` provides the exact signed
+  build, first-install/Files setup, ten-minute gate, and later Phase 7–11
+  sequence. It warns that generated evidence may contain device/signing
+  identifiers and must remain ignored.
+- CI recheck: run
+  [30406005730](https://github.com/chrissotraidis/spaghettipad/actions/runs/30406005730)
+  remains an external pre-start failure with zero steps and the unchanged
+  GitHub billing/spending-limit annotation.
+
 ### 2026-07-28 — Phase 12 clean-machine replay passed; clean CI still externally blocked
 
 - Checkout boundary: a `git clone --no-local` into

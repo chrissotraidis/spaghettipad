@@ -25,8 +25,9 @@ This is the final gate for a public source snapshot or downloadable IPA.
       ROM-free `spaghetti.o2r`.
 - [ ] Confirm `RIGHTS_AND_LICENSES.md` and `ThirdPartyLicenses/` are present.
 - [ ] Re-sign and update-install the exact IPA on a physical iPhone and iPad.
-- [ ] Replay launch, touch, ROM import, texture-pack import, controllers,
-      split-screen, tilt, lifecycle, audio, and save preservation.
+- [ ] Follow [HARDWARE_ACCEPTANCE.md](HARDWARE_ACCEPTANCE.md), then replay
+      touch, ROM import, texture-pack import, controllers, split-screen, tilt,
+      lifecycle, audio, and save preservation.
 - [ ] Record tag, commit, Xcode/SDK versions, app version, build number,
       device/OS matrix, and exact unsigned IPA SHA-256 in release notes.
 - [ ] Publish as a prerelease with [INSTALL_IPA.md](INSTALL_IPA.md), known

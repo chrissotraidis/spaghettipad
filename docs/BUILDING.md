@@ -85,6 +85,10 @@ If automatic signing needs to register the device or create a profile, open
 `build-ios/Spaghettify.xcodeproj`, select the `Spaghettify` scheme and your
 device, then confirm the team under Signing & Capabilities.
 
+On the Mac paired with the device, follow the
+[physical-device acceptance workflow](HARDWARE_ACCEPTANCE.md) to install the
+signed app and capture the Phase 6 ten-minute boot evidence.
+
 Package a clean unsigned developer artifact:
 
 ```sh
@@ -99,8 +103,10 @@ REQUIRE_SIGNED=1 scripts/package-ios.sh
 ```
 
 Both modes reject Simulator products, ROMs, `mk64*.o2r`, `.otr`, a changed
-`spaghetti.o2r`, and stale signing material. The IPA also carries the project
-rights notice and discovered third-party licenses.
+`spaghetti.o2r`, and stale signing material. Signed mode also requires an
+unexpired, decodable provisioning profile whose team and application
+identifier authorize the signed bundle. The IPA carries the project rights
+notice and discovered third-party licenses.
 
 ## First launch
 

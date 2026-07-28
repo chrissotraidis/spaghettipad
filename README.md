@@ -98,7 +98,9 @@ tap, and recalibrates after the app returns from the background.
 The proof log is intentionally strict: a Simulator result never stands in for
 a physical-device result. Follow the live
 [remaining-work queue](docs/remaining-work.md) for exact evidence and open
-gates.
+gates. Maintainers with a paired device can use the
+[physical-device acceptance workflow](docs/HARDWARE_ACCEPTANCE.md) to capture
+the next signed-install gate reproducibly.
 
 ## How the project is built
 
@@ -140,6 +142,7 @@ M-series-iPad performance experiment, not a default recommendation.
 - [Current queue and proof log](docs/remaining-work.md)
 - [Build from source](docs/BUILDING.md)
 - [Install an unsigned developer preview](docs/INSTALL_IPA.md)
+- [Run physical-device acceptance](docs/HARDWARE_ACCEPTANCE.md)
 - [Release checklist](docs/RELEASE_CHECKLIST.md)
 - [Rights and licensing boundary](RIGHTS_AND_LICENSES.md)
 - [iOS feasibility study](docs/spaghettikart-ios-feasibility.md)

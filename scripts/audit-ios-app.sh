@@ -12,7 +12,8 @@ fail() {
     exit 1
 }
 
-for command in codesign file find lipo plutil rg shasum unzip xcrun; do
+for command in codesign date file find lipo mktemp plutil rg security shasum \
+    unzip xcrun; do
     command -v "$command" >/dev/null ||
         fail "required command is unavailable: $command"
 done
@@ -21,6 +22,7 @@ done
 INFO="$APP/Info.plist"
 [ -f "$INFO" ] || fail "Info.plist is missing"
 EXECUTABLE_NAME="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$INFO")"
+BUNDLE_ID="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$INFO")"
 BINARY="$APP/$EXECUTABLE_NAME"
 [ -f "$BINARY" ] || fail "application executable is missing: $BINARY"
 
@@ -87,6 +89,59 @@ fi
 SIGNATURE_STATE="unsigned"
 if codesign --verify --strict "$APP" >/dev/null 2>&1 &&
    [ -f "$APP/embedded.mobileprovision" ]; then
+    SIGNING_AUDIT_DIR="$(mktemp -d /tmp/spaghettipad-signing-audit.XXXXXX)"
+    trap 'rm -rf "$SIGNING_AUDIT_DIR"' EXIT
+    PROFILE_PLIST="$SIGNING_AUDIT_DIR/profile.plist"
+    CODE_ENTITLEMENTS="$SIGNING_AUDIT_DIR/code-entitlements.plist"
+
+    security cms -D -i "$APP/embedded.mobileprovision" \
+        -o "$PROFILE_PLIST" >/dev/null 2>&1 ||
+        fail "embedded provisioning profile cannot be decoded"
+    codesign -d --entitlements :- "$APP" \
+        >"$CODE_ENTITLEMENTS" 2>/dev/null ||
+        fail "signed app entitlements cannot be decoded"
+    plutil -lint "$PROFILE_PLIST" "$CODE_ENTITLEMENTS" >/dev/null ||
+        fail "signed app or profile entitlements are invalid"
+
+    PROFILE_APP_ID="$(/usr/libexec/PlistBuddy \
+        -c 'Print :Entitlements:application-identifier' \
+        "$PROFILE_PLIST" 2>/dev/null || true)"
+    PROFILE_TEAM="$(/usr/libexec/PlistBuddy \
+        -c 'Print :Entitlements:com.apple.developer.team-identifier' \
+        "$PROFILE_PLIST" 2>/dev/null || true)"
+    PROFILE_IDENTIFIER_PREFIX="$(/usr/libexec/PlistBuddy \
+        -c 'Print :ApplicationIdentifierPrefix:0' \
+        "$PROFILE_PLIST" 2>/dev/null || true)"
+    PROFILE_EXPIRATION="$(plutil -extract ExpirationDate raw -o - \
+        "$PROFILE_PLIST" 2>/dev/null || true)"
+    PROFILE_EXPIRATION_EPOCH="$(date -j -u -f '%Y-%m-%dT%H:%M:%SZ' \
+        "$PROFILE_EXPIRATION" '+%s' 2>/dev/null || true)"
+    CODE_APP_ID="$(/usr/libexec/PlistBuddy \
+        -c 'Print :application-identifier' \
+        "$CODE_ENTITLEMENTS" 2>/dev/null || true)"
+    CODE_TEAM="$(/usr/libexec/PlistBuddy \
+        -c 'Print :com.apple.developer.team-identifier' \
+        "$CODE_ENTITLEMENTS" 2>/dev/null || true)"
+
+    [ -n "$PROFILE_APP_ID" ] && [ -n "$PROFILE_TEAM" ] &&
+        [ -n "$PROFILE_IDENTIFIER_PREFIX" ] && [ -n "$CODE_APP_ID" ] &&
+        [ -n "$CODE_TEAM" ] && [ -n "$PROFILE_EXPIRATION_EPOCH" ] ||
+        fail "signed app or profile lacks required application entitlements"
+    [ "$PROFILE_EXPIRATION_EPOCH" -gt "$(date +%s)" ] ||
+        fail "embedded provisioning profile is expired"
+    [ "$PROFILE_TEAM" = "$CODE_TEAM" ] ||
+        fail "code-signing team does not match the provisioning profile"
+    [ "$CODE_APP_ID" = "$PROFILE_IDENTIFIER_PREFIX.$BUNDLE_ID" ] ||
+        fail "signed application identifier does not match the bundle identifier"
+    if [ "$PROFILE_APP_ID" != "$CODE_APP_ID" ]; then
+        PROFILE_AUTH_PREFIX="${PROFILE_APP_ID%\*}"
+        [ "$PROFILE_AUTH_PREFIX" != "$PROFILE_APP_ID" ] ||
+            fail "provisioning profile does not authorize the signed application"
+        case "$CODE_APP_ID" in
+            "$PROFILE_AUTH_PREFIX"*) ;;
+            *) fail "provisioning profile does not authorize the signed application" ;;
+        esac
+    fi
     SIGNATURE_STATE="signed"
 elif [ -e "$APP/_CodeSignature" ] ||
      [ -e "$APP/embedded.mobileprovision" ]; then
