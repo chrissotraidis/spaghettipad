@@ -55,12 +55,12 @@ audited ROM-free unsigned IPA.
 | 8 | Grip-first full-analog touch controls | In progress (Simulator slice passed; hardware GP pending) | Full touch-only GP and analog/menu/lifecycle checks on hardware |
 | 9 | iPad UX and imported texture pack | In progress (Simulator UX/import slice passed; hardware pack GP pending) | Touch-complete UX plus Reloaded import/enable/full-GP hardware gate |
 | 10 | Controllers and split-screen | In progress (Simulator routing/render slice passed; hardware sessions pending) | Two-controller 2P session and measured 3P/4P decision |
-| 11 | Tilt steering | Pending | Persisted, drift-free tilt GP on hardware |
+| 11 | Tilt steering | In progress (Simulator slice passed; hardware GP pending) | Persisted, drift-free tilt GP on hardware |
 | 12 | Package, CI, docs, release | Pending | Clean CI, clean-machine replay, audited IPA and SHA-256 |
 
 ## Active gate
 
-**Phase 6/7/8/9/10 owner hardware replay; Phase 11 is the next unblocked Simulator gate.**
+**Phase 6/7/8/9/10/11 owner hardware replay; Phase 12 is the next unblocked implementation gate.**
 
 Expected:
 
@@ -85,15 +85,55 @@ Boundary:
   Phase 7: empty-container guidance, ROM validation, recovery, extraction, and
   relaunch behavior, plus the Simulator-valid touch and imported-pack UI
   slices of Phases 8 and 9, plus deterministic controller routing and
-  split-screen rendering for Phase 10. Hardware time/RSS, Files/iPad behavior,
-  sustained touch ergonomics, real texture-pack performance, Bluetooth
-  controller behavior, and split-screen frame time remain owner replay items
-  even when their Simulator equivalents pass.
+  split-screen rendering for Phase 10, plus the persisted CoreMotion-to-stick
+  control path for Phase 11. Hardware time/RSS, Files/iPad behavior, sustained
+  touch ergonomics, real texture-pack performance, Bluetooth controller
+  behavior, split-screen frame time, and a drift-free tilt GP remain owner
+  replay items even when their Simulator equivalents pass.
 - Simulator evidence does not prove signing, installation, watchdog behavior,
   or audio on physical hardware. Touch, extraction, performance, controller,
   texture-pack, and package behavior also remain unclaimed.
 
 ## Evidence log
+
+### 2026-07-28 — Phase 11 tilt-steering Simulator slice passed; hardware GP pending
+
+- Motion path: the iOS shell now samples `CMDeviceMotion.attitude.roll` at
+  60 Hz using `CMAttitudeReferenceFrameXArbitraryZVertical`, applies a small
+  dead zone and low-pass filter, and maps the calibrated delta to the virtual
+  controller's analog left-stick X axis. Tilt is off by default.
+- Controls UI: Settings › Controls exposes a persisted Tilt Steering checkbox,
+  0.5×–2.0× sensitivity slider, and one-tap Recenter Tilt Steering button.
+  `docs/screenshots/ipad-tilt-controls.png` records the default 1.0×/off state,
+  SHA-256
+  `1827654f7bc8967208ce30fef4d31121fcddb06389ecf7cc8e834cfbdfb01bcd`.
+- Input ownership: the on-screen stick wins while held, menu visibility blocks
+  motion input, and controller parking leaves tilt unable to write into a
+  detached touch controller. Releasing the stick lets the next motion sample
+  resume tilt steering.
+- Deterministic Simulator proof: launching with the Simulator-only
+  `SPAGHETTIPAD_SIMULATED_TILT_DEGREES=15` hook, enabling Tilt Steering, and
+  closing the menu produced filtered X values `6245`, `10444`, then `15166`.
+  Raising sensitivity from 1.0× to 2.0× through the visible Controls slider
+  produced `32767`; the setting was returned to 1.0× afterward.
+- Recenter/lifecycle proof: the visible recenter button emitted X `0`; closing
+  the menu then calibrated the held angle as center with no subsequent
+  non-zero value. Sending the app Home and foregrounding it restarted motion,
+  centered at the still-held 15-degree input, and again produced no drift.
+- Persistence proof: after terminating and relaunching the process without
+  touching Settings, the shell immediately logged simulated tilt enabled,
+  centered once, and reproduced the analog ramp. Tilt was returned to its
+  default off state after the replay.
+- Build and patch proof: the Release arm64 iPhoneSimulator executable SHA-256
+  is `bcbd3a2de859794974e336f29a3dff99bfd5d090583d042d2ea82f0e879a1ef5`.
+  `patches/spaghettikart-ios-tilt.patch` is 67 lines / 3,281 bytes with
+  SHA-256
+  `0a61bc4ce654abb600989fed90b1403d7163e640d46eb76d37662f32ec852e99`.
+  A fresh local clone passed base → first-run → touch → UX → tilt
+  application, `git diff --check`, and reverse-check of the tilt patch.
+- Boundary: Phase 11 remains in progress. CoreSimulator cannot prove physical
+  sensor orientation, grip comfort, long-session drift, or completion of a GP
+  using tilt plus on-screen A/B/R/Z; those remain physical-iPad gates.
 
 ### 2026-07-28 — Phase 10 controller routing and split-screen Simulator slice passed; hardware sessions pending
 

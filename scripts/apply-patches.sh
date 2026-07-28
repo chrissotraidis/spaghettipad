@@ -9,6 +9,7 @@ SPAGHETTIKART_PATCH="$ROOT/patches/spaghettikart-ios.patch"
 SPAGHETTIKART_FIRSTRUN_PATCH="$ROOT/patches/spaghettikart-ios-firstrun.patch"
 SPAGHETTIKART_TOUCH_PATCH="$ROOT/patches/spaghettikart-ios-touch.patch"
 SPAGHETTIKART_UX_PATCH="$ROOT/patches/spaghettikart-ios-ux.patch"
+SPAGHETTIKART_TILT_PATCH="$ROOT/patches/spaghettikart-ios-tilt.patch"
 LUS_PATCH="$ROOT/patches/libultraship-ios.patch"
 LUS_TOUCH_PATCH="$ROOT/patches/libultraship-ios-touch.patch"
 LUS_CONTROLLER_PATCH="$ROOT/patches/libultraship-ios-controller-ports.patch"
@@ -32,6 +33,8 @@ fail() {
     fail "maintained patch is missing: $SPAGHETTIKART_TOUCH_PATCH"
 [ -f "$SPAGHETTIKART_UX_PATCH" ] ||
     fail "maintained patch is missing: $SPAGHETTIKART_UX_PATCH"
+[ -f "$SPAGHETTIKART_TILT_PATCH" ] ||
+    fail "maintained patch is missing: $SPAGHETTIKART_TILT_PATCH"
 [ -f "$LUS_PATCH" ] || fail "maintained patch is missing: $LUS_PATCH"
 [ -f "$LUS_TOUCH_PATCH" ] ||
     fail "maintained patch is missing: $LUS_TOUCH_PATCH"
@@ -83,60 +86,74 @@ else
 fi
 
 if git -C "$SPAGHETTIKART_DIR" apply --reverse --check \
-    "$SPAGHETTIKART_UX_PATCH" 2>/dev/null; then
-    echo "SpaghettiKart iOS base, first-run, touch, and UX patches are already applied."
+    "$SPAGHETTIKART_TILT_PATCH" 2>/dev/null; then
+    echo "SpaghettiKart iOS base, first-run, touch, UX, and tilt patches are already applied."
 else
     if git -C "$SPAGHETTIKART_DIR" apply --reverse --check \
-        "$SPAGHETTIKART_TOUCH_PATCH" 2>/dev/null; then
-        echo "SpaghettiKart iOS base, first-run, and touch patches are already applied."
+        "$SPAGHETTIKART_UX_PATCH" 2>/dev/null; then
+        echo "SpaghettiKart iOS base, first-run, touch, and UX patches are already applied."
     else
         if git -C "$SPAGHETTIKART_DIR" apply --reverse --check \
-            "$SPAGHETTIKART_FIRSTRUN_PATCH" 2>/dev/null; then
-            echo "SpaghettiKart iOS base and first-run patches are already applied."
+            "$SPAGHETTIKART_TOUCH_PATCH" 2>/dev/null; then
+            echo "SpaghettiKart iOS base, first-run, and touch patches are already applied."
         else
             if git -C "$SPAGHETTIKART_DIR" apply --reverse --check \
-                "$SPAGHETTIKART_PATCH" 2>/dev/null; then
-                echo "SpaghettiKart iOS base patch is already applied."
+                "$SPAGHETTIKART_FIRSTRUN_PATCH" 2>/dev/null; then
+                echo "SpaghettiKart iOS base and first-run patches are already applied."
             else
-                git -C "$SPAGHETTIKART_DIR" diff --quiet -- . \
-                    ':(exclude)libultraship' ||
-                    fail "SpaghettiKart has modified tracked files"
+                if git -C "$SPAGHETTIKART_DIR" apply --reverse --check \
+                    "$SPAGHETTIKART_PATCH" 2>/dev/null; then
+                    echo "SpaghettiKart iOS base patch is already applied."
+                else
+                    git -C "$SPAGHETTIKART_DIR" diff --quiet -- . \
+                        ':(exclude)libultraship' ||
+                        fail "SpaghettiKart has modified tracked files"
+                    git -C "$SPAGHETTIKART_DIR" apply --check \
+                        "$SPAGHETTIKART_PATCH"
+                    git -C "$SPAGHETTIKART_DIR" apply \
+                        "$SPAGHETTIKART_PATCH"
+                    git -C "$SPAGHETTIKART_DIR" apply --reverse --check \
+                        "$SPAGHETTIKART_PATCH" ||
+                        fail "SpaghettiKart patch does not pass its reverse check"
+                    echo "Applied SpaghettiKart iOS patch at $EXPECTED_SPAGHETTIKART."
+                fi
+
                 git -C "$SPAGHETTIKART_DIR" apply --check \
-                    "$SPAGHETTIKART_PATCH"
+                    "$SPAGHETTIKART_FIRSTRUN_PATCH"
                 git -C "$SPAGHETTIKART_DIR" apply \
-                    "$SPAGHETTIKART_PATCH"
+                    "$SPAGHETTIKART_FIRSTRUN_PATCH"
                 git -C "$SPAGHETTIKART_DIR" apply --reverse --check \
-                    "$SPAGHETTIKART_PATCH" ||
-                    fail "SpaghettiKart patch does not pass its reverse check"
-                echo "Applied SpaghettiKart iOS patch at $EXPECTED_SPAGHETTIKART."
+                    "$SPAGHETTIKART_FIRSTRUN_PATCH" ||
+                    fail "SpaghettiKart first-run patch does not pass its reverse check"
+                echo "Applied SpaghettiKart iOS first-run patch at $EXPECTED_SPAGHETTIKART."
             fi
 
             git -C "$SPAGHETTIKART_DIR" apply --check \
-                "$SPAGHETTIKART_FIRSTRUN_PATCH"
+                "$SPAGHETTIKART_TOUCH_PATCH"
             git -C "$SPAGHETTIKART_DIR" apply \
-                "$SPAGHETTIKART_FIRSTRUN_PATCH"
+                "$SPAGHETTIKART_TOUCH_PATCH"
             git -C "$SPAGHETTIKART_DIR" apply --reverse --check \
-                "$SPAGHETTIKART_FIRSTRUN_PATCH" ||
-                fail "SpaghettiKart first-run patch does not pass its reverse check"
-            echo "Applied SpaghettiKart iOS first-run patch at $EXPECTED_SPAGHETTIKART."
+                "$SPAGHETTIKART_TOUCH_PATCH" ||
+                fail "SpaghettiKart touch patch does not pass its reverse check"
+            echo "Applied SpaghettiKart iOS touch patch at $EXPECTED_SPAGHETTIKART."
         fi
 
         git -C "$SPAGHETTIKART_DIR" apply --check \
-            "$SPAGHETTIKART_TOUCH_PATCH"
+            "$SPAGHETTIKART_UX_PATCH"
         git -C "$SPAGHETTIKART_DIR" apply \
-            "$SPAGHETTIKART_TOUCH_PATCH"
+            "$SPAGHETTIKART_UX_PATCH"
         git -C "$SPAGHETTIKART_DIR" apply --reverse --check \
-            "$SPAGHETTIKART_TOUCH_PATCH" ||
-            fail "SpaghettiKart touch patch does not pass its reverse check"
-        echo "Applied SpaghettiKart iOS touch patch at $EXPECTED_SPAGHETTIKART."
+            "$SPAGHETTIKART_UX_PATCH" ||
+            fail "SpaghettiKart UX patch does not pass its reverse check"
+        echo "Applied SpaghettiKart iOS UX patch at $EXPECTED_SPAGHETTIKART."
     fi
 
     git -C "$SPAGHETTIKART_DIR" apply --check \
-        "$SPAGHETTIKART_UX_PATCH"
+        "$SPAGHETTIKART_TILT_PATCH"
     git -C "$SPAGHETTIKART_DIR" apply \
-        "$SPAGHETTIKART_UX_PATCH"
+        "$SPAGHETTIKART_TILT_PATCH"
     git -C "$SPAGHETTIKART_DIR" apply --reverse --check \
-        "$SPAGHETTIKART_UX_PATCH" ||
-        fail "SpaghettiKart UX patch does not pass its reverse check"
-    echo "Applied SpaghettiKart iOS UX patch at $EXPECTED_SPAGHETTIKART."
+        "$SPAGHETTIKART_TILT_PATCH" ||
+        fail "SpaghettiKart tilt patch does not pass its reverse check"
+    echo "Applied SpaghettiKart iOS tilt patch at $EXPECTED_SPAGHETTIKART."
 fi

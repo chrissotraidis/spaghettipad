@@ -1,5 +1,6 @@
 #include <stdbool.h>
 
+#import <CoreMotion/CoreMotion.h>
 #import <UIKit/UIKit.h>
 #include <TargetConditionals.h>
 
@@ -47,13 +48,25 @@ static std::atomic_bool sTouchControlsMenuVisible(false);
 static std::atomic_bool sTouchStickActive(false);
 static BOOL sTouchControlsDesired;
 static BOOL sControllerWatchInstalled;
+static CMMotionManager* sMotionManager;
+static BOOL sTiltEnabled;
+static float sTiltSensitivity = 1.0f;
+static BOOL sTiltReferenceValid;
+static double sTiltReferenceRoll;
+static double sTiltFilteredDelta;
 #if TARGET_OS_SIMULATOR
 static std::vector<SDL_Joystick*> sSimulatorTestControllers;
+static NSTimer* sSimulatorTiltTimer;
+static double sSimulatorTiltRoll;
+static BOOL sSimulatorTiltNeedsNeutralSample;
+static BOOL sSimulatorTiltHasStarted;
 #endif
 
 static void SpaghettiPad_AttachVirtualController(void);
 static void SpaghettiPad_DetachVirtualController(void);
 static void SpaghettiPad_ApplyTouchControlsState(void);
+static void SpaghettiPad_StartTiltUpdates(void);
+static void SpaghettiPad_StopTiltUpdates(void);
 
 static void SpaghettiPad_PushKey(SDL_Scancode scancode, BOOL pressed) {
     SDL_Event event = {};
@@ -225,6 +238,119 @@ static void SpaghettiPad_SetStickAxes(Sint16 x, Sint16 y) {
         SDL_JoystickSetVirtualAxis(sVirtualJoystick, SDL_CONTROLLER_AXIS_LEFTX, x);
         SDL_JoystickSetVirtualAxis(sVirtualJoystick, SDL_CONTROLLER_AXIS_LEFTY, y);
     }
+}
+
+static void SpaghettiPad_SetTiltAxis(Sint16 x) {
+    if (!SPAGHETTIPAD_TOUCH_KEYBOARD_FALLBACK &&
+        sVirtualJoystick != nullptr) {
+        SDL_JoystickSetVirtualAxis(
+            sVirtualJoystick, SDL_CONTROLLER_AXIS_LEFTX, x);
+#if TARGET_OS_SIMULATOR
+        static Sint16 lastLoggedAxis;
+        if (std::abs((int)x - (int)lastLoggedAxis) >= 4096 ||
+            (x == 0 && lastLoggedAxis != 0)) {
+            lastLoggedAxis = x;
+            SDL_Log("[SpaghettiPad] simulated tilt axis x=%d", x);
+        }
+#endif
+    }
+}
+
+static void SpaghettiPad_ProcessTiltRoll(double roll) {
+    if (!sTiltEnabled || sTouchControlsMenuVisible.load() ||
+        sTouchStickActive.load() || sVirtualJoystick == nullptr) {
+        return;
+    }
+
+    if (!sTiltReferenceValid) {
+        sTiltReferenceRoll = roll;
+        sTiltFilteredDelta = 0.0;
+        sTiltReferenceValid = YES;
+        SpaghettiPad_SetTiltAxis(0);
+        SDL_Log("[SpaghettiPad] tilt steering centered");
+        return;
+    }
+
+    double delta = std::remainder(roll - sTiltReferenceRoll, 2.0 * M_PI);
+    sTiltFilteredDelta += (delta - sTiltFilteredDelta) * 0.18;
+    double normalized = sTiltFilteredDelta * sTiltSensitivity / 0.45;
+    if (std::abs(normalized) < 0.035) {
+        normalized = 0.0;
+    }
+    normalized = std::clamp(normalized, -1.0, 1.0);
+    SpaghettiPad_SetTiltAxis(
+        (Sint16)std::lround(normalized * SDL_JOYSTICK_AXIS_MAX));
+}
+
+static void SpaghettiPad_StartTiltUpdates(void) {
+    if (!sTiltEnabled) {
+        return;
+    }
+
+    sTiltReferenceValid = NO;
+    sTiltFilteredDelta = 0.0;
+
+#if TARGET_OS_SIMULATOR
+    NSString* simulatedDegrees = NSProcessInfo.processInfo.environment[
+        @"SPAGHETTIPAD_SIMULATED_TILT_DEGREES"];
+    if (simulatedDegrees.length > 0) {
+        sSimulatorTiltRoll = simulatedDegrees.doubleValue * M_PI / 180.0;
+        sSimulatorTiltNeedsNeutralSample = !sSimulatorTiltHasStarted;
+        sSimulatorTiltHasStarted = YES;
+        [sSimulatorTiltTimer invalidate];
+        sSimulatorTiltTimer = [NSTimer
+            scheduledTimerWithTimeInterval:1.0 / 60.0
+                                  repeats:YES
+                                    block:^(NSTimer* timer) {
+                (void)timer;
+                if (sTouchControlsMenuVisible.load() ||
+                    sTouchStickActive.load()) {
+                    return;
+                }
+                double roll = sSimulatorTiltNeedsNeutralSample
+                    ? 0.0 : sSimulatorTiltRoll;
+                sSimulatorTiltNeedsNeutralSample = NO;
+                SpaghettiPad_ProcessTiltRoll(roll);
+            }];
+        SDL_Log(
+            "[SpaghettiPad] simulated tilt enabled at %.1f degrees",
+            simulatedDegrees.doubleValue);
+        return;
+    }
+#endif
+
+    if (sMotionManager == nil) {
+        sMotionManager = [[CMMotionManager alloc] init];
+    }
+    if (!sMotionManager.deviceMotionAvailable) {
+        SDL_Log("[SpaghettiPad] tilt steering unavailable on this device");
+        return;
+    }
+
+    sMotionManager.deviceMotionUpdateInterval = 1.0 / 60.0;
+    [sMotionManager
+        startDeviceMotionUpdatesUsingReferenceFrame:
+            CMAttitudeReferenceFrameXArbitraryZVertical
+                                          toQueue:NSOperationQueue.mainQueue
+                                      withHandler:^(
+                                          CMDeviceMotion* motion,
+                                          NSError* error) {
+        if (error == nil && motion != nil) {
+            SpaghettiPad_ProcessTiltRoll(motion.attitude.roll);
+        }
+    }];
+    SDL_Log("[SpaghettiPad] tilt steering updates started at 60 Hz");
+}
+
+static void SpaghettiPad_StopTiltUpdates(void) {
+    [sMotionManager stopDeviceMotionUpdates];
+#if TARGET_OS_SIMULATOR
+    [sSimulatorTiltTimer invalidate];
+    sSimulatorTiltTimer = nil;
+#endif
+    sTiltReferenceValid = NO;
+    sTiltFilteredDelta = 0.0;
+    SpaghettiPad_SetTiltAxis(0);
 }
 
 static void SpaghettiPad_ResetAllInputs(void) {
@@ -1070,6 +1196,7 @@ void SpaghettiPad_InitializeTouchControls(void) {
                     usingBlock:^(NSNotification* notification) {
                         (void)notification;
                         SpaghettiPad_ReleaseVisibleInputs();
+                        SpaghettiPad_StopTiltUpdates();
                     }];
         [notifications
             addObserverForName:UIApplicationDidEnterBackgroundNotification
@@ -1078,6 +1205,14 @@ void SpaghettiPad_InitializeTouchControls(void) {
                     usingBlock:^(NSNotification* notification) {
                         (void)notification;
                         SpaghettiPad_ReleaseVisibleInputs();
+                    }];
+        [notifications
+            addObserverForName:UIApplicationDidBecomeActiveNotification
+                        object:nil
+                         queue:NSOperationQueue.mainQueue
+                    usingBlock:^(NSNotification* notification) {
+                        (void)notification;
+                        SpaghettiPad_StartTiltUpdates();
                     }];
     }
     if (!SpaghettiPad_HasPhysicalController()) {
@@ -1099,6 +1234,36 @@ void SpaghettiPad_SetTouchControlsMenuVisible(int visible) {
     }
     dispatch_async(dispatch_get_main_queue(), ^{
         SpaghettiPad_ApplyTouchControlsState();
+    });
+}
+
+void SpaghettiPad_SetTiltSteeringEnabled(int enabled) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        BOOL shouldEnable = enabled != 0;
+        if (sTiltEnabled == shouldEnable) {
+            return;
+        }
+        sTiltEnabled = shouldEnable;
+        if (sTiltEnabled) {
+            SpaghettiPad_StartTiltUpdates();
+        } else {
+            SpaghettiPad_StopTiltUpdates();
+        }
+    });
+}
+
+void SpaghettiPad_SetTiltSensitivity(float sensitivity) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        sTiltSensitivity = std::clamp(sensitivity, 0.5f, 2.0f);
+    });
+}
+
+void SpaghettiPad_RecenterTiltSteering(void) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        sTiltReferenceValid = NO;
+        sTiltFilteredDelta = 0.0;
+        SpaghettiPad_SetTiltAxis(0);
+        SDL_Log("[SpaghettiPad] tilt steering recenter requested");
     });
 }
 

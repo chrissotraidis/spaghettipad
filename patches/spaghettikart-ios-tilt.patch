@@ -1,0 +1,67 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -145,6 +145,7 @@ if(SPAGHETTIKART_IOS)
+     "${CMAKE_CURRENT_SOURCE_DIR}/config.yml"
+     "${CMAKE_CURRENT_SOURCE_DIR}/yamls"
+     "${CMAKE_CURRENT_SOURCE_DIR}/meta")
++  target_link_libraries(${PROJECT_NAME} PRIVATE "-framework CoreMotion")
+   set_source_files_properties(
+     "${SPAGHETTIPAD_SHELL_DIR}/Assets.xcassets"
+     "${SPAGHETTIPAD_PORT_ARCHIVE}"
+diff --git a/src/port/Engine.cpp b/src/port/Engine.cpp
+--- a/src/port/Engine.cpp
++++ b/src/port/Engine.cpp
+@@ -414,9 +414,15 @@ void GameEngine::Create() {
+ #elif defined(__IOS__)
+     CVarSetInteger(CVAR_IMGUI_CONTROLLER_NAV, 1);
+     CVarRegisterInteger("gSettings.SpaghettiPad.TouchControls", 1);
++    CVarRegisterInteger("gSettings.SpaghettiPad.TiltSteering", 0);
++    CVarRegisterFloat("gSettings.SpaghettiPad.TiltSensitivity", 1.0f);
+     SpaghettiPad_InitializeTouchControls();
+     SpaghettiPad_SetTouchControlsEnabled(
+         CVarGetInteger("gSettings.SpaghettiPad.TouchControls", 1));
++    SpaghettiPad_SetTiltSensitivity(
++        CVarGetFloat("gSettings.SpaghettiPad.TiltSensitivity", 1.0f));
++    SpaghettiPad_SetTiltSteeringEnabled(
++        CVarGetInteger("gSettings.SpaghettiPad.TiltSteering", 0));
+     if (HasImportedO2RMod() &&
+         !CVarGetInteger("gEnhancements.Mods.AlternateAssets", 0) &&
+         ShowYesNoBox(
+diff --git a/src/port/ui/PortMenu.cpp b/src/port/ui/PortMenu.cpp
+--- a/src/port/ui/PortMenu.cpp
++++ b/src/port/ui/PortMenu.cpp
+@@ -437,6 +437,33 @@ void PortMenu::AddSettings() {
+         .Options(CheckboxOptions()
+                      .DefaultValue(true)
+                      .Tooltip("Shows the low-grip touch controller. The menu button remains available when disabled."));
++    AddWidget(path, "Tilt Steering", WIDGET_CVAR_CHECKBOX)
++        .CVar("gSettings.SpaghettiPad.TiltSteering")
++        .Callback([](WidgetInfo& info) {
++            SpaghettiPad_SetTiltSteeringEnabled(
++                CVarGetInteger("gSettings.SpaghettiPad.TiltSteering", 0));
++        })
++        .Options(CheckboxOptions()
++                     .DefaultValue(false)
++                     .Tooltip("Steers by tilting the device. The touch stick takes priority while held."));
++    AddWidget(path, "Tilt Sensitivity: %.1fx", WIDGET_CVAR_SLIDER_FLOAT)
++        .CVar("gSettings.SpaghettiPad.TiltSensitivity")
++        .Callback([](WidgetInfo& info) {
++            SpaghettiPad_SetTiltSensitivity(
++                CVarGetFloat("gSettings.SpaghettiPad.TiltSensitivity", 1.0f));
++        })
++        .Options(FloatSliderOptions()
++                     .Min(0.5f)
++                     .Max(2.0f)
++                     .Step(0.1f)
++                     .DefaultValue(1.0f)
++                     .Format("%.1fx")
++                     .Tooltip("Adjusts how far steering moves for the same device tilt."));
++    AddWidget(path, "Recenter Tilt Steering", WIDGET_BUTTON)
++        .Callback([](WidgetInfo& info) {
++            SpaghettiPad_RecenterTiltSteering();
++        })
++        .Options(ButtonOptions().Tooltip("Uses the current device angle as straight ahead."));
+ #endif
+     AddWidget(path,
+               "This interface can be a little daunting. Please bear with us as we work to improve the experience "

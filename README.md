@@ -12,9 +12,9 @@
 
 > **Development preview:** the native iPadOS/iOS Simulator build is playable
 > through touch and the bring-your-own-ROM flow, and two-controller horizontal
-> split-screen now runs in the iPad Simulator. Physical-iPad validation,
-> Bluetooth-controller performance, tilt steering, packaging, and release
-> artifacts are still in progress. There is no public IPA yet.
+> split-screen and optional tilt steering now run in the iPad Simulator.
+> Physical-iPad validation, Bluetooth-controller performance, packaging, and
+> release artifacts are still in progress. There is no public IPA yet.
 
 ![SpaghettiPad running with its iPad touch layout](docs/screenshots/ipad-touch-controls.png)
 
@@ -34,6 +34,8 @@ four-button C diamond—is available without a keyboard.
 - **Couch multiplayer in progress.** Two controllers now receive independent
   player ports and render horizontal split-screen in the iPad Simulator. The
   two-Bluetooth-controller hardware and frame-time gate is still open.
+- **Tilt when you want it.** Opt-in steering includes sensitivity and recenter
+  controls, while the touch stick takes priority whenever it is held.
 - **Optional visual upgrades.** Import a compatible `.o2r` through Files,
   detect it in-app, and enable Alternate Assets without a desktop file picker.
   No third-party pack is bundled, fetched, mirrored, or redistributed.
@@ -67,6 +69,16 @@ inputs. Disconnect the last controller and the touch controller returns.
 
 <p align="center"><sub>Live two-player versus rendering in the iPad Simulator. The menu is left open to show that the touch overlay is parked; physical-iPad performance proof is still pending.</sub></p>
 
+## Optional tilt steering
+
+Tilt steering is off by default and lives beside the touch controls. It samples
+device motion at 60 Hz, exposes a 0.5×–2.0× sensitivity range, recenters in one
+tap, and recalibrates after the app returns from the background.
+
+![Tilt steering controls in the iPad Simulator](docs/screenshots/ipad-tilt-controls.png)
+
+<p align="center"><sub>The control path, persistence, recentering, sensitivity, and lifecycle recalibration pass in Simulator; a full tilt-driven Grand Prix remains a physical-iPad gate.</sub></p>
+
 ## Where it stands
 
 | Capability | Current proof |
@@ -79,7 +91,7 @@ inputs. Disconnect the last controller and the touch controller returns.
 | Audio and lifecycle | Three-cycle Simulator continuity plus human-confirmed audible resume |
 | Physical iPad | Signing, installation, stability, and touch-only Grand Prix pending |
 | Controllers and split-screen | Independent ports, parked touch input, four-port defaults, and live 2P horizontal rendering pass in Simulator; two-controller hardware GP/frame-time capture pending |
-| Tilt steering | Planned validation phase |
+| Tilt steering | 60 Hz analog path, persistence, sensitivity, recenter, touch-stick priority, and foreground recalibration pass in Simulator; physical tilt GP pending |
 | Unsigned ROM-free IPA | Final packaging phase |
 
 The proof log is intentionally strict: a Simulator result never stands in for
@@ -96,7 +108,7 @@ untraceable engine changes:
    [SpaghettiKart](https://github.com/HarbourMasters/SpaghettiKart),
    [libultraship](https://github.com/Kenix3/libultraship), and
    [Torch](https://github.com/HarbourMasters/Torch) revisions.
-2. Apply the maintained iOS, extraction, touch, and device-UX patches in order.
+2. Apply the maintained iOS, extraction, touch, device-UX, controller, and tilt patches in order.
 3. Compile the repo-owned Objective-C++ app shell and asset catalog into the
    native app.
 4. Audit the product for ROMs, generated game archives, imported textures,
