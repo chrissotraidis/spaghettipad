@@ -32,8 +32,27 @@ four-button C diamond—is available without a keyboard.
   in the app's Files-visible container and is extracted locally.
 - **Built toward couch multiplayer.** SpaghettiKart's native split-screen is
   the foundation for the planned two-controller, one-iPad experience.
-- **Optional visual upgrades.** User-imported `.o2r` texture packs are planned;
-  no third-party pack is bundled or redistributed.
+- **Optional visual upgrades.** Import a compatible `.o2r` through Files,
+  detect it in-app, and enable Alternate Assets without a desktop file picker.
+  No third-party pack is bundled, fetched, mirrored, or redistributed.
+
+## One app, two tailored layouts
+
+The same app runs on iPad and iPhone, but it does not pretend they are the
+same shape. iPad gets a roomy 2× interface and low grip controls; iPhone gets
+a compact 0.75× interface, its own control geometry, and native wide
+rendering.
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/ipad-settings.png" alt="SpaghettiPad texture-pack settings on iPad"></td>
+    <td width="50%"><img src="docs/screenshots/iphone-settings.png" alt="SpaghettiPad texture-pack settings on iPhone"></td>
+  </tr>
+  <tr>
+    <td align="center"><sub>iPad</sub></td>
+    <td align="center"><sub>iPhone</sub></td>
+  </tr>
+</table>
 
 ## Where it stands
 
@@ -43,6 +62,7 @@ four-button C diamond—is available without a keyboard.
 | iPad touch controls | Full layout, analog telemetry, menus, and lifecycle release pass in Simulator |
 | iPhone support | Dedicated compact controls and native widescreen pass in Simulator |
 | Files import and extraction | Recovery and relaunch pass in Simulator; physical-device timing remains |
+| Optional texture packs | Import, validation, enable, and persistence workflow passes with a ROM-free test archive in Simulator; real-pack hardware GP pending |
 | Audio and lifecycle | Three-cycle Simulator continuity plus human-confirmed audible resume |
 | Physical iPad | Signing, installation, stability, and touch-only Grand Prix pending |
 | Controllers and split-screen | Planned validation phase |
@@ -63,7 +83,7 @@ untraceable engine changes:
    [SpaghettiKart](https://github.com/HarbourMasters/SpaghettiKart),
    [libultraship](https://github.com/Kenix3/libultraship), and
    [Torch](https://github.com/HarbourMasters/Torch) revisions.
-2. Apply the maintained iOS, extraction, and touch patches in order.
+2. Apply the maintained iOS, extraction, touch, and device-UX patches in order.
 3. Compile the repo-owned Objective-C++ app shell and asset catalog into the
    native app.
 4. Audit the product for ROMs, generated game archives, imported textures,
@@ -79,6 +99,13 @@ This repository does **not** contain Mario Kart 64, extracted Nintendo assets,
 `mk64.o2r`, or MK64 Reloaded. You must supply your own legally acquired
 Mario Kart 64 (US 1.0) ROM. Texture packs remain optional, user-imported
 content and are never part of the app or release artifact.
+
+For an optional visual upgrade, SpaghettiPad links to the official
+[MK64 Reloaded](https://evilgames.eu/texture-packs/mk64-reloaded.htm) project
+page from Settings. Download the SpaghettiKart HD `.o2r` yourself, move it in
+Files to `On My iPad > SpaghettiPad > mods`, relaunch once, then use
+**Check Imported Texture Pack**. Start with HD; 4K remains a physical
+M-series-iPad performance experiment, not a default recommendation.
 
 ## Read the work
 

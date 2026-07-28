@@ -53,14 +53,14 @@ audited ROM-free unsigned IPA.
 | 6 | Signed physical-iPad boot | In progress | Signed install, title screen, ten-minute stability run |
 | 7 | On-device Files extraction | In progress (hardware replay) | Clean-device extraction, failure recovery, measured time/RSS |
 | 8 | Grip-first full-analog touch controls | In progress (Simulator slice passed; hardware GP pending) | Full touch-only GP and analog/menu/lifecycle checks on hardware |
-| 9 | iPad UX and imported texture pack | Pending | Touch-complete UX plus Reloaded import/enable/full-GP hardware gate |
+| 9 | iPad UX and imported texture pack | In progress (Simulator UX/import slice passed; hardware pack GP pending) | Touch-complete UX plus Reloaded import/enable/full-GP hardware gate |
 | 10 | Controllers and split-screen | Pending | Two-controller 2P session and measured 3P/4P decision |
 | 11 | Tilt steering | Pending | Persisted, drift-free tilt GP on hardware |
 | 12 | Package, CI, docs, release | Pending | Clean CI, clean-machine replay, audited IPA and SHA-256 |
 
 ## Active gate
 
-**Phase 6/7/8 owner hardware replay; Phase 9 is the next unblocked Simulator gate.**
+**Phase 6/7/8/9 owner hardware replay; Phase 10 is the next unblocked Simulator gate.**
 
 Expected:
 
@@ -83,13 +83,78 @@ Boundary:
   provisioning profile, so it cannot perform or claim the Phase 6 install.
 - Remote work therefore continues with the explicitly Simulator-valid part of
   Phase 7: empty-container guidance, ROM validation, recovery, extraction, and
-  relaunch behavior. Hardware time/RSS and Files/iPad behavior remain owner
-  replay items even when their Simulator equivalents pass.
+  relaunch behavior, plus the Simulator-valid touch and imported-pack UI
+  slices of Phases 8 and 9. Hardware time/RSS, Files/iPad behavior, sustained
+  touch ergonomics, and real texture-pack performance remain owner replay
+  items even when their Simulator equivalents pass.
 - Simulator evidence does not prove signing, installation, watchdog behavior,
   or audio on physical hardware. Touch, extraction, performance, controller,
   texture-pack, and package behavior also remain unclaimed.
 
 ## Evidence log
+
+### 2026-07-28 — Phase 9 device UX and imported-pack Simulator slice passed; hardware GP pending
+
+- Device-specific menu fit: SpaghettiPad now selects a 2× menu scale for
+  iPad and 0.75× for iPhone. The iOS General page puts the optional texture
+  workflow first, so `Use Alternate Assets`, `Check Imported Texture Pack`,
+  `Texture Pack Files Steps`, and `Get MK64 Reloaded` remain visible on the
+  phone's short landscape viewport without relying on scrolling. iPad and
+  iPhone screenshots are recorded as `docs/screenshots/ipad-settings.png`
+  (2420×1668, SHA-256
+  `830b8369d76635786e86f8c48386ef717ec5b4be4d2ae926da33cf25e5df8854`)
+  and `docs/screenshots/iphone-settings.png` (2622×1206, SHA-256
+  `4da6688d5842031b43944baa384f38ebe23474f4c78312f262651cbb922dbc87`).
+- iOS settings cleanup: desktop-only fullscreen, cursor-visibility, Alt-Tab
+  assets, file-picker, renderer-backend, match-refresh, jitter-fix,
+  windowed-fullscreen, and multi-viewport controls are hidden. Graphics keeps
+  the relevant resolution, MSAA, VSync, and texture-filter options and adds
+  explicit 30, 60, and 120 FPS (ProMotion) presets.
+- Import workflow: the app scans the Files-visible `Documents/mods` directory
+  for case-insensitive `.o2r` files, accepts only consistent ZIP archives with
+  a root `mods.toml`, and prompts once to enable Alternate Assets. The General
+  page also reports a precise no-pack result, explains the Files path and
+  HD-first/4K-on-M-series guidance, and opens only the official MK64 Reloaded
+  project page.
+- Positive/negative proof: the negative detector returned `No texture pack
+  found`. A generated ROM-free 232-byte manifest-only `.o2r` with SHA-256
+  `036dbc8814ba10f887dfda7c4ba73ea32cae82219469e306b7f77f372693312a`
+  triggered `Texture pack found`; choosing Yes persisted
+  `gEnhancements.Mods.AlternateAssets: 1`. The setting was restored to off,
+  both exact test archives were removed, and relaunch returned to the
+  no-pack state. No real texture pack was downloaded, bundled, mirrored, or
+  exercised.
+- Maintained patch: `patches/spaghettikart-ios-ux.patch` is 254 lines /
+  11,441 bytes with SHA-256
+  `cfea42612663c80249eab571623905424069d56d531e67a68d4255a4261b2962`.
+  `scripts/apply-patches.sh` applies it at the top of the SpaghettiKart stack,
+  recognizes an already-patched tree, and requires every earlier patch in
+  order. A fresh clone at the exact pin passed base -> first-run -> touch ->
+  UX application, reverse-check, idempotent second replay, and
+  `git diff --check`.
+- Build proof: the final Release arm64 iPhoneSimulator build completed with
+  `** BUILD SUCCEEDED **`; its executable SHA-256 is
+  `4d57b823388efb8fec0cdbf1fa88dfc88f80c3f06c29455b22059c0f596a4c7e`.
+  The same bundle was installed and visually exercised on the disposable
+  iPad Pro 11-inch (M4) and compact iPhone Simulators. The iPhone retained its
+  native 874×402 widescreen rendering while the adjusted UI exposed the
+  complete import workflow. The full unsigned iPhoneOS wrapper also completed
+  with `** BUILD SUCCEEDED **` and passed its arm64/ROM-free audit; its
+  executable SHA-256 is
+  `d5baf2a0be23738b8e713f9fc826583503a01965faadfbafa179aeba3c3bc871`,
+  while bundled clean `spaghetti.o2r` remains
+  `4301e00ac0b2363ea2e0e78f97105f82f4c3da1f85f0f9fb42cb2a63918f2b79`.
+  The shared macOS target rebuilt successfully as an arm64 Mach-O with
+  SHA-256
+  `166170d41a841a92c1313529a2e49b30a5a13679c210aabd5350899261111275`.
+- Public surface: the README now shows the shared app icon, real touch
+  gameplay, side-by-side iPad/iPhone settings, current proof boundaries, and
+  an accurate user-directed MK64 Reloaded import path.
+- Boundary: this closes only the ROM-free Simulator UX and import mechanics.
+  Phase 9 remains in progress until the owner imports the real HD pack on a
+  physical iPad, confirms one cold relaunch plus a complete Grand Prix, and
+  records frame-time/RSS evidence. The 4K pack remains optional and may be
+  evaluated only on an M-series iPad after the HD gate.
 
 ### 2026-07-28 — Phase 8 Simulator touch and iPhone widescreen slice passed; hardware GP pending
 

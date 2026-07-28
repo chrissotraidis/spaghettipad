@@ -997,6 +997,12 @@ void SpaghettiPad_SetTouchControlsMenuVisible(int visible) {
     });
 }
 
+float SpaghettiPad_RecommendedMenuScale(void) {
+    CGRect bounds = UIScreen.mainScreen.bounds;
+    CGFloat shortEdge = MIN(CGRectGetWidth(bounds), CGRectGetHeight(bounds));
+    return shortEdge >= 600.0 ? 2.0f : 0.75f;
+}
+
 void SpaghettiPad_RecordRawStick(int rawX, int rawY) {
     static std::atomic_int lastRawX(0);
     static std::atomic_int lastRawY(0);

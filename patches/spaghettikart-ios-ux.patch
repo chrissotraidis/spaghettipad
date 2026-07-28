@@ -1,0 +1,254 @@
+diff --git a/src/engine/mods/ModManager.cpp b/src/engine/mods/ModManager.cpp
+index 586befb0b..06458127f 100644
+--- a/src/engine/mods/ModManager.cpp
++++ b/src/engine/mods/ModManager.cpp
+@@ -130,6 +130,25 @@ std::vector<std::string> ListMods() {
+     return archiveFiles;
+ }
+ 
++bool HasImportedO2RMod() {
++    const std::filesystem::path modsPath =
++        Ship::Context::GetPathRelativeToAppDirectory("mods");
++    std::error_code error;
++    if (!std::filesystem::is_directory(modsPath, error)) {
++        return false;
++    }
++
++    for (std::filesystem::directory_iterator iterator(modsPath, error), end;
++         !error && iterator != end; iterator.increment(error)) {
++        if (iterator->is_regular_file(error) &&
++            StringHelper::IEquals(iterator->path().extension().string(), ".o2r") &&
++            IsUsableGameArchive(iterator->path().string())) {
++            return true;
++        }
++    }
++    return false;
++}
++
+ std::optional<std::vector<std::string>> CheckCyclicDependencies() {
+     auto list = std::vector<std::string>{};
+     for (const auto& [metaA, _] : Mods) {
+diff --git a/src/engine/mods/ModManager.h b/src/engine/mods/ModManager.h
+index af0baa2e9..c9013f7c8 100644
+--- a/src/engine/mods/ModManager.h
++++ b/src/engine/mods/ModManager.h
+@@ -1,4 +1,5 @@
+ #pragma once
+ 
+ void InitModsSystem();
+-void UnloadMods();
+\ No newline at end of file
++void UnloadMods();
++bool HasImportedO2RMod();
+diff --git a/src/port/Engine.cpp b/src/port/Engine.cpp
+index 9f6254812..2837c8862 100644
+--- a/src/port/Engine.cpp
++++ b/src/port/Engine.cpp
+@@ -404,6 +404,10 @@ void GameEngine::Create() {
+     InitModsSystem();
+     instance->gHMAS = new HMAS();
+     instance->AudioInit();
++#ifdef __IOS__
++    CVarRegisterFloat(
++        "gSettings.Menu.Scale", SpaghettiPad_RecommendedMenuScale());
++#endif
+     GameUI::SetupGuiElements();
+ #if defined(__SWITCH__) || defined(__WIIU__)
+     CVarRegisterInteger("gControlNav", 1); // always enable controller nav on switch/wii u
+@@ -413,6 +417,18 @@ void GameEngine::Create() {
+     SpaghettiPad_InitializeTouchControls();
+     SpaghettiPad_SetTouchControlsEnabled(
+         CVarGetInteger("gSettings.SpaghettiPad.TouchControls", 1));
++    if (HasImportedO2RMod() &&
++        !CVarGetInteger("gEnhancements.Mods.AlternateAssets", 0) &&
++        ShowYesNoBox(
++            "Texture pack found",
++            "SpaghettiPad found an imported .o2r in the mods folder.\n\n"
++            "Enable Use Alternate Assets now?") == IDYES) {
++        CVarSetInteger("gEnhancements.Mods.AlternateAssets", 1);
++        Ship::Context::GetInstance()
++            ->GetWindow()
++            ->GetGui()
++            ->SaveConsoleVariablesNextFrame();
++    }
+ #endif
+ }
+ 
+diff --git a/src/port/ui/PortMenu.cpp b/src/port/ui/PortMenu.cpp
+index 145a046f7..fa6e57a98 100644
+--- a/src/port/ui/PortMenu.cpp
++++ b/src/port/ui/PortMenu.cpp
+@@ -4,6 +4,8 @@
+ #include "SpaghettiPadTouchControls.h"
+ #endif
+ #include "UIWidgets.h"
++#include "engine/mods/ModManager.h"
++#include "port/Engine.h"
+ #include "port/Game.h"
+ #include "ship/window/gui/GuiMenuBar.h"
+ #include "ship/window/gui/GuiElement.h"
+@@ -100,8 +102,60 @@ void PortMenu::AddSettings() {
+     AddSidebarEntry("Settings", "General", 3);
+     WidgetPath path = { "Settings", "General", SECTION_COLUMN_1 };
+ 
++#ifdef __IOS__
++    AddWidget(path, "Use Alternate Assets", WIDGET_CVAR_CHECKBOX)
++        .CVar("gEnhancements.Mods.AlternateAssets")
++        .Options(CheckboxOptions()
++                     .DefaultValue(false)
++                     .Tooltip("Uses replacement textures from imported .o2r packs."));
++    AddWidget(path, "Check Imported Texture Pack", WIDGET_BUTTON)
++        .Callback([](WidgetInfo& info) {
++            if (!HasImportedO2RMod()) {
++                GameEngine::ShowMessage(
++                    "No texture pack found",
++                    "Copy an official SpaghettiKart .o2r into Files > On My iPad > "
++                    "SpaghettiPad > mods, then return here.",
++                    SDL_MESSAGEBOX_INFORMATION);
++                return;
++            }
++            if (!CVarGetInteger("gEnhancements.Mods.AlternateAssets", 0) &&
++                GameEngine::ShowYesNoBox(
++                    "Texture pack found",
++                    "An imported .o2r is present.\n\nEnable Use Alternate Assets now?") == IDYES) {
++                CVarSetInteger("gEnhancements.Mods.AlternateAssets", 1);
++                Ship::Context::GetInstance()
++                    ->GetWindow()
++                    ->GetGui()
++                    ->SaveConsoleVariablesNextFrame();
++            } else {
++                GameEngine::ShowMessage(
++                    "Texture pack found",
++                    "An imported .o2r is present. If you copied it while SpaghettiPad "
++                    "was open, relaunch once so the archive is loaded.",
++                    SDL_MESSAGEBOX_INFORMATION);
++            }
++        })
++        .Options(ButtonOptions().Tooltip("Detects imported .o2r files and offers to enable them."));
++    AddWidget(path, "Texture Pack Files Steps", WIDGET_BUTTON)
++        .Callback([](WidgetInfo& info) {
++            GameEngine::ShowMessage(
++                "Import a texture pack",
++                "1. Download the SpaghettiKart HD .o2r from the official MK64 Reloaded page.\n"
++                "2. In Files, move it to On My iPad > SpaghettiPad > mods.\n"
++                "3. Return here and tap Check Imported Texture Pack.\n\n"
++                "Use HD first. Try 4K only on an M-series iPad.",
++                SDL_MESSAGEBOX_INFORMATION);
++        })
++        .Options(ButtonOptions().Tooltip("Shows the Files import path and device guidance."));
++    AddWidget(path, "Get MK64 Reloaded", WIDGET_BUTTON)
++        .Callback([](WidgetInfo& info) {
++            SDL_OpenURL("https://evilgames.eu/texture-packs/mk64-reloaded.htm");
++        })
++        .Options(ButtonOptions().Tooltip("Opens the pack author's official project page in Safari."));
++#endif
++
++#if !defined(__SWITCH__) && !defined(__IOS__)
+     static bool isFullscreen = false;
+-#ifndef __SWITCH__
+     AddWidget(path, "Toggle Fullscreen", WIDGET_CHECKBOX)
+         .ValuePointer(&isFullscreen)
+         .PreFunc([](WidgetInfo& info) { isFullscreen = Ship::Context::GetInstance()->GetWindow()->IsFullscreen(); })
+@@ -133,7 +187,11 @@ void PortMenu::AddSettings() {
+         .PreFunc([](WidgetInfo& info) { info.isHidden = !CVarGetInteger("gSettings.Menu.Extent", 0); })
+         .Options(FloatSliderOptions()
+                      .Tooltip("Adjust the scale for the menu.")
++#ifdef __IOS__
++                     .Min(0.75f)
++#else
+                      .Min(1.0f)
++#endif
+                      .Max(2.0f)
+                      .DefaultValue(1.0f)
+                      .Format("%.1f")
+@@ -149,6 +207,7 @@ void PortMenu::AddSettings() {
+             "Allows controller navigation of the Spaghetti menu (Settings, Enhancements,...)\nCAUTION: "
+             "This will disable game inputs while the menu is visible.\n\nD-pad to move between "
+             "items, A to select, B to move up in scope."));
++#ifndef __IOS__
+     AddWidget(path, "Cursor Always Visible", WIDGET_CVAR_CHECKBOX)
+         .CVar("gSettings.CursorVisibility")
+         .Callback([](WidgetInfo& info) {
+@@ -156,6 +215,7 @@ void PortMenu::AddSettings() {
+                 CVarGetInteger("gSettings.CursorVisibility", 0));
+         })
+         .Options(CheckboxOptions().Tooltip("Makes the cursor always visible, even in full screen."));
++#endif
+ #endif
+     AddWidget(path, "Search In Sidebar", WIDGET_CVAR_CHECKBOX)
+         .CVar("gSettings.Menu.SidebarSearch")
+@@ -172,6 +232,7 @@ void PortMenu::AddSettings() {
+         .CVar("gSettings.Menu.SearchAutofocus")
+         .Options(CheckboxOptions().Tooltip(
+             "Search input box gets autofocus when visible. Does not affect using other widgets."));
++#ifndef __IOS__
+     AddWidget(path, "Alt Assets Tab hotkey", WIDGET_CVAR_CHECKBOX)
+         .CVar("gEnhancements.Mods.AlternateAssetsHotkey")
+         .Options(
+@@ -183,6 +244,7 @@ void PortMenu::AddSettings() {
+             SDL_OpenURL(std::string("file:///" + std::filesystem::absolute(filesPath).string()).c_str());
+         })
+         .Options(ButtonOptions().Tooltip("Opens the folder that contains the save and mods folders, etc."));
++#endif
+ #endif
+ 
+     // Audio Settings
+@@ -233,7 +295,9 @@ void PortMenu::AddSettings() {
+     }
+     path.sidebarName = "Graphics";
+     AddSidebarEntry("Settings", "Graphics", 3);
++#ifndef __IOS__
+     AddWidget(path, "Renderer API (Needs reload)", WIDGET_VIDEO_BACKEND);
++#endif
+ 
+     AddWidget(path, "Internal Resolution: %.0f%%", WIDGET_CVAR_SLIDER_FLOAT)
+         .CVar(CVAR_INTERNAL_RESOLUTION)
+@@ -291,6 +355,27 @@ void PortMenu::AddSettings() {
+                 info.activeDisables.push_back(DISABLE_FOR_MATCH_REFRESH_RATE_ON);
+         })
+         .Options(IntSliderOptions().Tooltip(tooltip).Min(30).Max(maxFps).DefaultValue(30));
++#ifdef __IOS__
++    AddWidget(path, "30 FPS", WIDGET_BUTTON)
++        .Callback([](WidgetInfo& info) {
++            CVarSetInteger("gInterpolationFPS", 30);
++            Ship::Context::GetInstance()->GetWindow()->GetGui()->SaveConsoleVariablesNextFrame();
++        })
++        .Options(ButtonOptions().Tooltip("Original frame pacing with interpolated rendering."));
++    AddWidget(path, "60 FPS", WIDGET_BUTTON)
++        .Callback([](WidgetInfo& info) {
++            CVarSetInteger("gInterpolationFPS", 60);
++            Ship::Context::GetInstance()->GetWindow()->GetGui()->SaveConsoleVariablesNextFrame();
++        })
++        .Options(ButtonOptions().Tooltip("Recommended smooth setting for iPhone and iPad."));
++    AddWidget(path, "120 FPS (ProMotion)", WIDGET_BUTTON)
++        .Callback([](WidgetInfo& info) {
++            CVarSetInteger("gInterpolationFPS", 120);
++            Ship::Context::GetInstance()->GetWindow()->GetGui()->SaveConsoleVariablesNextFrame();
++        })
++        .Options(ButtonOptions().Tooltip("For ProMotion iPads; verify performance with imported texture packs."));
++#endif
++#ifndef __IOS__
+     AddWidget(path, "Match Refresh Rate", WIDGET_BUTTON)
+         .Callback([](WidgetInfo& info) {
+             int hz = Ship::Context::GetInstance()->GetWindow()->GetCurrentRefreshRate();
+@@ -316,10 +401,12 @@ void PortMenu::AddSettings() {
+                      .Min(0)
+                      .Max(MAX_FPS)
+                      .DefaultValue(80));
++#endif
+     AddWidget(path, "Enable Vsync", WIDGET_CVAR_CHECKBOX)
+         .CVar(CVAR_VSYNC_ENABLED)
+         .PreFunc([](WidgetInfo& info) { info.isHidden = mPortMenu->disabledMap.at(DISABLE_FOR_NO_VSYNC).active; })
+         .Options(CheckboxOptions().Tooltip("Enables Vsync."));
++#ifndef __IOS__
+     AddWidget(path, "Windowed Fullscreen", WIDGET_CVAR_CHECKBOX)
+         .CVar(CVAR_SDL_WINDOWED_FULLSCREEN)
+         .PreFunc([](WidgetInfo& info) {
+@@ -333,6 +420,7 @@ void PortMenu::AddSettings() {
+         .Options(CheckboxOptions()
+                      .Tooltip("Allows multiple ImGui windows to be opened at once (Does not effect the game or the splitscreen modes). Requires a reload to take effect.")
+                      .DefaultValue(true));
++#endif
+     AddWidget(path, "Texture Filter (Needs reload)", WIDGET_CVAR_COMBOBOX)
+         .CVar(CVAR_TEXTURE_FILTER)
+         .Options(ComboboxOptions().Tooltip("Sets the applied Texture Filtering.").ComboMap(textureFilteringMap));
