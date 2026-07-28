@@ -256,6 +256,22 @@ index bbc33549a..a2d5dc8d7 100644
  else()
    find_package(Ogg REQUIRED)
    find_package(Vorbis REQUIRED)
+diff --git a/src/port/Game.cpp b/src/port/Game.cpp
+index 9804fe324..6e2811f79 100644
+--- a/src/port/Game.cpp
++++ b/src/port/Game.cpp
+@@ -1065,6 +1065,11 @@ extern "C"
+     thread5_game_loop();
+     gEditor.Load();
+     while (WindowIsRunning()) {
++#ifdef __IOS__
++        if (!WindowIsFrameReady()) {
++            continue;
++        }
++#endif
+         push_frame();
+     }
+     CustomEngineDestroy();
 diff --git a/src/port/SpaghettiGui.cpp b/src/port/SpaghettiGui.cpp
 index 56320e2be..1f15522dd 100644
 --- a/src/port/SpaghettiGui.cpp

@@ -60,28 +60,74 @@ audited ROM-free unsigned IPA.
 
 ## Active gate
 
-**Phase 5 — prove lifecycle and audio correctness through three consecutive
-Simulator background/foreground cycles.**
+**Phase 5b — close the Simulator audible-resume listening gate on the intended
+output device.**
 
 Expected:
 
-1. The iOS game loop yields through `WindowIsFrameReady()` while backgrounded;
-   that bridge continues pumping lifecycle events without advancing the game.
-2. One Simulator PID survives three background/foreground cycles.
-3. `spaghettify.cfg.json` advances on each background transition while the
-   game log does not advance until foregrounded.
-4. SDL audio initializes, pauses without queue growth, and resumes audibly
-   after every foreground transition.
+1. Route normal application audio to the output the listener can actually
+   hear; do not infer speaker output from the system-alert route.
+2. Hear Mario Kart title/demo audio before backgrounding and after each of
+   three foreground transitions, with no permanent mute or obvious stale
+   queued-audio burst.
 
 Boundary:
 
-- Phase 4 proves Simulator boot, archive loading, landscape Metal rendering,
-  and prompt-free relaunch only.
-- Audio initialization is not subjective audible-output proof. No
-  physical-device runtime, lifecycle continuity, touch, extraction,
-  performance, controller, texture-pack, or package behavior is claimed yet.
+- The Phase 5 lifecycle slice below proves Simulator event delivery,
+  synchronous config flush, paused game/log work, same-PID resume, live Metal
+  continuation, and container integrity.
+- `Audio thread started` plus the SDL pause/resume implementation is objective
+  initialization/path evidence, not a human listening result. Phase 5 remains
+  in progress until audible output is accepted.
+- No physical-device runtime, touch, extraction, performance, controller,
+  texture-pack, or package behavior is claimed yet.
 
 ## Evidence log
+
+### 2026-07-28 — Phase 5 lifecycle slice passed; audible resume pending
+
+- Implementation: the iOS-only `src/port/Game.cpp` loop now checks
+  `WindowIsFrameReady()` before `push_frame()`. The existing bridge pumps SDL
+  events and sleeps for 16 ms when the window is backgrounded, so lifecycle
+  events still dispatch without advancing the game, renderer, or audio tick.
+  The maintained `patches/spaghettikart-ios.patch` is now 313 lines across
+  eight source files (142 insertions, 48 deletions), SHA-256
+  `3a5f5b7c516a570d8525ec110d0611cafce6a44099a3f3cd32ad2b456782514c`,
+  and passes reverse-apply and whitespace checks.
+- Audio-timing question: `func_800CB2C4()` updates camera-relative sound
+  state, sequence commands/fades, sound requests, and the audio task at the
+  start of `thread5_iteration()`. It has no separate wall-clock owner relevant
+  to suspension. Because the new readiness gate runs before `push_frame()`,
+  neither that function nor `calculate_delta_time()` runs while backgrounded.
+- Build proof: the final arm64 Simulator rebuild ended in
+  `** BUILD SUCCEEDED **`; executable SHA-256 is
+  `839267f64fa6e71b2560f6996a2de31297aefeb6a9d298c0f11f67898e3c59bb`.
+  The native arm64 macOS regression target also rebuilt successfully and
+  retained SHA-256
+  `236e8cddd0dd54963980d0a3bf6bb9b7909aaa75fa5aa71db8c98f547219c39b`.
+- Runtime: on the iPad Pro 11-inch (M4), iOS 18.5 Simulator, PID `86185`
+  reached the live title screen and survived three consecutive 20-second
+  Home/foreground cycles. Foregrounding after every cycle returned the same
+  PID and live Metal animation.
+- Pause/config proof: the baseline game log was 659 lines and 53,660 bytes
+  with mtime `08:43:21-0500`. It retained exactly those three values through
+  all three background dwells. Synchronous config saves advanced
+  `spaghettify.cfg.json` from `08:43:19-0500` to `08:44:27-0500`,
+  `08:45:38-0500`, and `08:46:32-0500`.
+- Integrity: after the cycles, `Documents/mk64.o2r` retained SHA-256
+  `26a8d0cf64a9e70276856b8876d41037195ea72cbbe78915257e6efd50179064`
+  and `Documents/default.sav` retained SHA-256
+  `6421a1adf0c5cc7a3eb1c720f21ccaa3ea528bc6ed12dfae5d46a16cbaab0416`.
+  The synchronously saved config hashes to
+  `39b423a5ddaec718dd592ef866389b7a26bdc96e266e0bf62b859189a9fa5c66`.
+  No new SpaghettiPad crash report appeared.
+- Audio boundary: the game log recorded `Audio thread started` at
+  `08:43:19.364`. The lifecycle handler pauses SDL output, clears queued
+  samples, and resumes the device on foreground; the live process resumed
+  after every cycle. However, macOS reported `Jump Desktop Audio` as
+  `Default Output Device` and `MacBook Air Speakers` only as
+  `Default System Output Device`. No human audible-output result is claimed;
+  that listening check remains the Phase 5b gate.
 
 ### 2026-07-28 — Phase 4 Simulator title-screen gate passed
 
