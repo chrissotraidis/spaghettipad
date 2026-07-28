@@ -56,11 +56,11 @@ audited ROM-free unsigned IPA.
 | 9 | iPad UX and imported texture pack | In progress (Simulator UX/import slice passed; hardware pack GP pending) | Touch-complete UX plus Reloaded import/enable/full-GP hardware gate |
 | 10 | Controllers and split-screen | In progress (Simulator routing/render slice passed; hardware sessions pending) | Two-controller 2P session and measured 3P/4P decision |
 | 11 | Tilt steering | In progress (Simulator slice passed; hardware GP pending) | Persisted, drift-free tilt GP on hardware |
-| 12 | Package, CI, docs, release | In progress (local gates passed; clean CI pending) | Clean CI, clean-machine replay, audited IPA and SHA-256 |
+| 12 | Package, CI, docs, release | In progress (local gates passed; CI externally blocked before runner start) | Clean CI, clean-machine replay, audited IPA and SHA-256 |
 
 ## Active gate
 
-**Phase 12 clean-runner CI; Phase 6/7/8/9/10/11 owner hardware replay remains separate.**
+**Phase 12 GitHub billing/run availability; Phase 6/7/8/9/10/11 owner hardware replay remains separate.**
 
 Expected:
 
@@ -129,10 +129,18 @@ Boundary:
   `docs/INSTALL_IPA.md`, `docs/RELEASE_CHECKLIST.md`, and
   `RIGHTS_AND_LICENSES.md` define reproducible build, sideload, release, and
   rights boundaries without claiming a public download.
+- Clean-runner attempt: GitHub Actions run
+  [30403472162](https://github.com/chrissotraidis/spaghettipad/actions/runs/30403472162)
+  was created for commit `738805932ce9102e9a6681bda5d4b34247d9205c`
+  but GitHub assigned no runner and executed no steps. Its sole annotation
+  reports failed recent account payments or an insufficient spending limit
+  and directs the account owner to Billing & plans. This is an external
+  pre-start block, not a repository-safety or build failure.
 - Boundary: this closes the local Phase 12 build/package slice, not Phase 12
-  itself. The pushed GitHub Actions run must still reproduce the unsigned
-  artifact on a clean macOS runner. Physical signing, installation, runtime,
-  update, and gameplay gates remain open regardless of CI.
+  itself. After GitHub billing/run availability is restored, the workflow must
+  reproduce the unsigned artifact on a clean macOS runner. Physical signing,
+  installation, runtime, update, and gameplay gates remain open regardless of
+  CI.
 
 ### 2026-07-28 — Phase 11 tilt-steering Simulator slice passed; hardware GP pending
 
