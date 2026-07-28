@@ -21,7 +21,7 @@ This is the final gate for a public source snapshot or downloadable IPA.
 - [ ] Build without `DEVELOPMENT_TEAM`, then run `scripts/package-ios.sh`.
 - [ ] Confirm the IPA has no `_CodeSignature` or
       `embedded.mobileprovision`.
-- [ ] Confirm the only `.o2r` in the app is the hash-pinned,
+- [ ] Confirm the only `.o2r` in the app is the content-hash-pinned,
       ROM-free `spaghetti.o2r`.
 - [ ] Confirm `RIGHTS_AND_LICENSES.md` and `ThirdPartyLicenses/` are present.
 - [ ] Re-sign and update-install the exact IPA on a physical iPhone and iPad.

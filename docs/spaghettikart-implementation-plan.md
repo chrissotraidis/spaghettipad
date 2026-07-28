@@ -240,7 +240,7 @@ Texture-pack items: touch-reachable **Use Alternate Assets** toggle in the menu 
 
 ### Phase 12 — Packaging, CI, docs, release
 **Goal:** a tagged release someone else can build and sideload from the docs alone.
-**Changes:** `scripts/package-ios.sh` (audit: reject Simulator products, ROMs, `mk64*.o2r`, `.otr`, stale signing; verify bundled `spaghetti.o2r` hash), `scripts/build-ios.sh` one-shot wrapper, GitHub Actions macOS job (bootstrap → patch → build unsigned → audit; mirrors `HP:.github/workflows/ios-build.yml` contract), `docs/BUILDING.md`, `docs/INSTALL_IPA.md`, release checklist.
+**Changes:** `scripts/package-ios.sh` (audit: reject Simulator products, ROMs, `mk64*.o2r`, `.otr`, stale signing; verify bundled `spaghetti.o2r` content hash independent of build-time ZIP timestamps), `scripts/build-ios.sh` one-shot wrapper, GitHub Actions macOS job (bootstrap → patch → build unsigned → audit; mirrors `HP:.github/workflows/ios-build.yml` contract), `docs/BUILDING.md`, `docs/INSTALL_IPA.md`, release checklist.
 **Accept:** CI green on a clean runner; `REQUIRE_SIGNED=1` rejects the unsigned artifact; IPA SHA-256 published; README claim language matches §4 of the review doc ("built for iPad"; no false firsts).
 
 ## 5. Touch control specification
@@ -317,7 +317,7 @@ Code path behind it (all verified): `GameEngine::Create` (`SK:src/port/Game.cpp:
 - **Configure/build:** CMake `-GXcode`, `-DCMAKE_SYSTEM_NAME=iOS`, `DT`, `-DPLATFORM=OS64|SIMULATORARM64`, `-DSPAGHETTIPAD_SHELL_DIR`, `-DBUNDLE_ID`, signing off for CI (`CODE_SIGNING_ALLOWED=NO`), on for device via `DEVELOPMENT_TEAM` env → `XCODE_ATTRIBUTE_DEVELOPMENT_TEAM`, `CODE_SIGN_STYLE=Automatic`.
 - **Entitlements:** none beyond defaults (no JIT, no special capabilities). File sharing is plist-only. Game Center/haptics need nothing.
 - **Provisioning:** personal team for development (7-day resign cadence noted in docs); paid team for the release archive. Device install via Xcode Devices window or `xcrun devicectl device install app`.
-- **Artifacts:** unsigned IPA via `scripts/package-ios.sh` (zip `Payload/SpaghettiPad.app`, audit first: no ROM, no `mk64*.o2r`, no `.otr`, no `_CodeSignature`/`embedded.mobileprovision` in the unsigned artifact; verify bundled `spaghetti.o2r` SHA-256 against the recorded clean hash). `REQUIRE_SIGNED=1` mode for a locally signed archive.
+- **Artifacts:** unsigned IPA via `scripts/package-ios.sh` (zip `Payload/SpaghettiPad.app`, audit first: no ROM, no `mk64*.o2r`, no `.otr`, no `_CodeSignature`/`embedded.mobileprovision` in the unsigned artifact; verify the sorted paths and uncompressed contents of bundled `spaghetti.o2r` against the recorded clean content hash). `REQUIRE_SIGNED=1` mode for a locally signed archive.
 - **Distribution:** GitHub release with the unsigned IPA + AltStore Classic/SideStore instructions (adapt `HP:docs/INSTALL_IPA.md`). SideStore source JSON deferred (D12). Every release runs the repo-safety audit; the repo never contains ROM data or extracted assets (enforced by `.gitignore` + `check-repo-safety.sh` + CI, the HarkinianPad triple lock).
 
 ## 8. Risks

@@ -56,7 +56,7 @@ audited ROM-free unsigned IPA.
 | 9 | iPad UX and imported texture pack | In progress (Simulator UX/import slice passed; hardware pack GP pending) | Touch-complete UX plus Reloaded import/enable/full-GP hardware gate |
 | 10 | Controllers and split-screen | In progress (Simulator routing/render slice passed; hardware sessions pending) | Two-controller 2P session and measured 3P/4P decision |
 | 11 | Tilt steering | In progress (Simulator slice passed; hardware GP pending) | Persisted, drift-free tilt GP on hardware |
-| 12 | Package, CI, docs, release | In progress (local gates passed; CI externally blocked before runner start) | Clean CI, clean-machine replay, audited IPA and SHA-256 |
+| 12 | Package, CI, docs, release | In progress (local and clean-machine gates passed; CI externally blocked before runner start) | Clean CI, clean-machine replay, audited IPA and SHA-256 |
 
 ## Active gate
 
@@ -96,6 +96,46 @@ Boundary:
   proves artifact contents, not device installation or runtime behavior.
 
 ## Evidence log
+
+### 2026-07-28 — Phase 12 clean-machine replay passed; clean CI still externally blocked
+
+- Checkout boundary: a `git clone --no-local` into
+  `/tmp/spaghettipad-clean-replay-eb0e026` checked out publication commit
+  `eb0e0264b9ad6a7c8977d900ab0ad663cfab1327`. The bootstrap fetched
+  SpaghettiKart `5b28472d477bab101dee2a0f469fe2aee2c58a01`,
+  libultraship `f5c3843fe937320b64ff754fa6bf71b13ff5e7a1`, and Torch
+  `2d474ddb8da8b213fbdbb49d0273ce31fa955f35`, then disabled every upstream
+  push URL.
+- Reproduction: the fresh tree built the host oracle and ROM-free port archive
+  from zero, cleanly applied all eight maintained patch layers, configured
+  the iPhoneOS project in 869 seconds, and completed the unsigned arm64
+  Release target with `** BUILD SUCCEEDED **`. The fresh executable SHA-256 is
+  `70413176cc8e8e427d4b25bbb665c549a109d1ff48e648dd69bc7c0e64788e4d`.
+- Reproducibility correction: the first post-build audit correctly exposed
+  that Torch writes current timestamps into every ZIP entry, so byte-for-byte
+  `spaghetti.o2r` hashes differ across clean builds even when every path and
+  payload byte is identical. The established and fresh archives are both
+  2,706,468 bytes with 369 entries and 19,658,261 uncompressed bytes; their
+  sorted path-plus-uncompressed-content SHA-256 is identically
+  `5ab6f5d8898cfdc3e8806b985bf84ec34b2d2968f158ac2e84359e45ff8564a0`.
+  `scripts/hash-port-archive.sh` now makes that content digest the maintained
+  audit contract while ignoring only build-time ZIP metadata.
+- Fresh artifact: the corrected audit passed the clean app as unsigned,
+  iPhoneOS 15.0, arm64, ROM-free, and controller-database-pinned.
+  `scripts/package-ios.sh` produced an 11,217,754-byte / 292-entry unsigned
+  IPA with SHA-256
+  `752f8a813d277b7658585803a7dce0383b894b2c6ba24ba14bcbc3c205088533`.
+  `unzip -tq` passed; the archive contains the project rights notice and 32
+  third-party notices, with no ROM, `mk64*.o2r`, `.otr`, signature, or
+  provisioning profile.
+- Negative and cleanliness gates: `REQUIRE_SIGNED=1` rejected the fresh
+  unsigned app before creating an output. Repository safety passed in both
+  the publication checkout and fresh checkout, and the fresh checkout
+  remained clean after the complete ignored build/package replay.
+- Boundary: the local clean-machine half of Phase 12 is now closed. GitHub's
+  hosted runner still must execute the same workflow after the account
+  billing/spending-limit block is resolved; physical-device gates remain
+  separate.
 
 ### 2026-07-28 — Phase 12 local package and documentation gates passed; clean CI pending
 

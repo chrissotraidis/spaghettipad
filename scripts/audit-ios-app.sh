@@ -4,7 +4,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 APP="${1:-$ROOT/build-ios/Release-iphoneos/SpaghettiPad.app}"
-EXPECTED_PORT_SHA256="4301e00ac0b2363ea2e0e78f97105f82f4c3da1f85f0f9fb42cb2a63918f2b79"
+EXPECTED_PORT_CONTENT_SHA256="5ab6f5d8898cfdc3e8806b985bf84ec34b2d2968f158ac2e84359e45ff8564a0"
 EXPECTED_CONTROLLER_SHA256="eb002773dc8a16aa96f9ee2609798e231a9deb60c45e21fbdd4e221c9e8b7d77"
 
 fail() {
@@ -57,8 +57,9 @@ for required in \
     [ -f "$required" ] || fail "required runtime resource is missing: $required"
 done
 
-[ "$(shasum -a 256 "$APP/spaghetti.o2r" | awk '{print $1}')" = \
-    "$EXPECTED_PORT_SHA256" ] || fail "clean port archive hash changed"
+[ "$("$ROOT/scripts/hash-port-archive.sh" "$APP/spaghetti.o2r")" = \
+    "$EXPECTED_PORT_CONTENT_SHA256" ] ||
+    fail "clean port archive content hash changed"
 [ "$(shasum -a 256 "$APP/gamecontrollerdb.txt" | awk '{print $1}')" = \
     "$EXPECTED_CONTROLLER_SHA256" ] || fail "controller database hash changed"
 
@@ -107,5 +108,5 @@ echo "  bundle         $APP"
 echo "  architecture   $(lipo -archs "$BINARY")"
 echo "  signing        $SIGNATURE_STATE"
 echo "  binary sha256  $(shasum -a 256 "$BINARY" | awk '{print $1}')"
-echo "  archive sha256 $EXPECTED_PORT_SHA256"
+echo "  archive content sha256 $EXPECTED_PORT_CONTENT_SHA256"
 echo "  controller db  $EXPECTED_CONTROLLER_SHA256"

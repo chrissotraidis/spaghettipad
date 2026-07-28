@@ -42,8 +42,10 @@ scripts/build-ios.sh --device
 ```
 
 The result is `build-ios/Release-iphoneos/SpaghettiPad.app`. The wrapper audits
-its platform, minimum OS, architecture, resources, clean archive hash,
-controller database hash, game-data boundary, and signing state.
+its platform, minimum OS, architecture, resources, clean archive content hash,
+controller database hash, game-data boundary, and signing state. The content
+hash covers every sorted path and its uncompressed bytes while ignoring
+Torch's build-time ZIP timestamps.
 
 ## Version and identity
 
