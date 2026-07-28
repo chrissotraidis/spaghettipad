@@ -68,6 +68,10 @@ SpaghettiKart, like Shipwright, has **no top-level LICENSE** (verified; Torch an
 
 **D13 — Working name: "SpaghettiPad"** (bundle `com.chrissotraidis.spaghettipad`, display name "SpaghettiPad"). *Deferred final naming* — settled by the owner before first public artifact; nothing else in this plan depends on it.
 
+**D14 — Texture packs: first-class native support for MK64 Reloaded; never bundled.**
+The [MK64 Reloaded](https://github.com/GhostlyDark/MK64-Reloaded) UHD pack (GhostlyDark) is the marquee visual upgrade and must work as a first-class feature on iPad: guided import (Files → `Documents/mods/`), automatic detection of an installed pack, a one-tap prompt to enable **Use Alternate Assets** (SpaghettiKart's alt-assets CVar; today's toggle is the Tab hotkey — `SK:src/port/Engine.cpp:377-382` — which needs a touch-reachable menu control), and HD-vs-4K guidance per device class. **The pack is never bundled in the app or IPA**: verified 2026-07-28, the MK64-Reloaded repo has **no license** (all rights reserved by default) and the content is derivative of Nintendo art — bundling would violate both GhostlyDark's rights and this project's own audit invariant. Even rebelancap's port ships without it and directs users to the official downloads. In-app *fetching* of the pack is deferred (Open Question 11); v1 opens the official release page in Safari and guides the Files copy.
+Performance is part of "native": a 4K/HD pack on iPad means real texture-memory pressure. **rebelancap's `SpaghettiKart-ios` repo is MIT-licensed (verified: `LICENSE`, © 2026 rebelancap)** — his memory/perf patches are directly on point and may be adapted with attribution: `0021-lus-metal-texture-clamp`, `0022-lus-texcache-byte-budget`, `0030-lus-coupled-resource-eviction`, `0031-port-decode-downscale`, `0034-lus-metal-async-shaders`. Treat them as a reviewed starting point, not a blind import; every adaptation becomes one of our maintained patches with a provenance note.
+
 ## 3. Architecture
 
 ```
@@ -217,10 +221,11 @@ Also: the enhancements menu is unreachable by touch today (F1/Escape/GamepadBack
 **Accept:** all §5 acceptance checks pass on hardware; virtual controller appears as port 0 and steering telemetry shows analog values (not ±max only) — check with the input display or `gControllers[0].rawStickX` logging.
 **Verify:** record a full GP run; menu open/close cycles do not strand inputs (all released on hide).
 
-### Phase 9 — iPad UX pass
-**Goal:** menus and HUD are correct for iPad specifically.
+### Phase 9 — iPad UX pass + native texture-pack support (D14)
+**Goal:** menus and HUD are correct for iPad specifically, and MK64 Reloaded works as a first-class feature.
 **Changes:** confirm the 600-pt scale rule lands well on iPad (2×) and iPhone (1×/0.75 option); safe-area audit of the overlay; expose `gInterpolationFPS` presets (30/60/120) in Settings with ProMotion note (`CADisableMinimumFrameDurationOnPhone` already in plist; SK target-fps plumbing verified at `SK:src/port/Engine.cpp:298-301,467`); hide/neutralize desktop-isms verified by the dive: "Cursor Always Visible" (`SK:src/port/ui/PortMenu.cpp:148-154`), "Open App Files Folder" `SDL_OpenURL(file://…)` (`:176-182` — repoint to a Files-app tip), Ctrl/Cmd+R reset (add confirm popup, HP pattern).
-**Accept:** side-by-side screenshots iPad/iPhone; every Settings/Enhancements panel operable by touch; no dead menu items on iOS.
+Texture-pack items: touch-reachable **Use Alternate Assets** toggle in the menu (replacing the Tab hotkey path, `SK:src/port/Engine.cpp:377-382`); mods-folder detection on launch/rescan with a one-tap enable prompt; a "Get texture packs" entry that opens the official MK64-Reloaded release page and shows the Files-copy instructions; adapt rebelancap's MIT texture-memory patches (D14 list) as needed to hold frame rate with the HD pack — measure before adopting each.
+**Accept:** side-by-side screenshots iPad/iPhone; every Settings/Enhancements panel operable by touch; no dead menu items on iOS; **MK64 Reloaded HD imported via Files on hardware, detected, enabled from the menu without a keyboard, and a full GP completes with the pack active at the Phase-6 baseline frame rate** (4K attempted on M-series iPad; result recorded either way); audit still shows no pack content in the app bundle or IPA.
 
 ### Phase 10 — Physical controllers + split-screen on one iPad
 **Goal:** 2-player GP/VS/battle, two Bluetooth controllers, one iPad — stable frame rate; the flagship demo.
@@ -347,3 +352,4 @@ Code path behind it (all verified): `GameEngine::Create` (`SK:src/port/Game.cpp:
 8. **Upstream appetite** — would HarbourMasters take these patches (coco875's PR #694 is stalled)? Settled by: asking after Phase 6 produces evidence; affects only where patches live long-term, not this plan.
 9. **Final name/branding** (D13) and the exact public claim language (must match review-doc §4 truth tiers). Settled by: owner before first release.
 10. **Sunset-Dawn IPA archaeology** — its `Spaghettify` binary could be strings-inspected for approach hints if Phase 3 hits walls. Settled by: only if needed; not a dependency.
+11. **In-app texture-pack download** (fetching MK64 Reloaded from its official source on user request, instead of the Safari-plus-Files flow). Convenience vs. the fact that the pack is unlicensed content we'd be programmatically distributing-by-facilitation. Settled by: owner decision after v1 ships with the guided-import flow; if approved, download only from GhostlyDark's official release URLs with an explicit consent dialog.
