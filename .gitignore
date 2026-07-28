@@ -1,0 +1,18 @@
+# Never commit game data or ROM-derived archives
+*.z64
+*.n64
+*.v64
+*.o2r
+*.otr
+*.ipa
+
+# Local reference material (contains ROMs, prior-art builds, HarkinianPad snapshot)
+ref/
+
+# Disposable upstream checkouts and build trees (see implementation plan, Phase 0)
+sources/
+build-*/
+work/
+
+# macOS noise
+.DS_Store
