@@ -52,7 +52,7 @@ audited ROM-free unsigned IPA.
 | 5 | Lifecycle and audio | Complete | Three-cycle continuity, config flush, paused simulation, audible resume |
 | 6 | Signed physical-iPad boot | In progress | Signed install, title screen, ten-minute stability run |
 | 7 | On-device Files extraction | In progress (hardware replay) | Clean-device extraction, failure recovery, measured time/RSS |
-| 8 | Grip-first full-analog touch controls | Pending | Full touch-only GP and analog/menu/lifecycle checks on hardware |
+| 8 | Grip-first full-analog touch controls | In progress (Simulator slice passed; hardware GP pending) | Full touch-only GP and analog/menu/lifecycle checks on hardware |
 | 9 | iPad UX and imported texture pack | Pending | Touch-complete UX plus Reloaded import/enable/full-GP hardware gate |
 | 10 | Controllers and split-screen | Pending | Two-controller 2P session and measured 3P/4P decision |
 | 11 | Tilt steering | Pending | Persisted, drift-free tilt GP on hardware |
@@ -60,7 +60,7 @@ audited ROM-free unsigned IPA.
 
 ## Active gate
 
-**Phase 6/7 owner hardware replay; Phase 8 is the next unblocked Simulator gate.**
+**Phase 6/7/8 owner hardware replay; Phase 9 is the next unblocked Simulator gate.**
 
 Expected:
 
@@ -90,6 +90,108 @@ Boundary:
   texture-pack, and package behavior also remain unclaimed.
 
 ## Evidence log
+
+### 2026-07-28 — Phase 8 Simulator touch and iPhone widescreen slice passed; hardware GP pending
+
+- Implementation: `ios/SpaghettiPadShell.mm` now carries the current
+  HarkinianPad-derived, device-specific overlay rather than the discarded
+  proportional prototype. iPad uses the low grip rails and scaled 150-point
+  fixed-center stick; iPhone uses a dedicated compact layout with a 116-point
+  stick, 44-point upper controls, and safe-area-aware top/bottom menu
+  placement. Both expose A, B, L, R, duplicate Z, Start, all four D-pad
+  directions, and the full four-button C diamond.
+- Input path: the overlay attaches one SDL virtual game controller and writes
+  true analog axes plus SpaghettiKart's native button mappings. The menu
+  button alone retains the Harkinian keyboard event path; a compile-time
+  keyboard fallback remains. Quick taps receive only the remainder of a
+  50-millisecond minimum hold, while hiding, disabling, or backgrounding the
+  overlay releases immediately.
+- Maintained patches: `patches/libultraship-ios-touch.patch` is 49 lines /
+  1,603 bytes with SHA-256
+  `74b849e5daf1cb88096619ce30240937135c7e9ae64ff8e0d50fed32656aa978`.
+  It filters touch-generated mouse clicks and reports menu visibility after
+  the port's virtual `DrawMenu` override. `patches/spaghettikart-ios-touch.patch`
+  is 134 lines / 4,997 bytes with SHA-256
+  `ff6f85c9d29704e0d5d9c589115d6064b70ceb18f5812f92c85076e476aa0019`.
+  It compiles the Objective-C++ shell, enables controller navigation,
+  persists the Touch Controls setting, records Simulator-only input
+  telemetry, and selects the shared app icon. `scripts/apply-patches.sh`
+  recognizes and replays the complete patch stacks in dependency order.
+- Game-level telemetry: direct touches produced Start held/pressed
+  `0x1000`, A `0x8000`, B `0x4000`, and C-Right `0x0001`, followed by zero
+  held state on release. Held-pointer Simulator input produced raw stick X
+  values of 80 and 22 before returning to zero, proving intermediate analog
+  values rather than digital extrema.
+- Lifecycle proof: A was held at game level (`0x8000`) before the app was
+  backgrounded. The resign-active observer emitted its release, and the game
+  returned with held/pressed state `0x0000`. Opening the in-game settings
+  menu hid and released every gameplay control; closing restored them.
+  Settings › Controls exposed the persisted Touch Controls checkbox while the
+  always-available `•••` control prevented a disabled overlay from stranding
+  the user.
+- Device layout proof: the iPad Pro 11-inch (M4), iOS 18.5 Simulator
+  `7D6115C9-2ACC-4E72-A53A-3777D50E7037` rendered the full, non-overlapping
+  grip layout. The disposable compact iPhone Simulator
+  `F07EF5C1-3E0E-45AE-99DE-AE022B0E92D8` rendered its separate layout without
+  control overlap or Dynamic Island intrusion, including all four C buttons.
+- Native iPhone widescreen: the live Graphics panel reported both viewport
+  and internal dimensions as 874×402 (about 2.17:1), with advanced aspect
+  forcing disabled. libultraship derives the game viewport from the window
+  size and SpaghettiKart's aspect adjustment expands horizontal geometry;
+  the live race filled the wide display without scaling a 4:3 framebuffer.
+  Enabling a forced ratio retains the renderer's aspect correction rather
+  than stretching unless the separate `IgnoreAspectCorrection` option is
+  deliberately selected.
+- Shared app icon: the original, Nintendo-asset-free spaghetti-track/D-pad
+  mark is one opaque universal 1024×1024 source (SHA-256
+  `ff669cbfe2d2b11f9f0cc9207d8803d74157cc1cb9fe07c8d25569fe5f2f1a1d`)
+  for iPhone and iPad. Xcode emitted `AppIcon60x60@2x.png`,
+  `AppIcon76x76@2x~ipad.png`, a 3.8 MiB `Assets.car` (SHA-256
+  `dc07c8790b13ea23b47f812c002af88e8c329a8f80e67171f517fa7976f4f968`),
+  and matching `CFBundleIcons` / `CFBundleIcons~ipad` metadata. Bundle
+  validation passed without asset-catalog warnings.
+- Build and replay proof: the Release arm64 Simulator build succeeded; its
+  executable SHA-256 is
+  `9d6b830057c65f5a2a3779606a6110968938134d92066c57de3a7b097c85ce18`.
+  The unsigned Release iPhoneOS wrapper then completed with
+  `** BUILD SUCCEEDED **` and its audit accepted an arm64, iOS 15.0,
+  iPhone+iPad-family application. The device executable SHA-256 is
+  `81fa6a9dc04d7cbe604f7febe44535bc3cdee9f176d70614c139a18cde6c5662`;
+  bundled ROM-free `spaghetti.o2r` is
+  `4301e00ac0b2363ea2e0e78f97105f82f4c3da1f85f0f9fb42cb2a63918f2b79`;
+  and the controller database is
+  `eb002773dc8a16aa96f9ee2609798e231a9deb60c45e21fbdd4e221c9e8b7d77`.
+  The existing macOS oracle Release target also rebuilt successfully after
+  the iOS patch stack, guarding the host path against regression.
+  Both differential patches apply and reverse-check after the earlier patches
+  in fresh local clones at the exact upstream pins. Root/nested
+  `git diff --check`, shell syntax, and the ROM/asset bundle scan pass; no
+  ROM, `mk64*.o2r`, `.otr`, or imported texture content exists in the app.
+- Boundary: this closes only the reproducible Simulator slice. Phase 8 remains
+  in progress until the owner completes a touch-only Grand Prix on physical
+  iPad, including rocket start, hop-drift, directed item throw, pause/resume,
+  settings cycles, background release, sustained ergonomics, and recorded
+  behavior alongside the still-open Phase 6/7 hardware gates.
+
+### 2026-07-28 — Phase 9 texture-pack research narrowed the supported path
+
+- The current realistic visual upgrade is
+  [MK64 Reloaded](https://github.com/GhostlyDark/MK64-Reloaded), whose official
+  SpaghettiKart release offers an HD `.o2r` around 424 MiB and a 4K `.o2r`
+  around 1.15 GiB. The Phase 9 UI will guide a Files copy into `Documents/mods/`,
+  detect the archive, and expose SpaghettiKart's Alternate Assets setting.
+- Neither the repository nor its release payload carries a redistribution
+  license, and the textures derive from Nintendo art. SpaghettiPad must never
+  bundle, mirror, or fetch the pack itself; it will link to the
+  [official project page](https://evilgames.eu/texture-packs/mk64-reloaded.htm)
+  and keep import user-directed. The
+  [SpaghettiKart texture-pack guide](https://harbourmasters.github.io/SpaghettiKart/md_docs_2textures-pack.html)
+  remains the format reference.
+- No complete, maintained, genuinely open-licensed Mario Kart 64 texture pack
+  was found. Older Rice-format packs are inactive/unlicensed and require
+  conversion, so v1 will support Reloaded HD first, attempt 4K only on an
+  M-series physical iPad, and record memory/frame-time measurements before
+  adopting any optional texture-memory patch.
 
 ### 2026-07-28 — Phase 7 Simulator first-run slice passed; hardware pending
 

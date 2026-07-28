@@ -245,35 +245,61 @@ Texture-pack items: touch-reachable **Use Alternate Assets** toggle in the menu 
 
 ## 5. Touch control specification
 
-Landscape only. All coordinates in points, positions given for a 12.9" iPad (1366×1024 pt landscape) and scale rule `s = clamp(shortSide/1024, 0.78, 1.15)`; iPhone uses the same anchors against its safe area. Every control is a translucent dark element (fill white 4% α≈0.35, 2-pt light border, pressed state brightens), N64 color accents: A blue, B green, Start red, C amber — HarkinianPad's proven styling. Empty overlay space passes touches through (hit-test returns nil). Opacity, per-button hide, and drag-to-customize are **not** in v1 (deliberately smaller than rebelancap's customizer; revisit post-release).
+Landscape only. The owner superseded the earlier proportional 12.9-inch
+layout on 2026-07-28: SpaghettiPad uses the current HarkinianPad
+device-specific layout and settings behavior as its foundation, with a
+dedicated compact iPhone arrangement rather than a shrunken iPad overlay. The
+iPad layout uses `s = clamp(height/834, 0.78, 1.12)`, low left/right grip rails,
+a 150·s fixed-center stick, 106×54·s shoulders, 52·s D-pad buttons, 66·s face
+buttons, and a 46·s four-way C diamond. Displays below 560 pt tall use the
+Harkinian compact geometry: 116 pt stick, 76×44 pt shoulders, 44 pt D-pad,
+52 pt face buttons, and a 40 pt C diamond. Both layouts anchor to the safe
+area. They share HarkinianPad's translucent dark styling and N64 accents:
+A blue, B green, Start red, C amber. Empty overlay space passes touches through
+(`hitTest` returns `nil`). Opacity, per-button hide, and drag-to-customize are
+not in v1.
 
 Input delivery: one `SDL_JoystickAttachVirtualEx` virtual game controller created at boot (SDL_GameController-compatible descriptor), buttons/axes set from the UIKit handlers on the main thread; LUS `ControlDeck` maps it as a normal controller. Fallback mode (compile-time flag): post SDL key events per HarkinianPad.
 
 Left rail (steering hand):
-| Control | Size | Position | Behavior |
-|---|---|---|---|
-| **Steering stick** | 170·s ⌀, knob 45% | center-x = safeL + 130·s, center-y = 78% height | Floating-origin *within its well*: knob tracks finger, X axis = full analog (-32767..32767 virtual → LUS ±85), Y axis forwarded (needed for reverse gate `<-0x31` and item-throw direction — verified `SK:src/player_controller.c:4345-4351`, `SK:src/racing/actors_extended.c:300-309`). Deadzone handled by game; emit raw. Release springs to center. |
-| **Z (item)** | 64·s pill | above stick, x = safeL + 60·s, y = 56% | Momentary. Duplicated right (below). Fires `BTN_Z`. |
-| **D-pad (menus)** | 4× 46·s cluster | x = safeL + 60·s, y = 30% | Menu navigation + player-count select. Small, out of the racing hand's way. |
-| **L** | 56·s pill | left of D-pad row, y = 18% | Music-volume cycle in race; Options shortcut on main menu (`SK:src/menus.c:1330s`, `race_logic.c:777-787`). Low-priority placement is deliberate. |
+
+| Control | Behavior |
+|---|---|
+| **Steering stick** | Harkinian fixed-center visual with continuous X/Y output (-32767..32767 virtual → LUS ±85). The game owns its deadzone. Release springs to center. |
+| **Z (item)** | Momentary and duplicated on the right; both instances write the same trigger axis. |
+| **D-pad** | Four independent buttons for menu navigation and player-count selection. |
+| **L** | Momentary shoulder; music-volume cycle in race and Options shortcut on the main menu. |
 
 Right rail (action hand):
-| Control | Size | Position | Behavior |
-|---|---|---|---|
-| **A (gas)** | 92·s ⌀ | x = safeR − 110·s, y = 74% | Momentary hold. v1 has **no** hold-to-lock; revisit after playtests (rebelancap's lock is clever but adds state users can't see). |
-| **B (brake/reverse)** | 66·s ⌀ | left of A, offset (−96·s, +18·s) | Momentary. A+B together must be physically comfortable (rocket start — `SK:src/player_controller.c:4309-4321`): verified reachable with thumb roll. |
-| **R (hop/drift)** | 72·s ⌀ | above A, offset (+6·s, −102·s) | Momentary; the drift finger lives here — second-largest target on purpose. |
-| **Z (item, right copy)** | 58·s ⌀ | left of R, offset (−92·s, −96·s) | Same virtual button as left Z. |
-| **C-Left (look behind)** | 44·s | top edge of cluster, y = 34% | Momentary; only active when `gLookBehind` CVar on (`SK:src/code_80005FD0.c:6688-6720`); hidden otherwise. |
-| **C-Right (HUD/map)** | 44·s | right of C-Left | Cycles HUD modes (`SK:src/code_80057C60.c:1299-1355`). |
-| **Start** | 56·s pill "▶/⏸" | x = safeR − 60·s, y = 16% | Pause; also menu-confirm (Start≡A in menus, verified). |
+
+| Control | Behavior |
+|---|---|
+| **A (gas)** | Momentary hold; no invisible hold-to-lock state in v1. |
+| **B (brake/reverse)** | Momentary; the Harkinian face cluster keeps A+B reachable by thumb roll for rocket starts. |
+| **R (hop/drift)** | Momentary shoulder on the upper grip rail. |
+| **Z (right copy)** | Same virtual trigger as the left Z. |
+| **C-Up / C-Down / C-Left / C-Right** | Full N64 C-button diamond. SpaghettiKart maps it through the virtual controller's right-stick/button convention; C-Right reaches HUD/map and C-Left reaches look-behind when enabled. |
+| **Start** | Red `▶` button for pause and menu confirmation. |
 
 Persistent chrome:
-- **`•••` menu button**, 40 pt, top-right inside safe area, always installed even when gameplay controls are disabled. Posts the SpaghettiGui toggle (Escape/F1 equivalent — `SK:src/port/SpaghettiGui.cpp:107-113`).
+- **`•••` menu button**, always installed even when gameplay controls are
+  disabled. It is 38 pt at the iPad safe-area upper right. On iPhone it is
+  44 pt, top-center during gameplay and bottom-center while the menu is open
+  so it does not cover the compact controls or menu chrome. It posts the
+  SpaghettiGui toggle (Escape/F1 equivalent).
 - **Mode changes:** opening the ImGui menu hides all gameplay controls and releases every held input (hook: `SpaghettiPad_SetTouchControlsMenuVisible` from the LUS patch); closing restores them iff the persisted **Settings › Controls › Touch Controls** CVar is on. Connecting a physical controller hides the overlay (toast: "Controller connected — touch controls hidden; re-enable in Settings"); disconnecting restores it. Disabling touch controls never strands the user (the `•••` survives).
-- **Not in v1:** C-Up (credits easter egg only), haptics, layout editor, portrait, second-player touch.
+- **Not in v1:** haptics, layout editor, portrait, second-player touch.
 
-Acceptance checks (Phase 8 gate): 1) all 13 elements render non-overlapping on 12.9" and 11" iPad and iPhone 15-class sim; 2) title→player-count→kart→cup→race using touch only; 3) analog steering sweep produces intermediate `rawStickX` values; 4) hop-drift (hold R + steer) and rocket start (A+B) both executable; 5) item throw-forward (stick up + Z) works; 6) pause/resume; 7) menu button opens PortMenu with gameplay controls hidden, close restores; 8) toggle off/on from Settings without restart; 9) backgrounding mid-race releases all held inputs.
+Acceptance checks (Phase 8 gate): 1) the stick, all 15 gameplay buttons,
+and persistent menu button render without overlap on 12.9-inch and 11-inch
+iPad plus an iPhone-class Simulator; 2) title→player-count→kart→cup→race using
+touch only; 3) analog steering sweep produces intermediate `rawStickX` values;
+4) hop-drift (hold R + steer) and rocket start (A+B) are executable; 5) item
+throw-forward (stick up + Z) works; 6) pause/resume; 7) menu open hides and
+releases gameplay controls, close restores; 8) the persisted Controls toggle
+works without restart; 9) backgrounding mid-race releases all held inputs; and
+10) iPhone gameplay uses its native wide viewport with aspect-aware horizontal
+expansion, never a stretched framebuffer.
 
 ## 6. Asset pipeline specification
 

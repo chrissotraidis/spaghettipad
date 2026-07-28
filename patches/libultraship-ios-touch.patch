@@ -1,0 +1,49 @@
+diff --git a/src/fast/backends/gfx_sdl2.cpp b/src/fast/backends/gfx_sdl2.cpp
+index d4a727dc..b2294c9f 100644
+--- a/src/fast/backends/gfx_sdl2.cpp
++++ b/src/fast/backends/gfx_sdl2.cpp
+@@ -618,9 +618,19 @@ void GfxWindowBackendSDL2::HandleSingleEvent(SDL_Event& event) {
+             OnKeyup(event.key.keysym.scancode);
+             break;
+         case SDL_MOUSEBUTTONDOWN:
++#ifdef __IOS__
++            if (event.button.which == SDL_TOUCH_MOUSEID) {
++                break;
++            }
++#endif
+             OnMouseButtonDown(event.button.button - 1);
+             break;
+         case SDL_MOUSEBUTTONUP:
++#ifdef __IOS__
++            if (event.button.which == SDL_TOUCH_MOUSEID) {
++                break;
++            }
++#endif
+             OnMouseButtonUp(event.button.button - 1);
+             break;
+         case SDL_MOUSEWHEEL:
+diff --git a/src/ship/window/gui/Gui.cpp b/src/ship/window/gui/Gui.cpp
+index 2b40f40b..34f2d863 100644
+--- a/src/ship/window/gui/Gui.cpp
++++ b/src/ship/window/gui/Gui.cpp
+@@ -586,10 +586,6 @@ void Gui::DrawMenu() {
+         GetMenu()->Draw();
+     }
+ 
+-#ifdef __IOS__
+-    SpaghettiPad_SetTouchControlsMenuVisible(GetMenuOrMenubarVisible());
+-#endif
+-
+     for (auto& windowIter : mGuiWindows) {
+         windowIter.second->Update();
+         windowIter.second->Draw();
+@@ -786,6 +782,9 @@ void Gui::StartDraw() {
+     StartFrame();
+     // Draw the gui menus
+     DrawMenu();
++#ifdef __IOS__
++    SpaghettiPad_SetTouchControlsMenuVisible(GetMenuOrMenubarVisible());
++#endif
+     // Calculate the available space the game can render to
+     CalculateGameViewport();
+ }
