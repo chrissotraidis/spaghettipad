@@ -48,8 +48,8 @@ audited ROM-free unsigned IPA.
 | 1 | Host oracle and clean port archives | Complete | macOS title, archive hashes, clean `spaghetti.o2r` audit |
 | 2 | Patched libultraship iOS static library | Complete | arm64 iPhoneOS library, symbol audit, patch replay, macOS regression build |
 | 3 | Full unsigned iOS app links | Complete | iPhoneOS app, platform/min-OS/bundle audit |
-| 4 | Simulator title screen | In progress | Live Metal frame, logs, screenshot, no desktop dialog symbols |
-| 5 | Lifecycle and audio | Pending | Three-cycle continuity, config flush, paused simulation, audible resume |
+| 4 | Simulator title screen | Complete | Live Metal frame, logs, screenshot, no desktop dialog symbols |
+| 5 | Lifecycle and audio | In progress | Three-cycle continuity, config flush, paused simulation, audible resume |
 | 6 | Signed physical-iPad boot | Pending | Signed install, title screen, ten-minute stability run |
 | 7 | On-device Files extraction | Pending | Clean-device extraction, failure recovery, measured time/RSS |
 | 8 | Grip-first full-analog touch controls | Pending | Full touch-only GP and analog/menu/lifecycle checks on hardware |
@@ -60,27 +60,78 @@ audited ROM-free unsigned IPA.
 
 ## Active gate
 
-**Phase 4 — boot the unsigned application to a live Metal title screen on an
-iPad Pro Simulator.**
+**Phase 5 — prove lifecycle and audio correctness through three consecutive
+Simulator background/foreground cycles.**
 
 Expected:
 
-1. `scripts/configure-ios.sh --simulator` generates the arm64 Simulator
-   project and the `Spaghettify` target builds `SpaghettiPad.app`.
-2. The ignored Phase 1 `ref/mk64.o2r` is staged into the Simulator
-   application's Files-visible Documents container.
-3. A live launch loads `spaghetti.o2r` and `mk64.o2r`, renders the Mario Kart
-   64 title screen through Metal, and a relaunch skips import prompts.
-4. The Simulator binary contains no portable-file-dialog symbols.
+1. The iOS game loop yields through `WindowIsFrameReady()` while backgrounded;
+   that bridge continues pumping lifecycle events without advancing the game.
+2. One Simulator PID survives three background/foreground cycles.
+3. `spaghettify.cfg.json` advances on each background transition while the
+   game log does not advance until foregrounded.
+4. SDL audio initializes, pauses without queue growth, and resumes audibly
+   after every foreground transition.
 
 Boundary:
 
-- Phase 3 proves only a linked and audited unsigned iPhoneOS application.
-- No Simulator or physical-device runtime, lifecycle continuity, audible
-  output, touch, extraction, performance, controller, texture-pack, or
-  package behavior is claimed yet.
+- Phase 4 proves Simulator boot, archive loading, landscape Metal rendering,
+  and prompt-free relaunch only.
+- Audio initialization is not subjective audible-output proof. No
+  physical-device runtime, lifecycle continuity, touch, extraction,
+  performance, controller, texture-pack, or package behavior is claimed yet.
 
 ## Evidence log
+
+### 2026-07-28 — Phase 4 Simulator title-screen gate passed
+
+- Build: `scripts/configure-ios.sh --simulator` generated the Xcode project
+  for `arm64-apple-ios15.0-simulator` with the iPhoneSimulator 26.5 SDK. The
+  final `SpaghettiPad.app` build ended in `** BUILD SUCCEEDED **`; its arm64
+  executable reports `LC_BUILD_VERSION` platform `IOSSIMULATOR`, minimum
+  15.0, SDK 26.5, and SHA-256
+  `8e18588cf5de24927e8b2a51251c76068ecc24a23d2d98d77d88f9fbd45a4ef2`.
+- Data boundary: ignored `ref/mk64.o2r` was staged only into the app's
+  Files-visible Simulator Documents container. Source and staged copies both
+  retained SHA-256
+  `26a8d0cf64a9e70276856b8876d41037195ea72cbbe78915257e6efd50179064`;
+  no ROM was copied into the app or repository.
+- Runtime: a clean launch on the booted iPad Pro 11-inch (M4), iOS 18.5
+  Simulator loaded bundled `spaghetti.o2r`, then
+  `Documents/mk64.o2r`, registered the MK64 and extended-asset mods, loaded
+  the title-screen audio sequence, and rendered live Metal frames through
+  title and attract-mode races.
+- Relaunch: a second clean launch at 08:03:04 loaded the persisted
+  `Documents/mk64.o2r` by 08:03:05 and reached game rendering without an
+  import or portable-file dialog. The final title-screen evidence is the
+  ignored `ref/evidence/phase4-simulator-title-landscape.jpeg` (SHA-256
+  `31d867e86f124013a39fb1259722b348e75276702cb416c1a480c3eedfbb06ca`).
+- Landscape correction: the initial Simulator launch exposed an actual
+  portrait scene despite landscape-only plist declarations. The narrow fix
+  keeps SDL's landscape hint and wires its created window to the native shell,
+  which requests a landscape `UIWindowScene` geometry update. UIKit logs then
+  recorded the scene orientation preferences as landscape-left/right, and
+  the visually inspected Simulator window and title screen were upright in
+  landscape. Xcode 26.6's `simctl io screenshot` retained the raw portrait
+  buffer orientation, so the settled Simulator-window capture is the visual
+  acceptance source.
+- Dialog audit: the Simulator executable's undefined-symbol table contains no
+  `pfd`, portable-file-dialog, or file-dialog symbol.
+- Patch replay: `patches/libultraship-ios.patch` now contains the two guarded
+  landscape integration additions and exactly matches the 17-file upstream
+  diff (520 lines, 184 insertions, 23 deletions; SHA-256
+  `db284e75edc058f78ff81dca1dd3b6b64e27f0db67f22cc8d69274b25ff011ea`).
+  Both maintained patches reverse-applied to pristine pinned inputs, reapplied
+  through `scripts/apply-patches.sh`, and passed reverse-check and
+  `git diff --check`.
+- Desktop regression: the complete patched native arm64 macOS target rebuilt
+  and linked successfully after the orientation addition; final executable
+  SHA-256 is
+  `236e8cddd0dd54963980d0a3bf6bb9b7909aaa75fa5aa71db8c98f547219c39b`.
+  `scripts/check-repo-safety.sh` also passed.
+- Boundary: this phase does not claim lifecycle continuity, subjective audible
+  audio, physical-device runtime, touch, extraction, performance, controller,
+  texture-pack, or package behavior.
 
 ### 2026-07-28 — Phase 3 unsigned iPhoneOS application gate passed
 

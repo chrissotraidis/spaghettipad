@@ -198,7 +198,7 @@ index da8adcfd..5ba3f983 100644
  }
  
 diff --git a/src/fast/backends/gfx_sdl2.cpp b/src/fast/backends/gfx_sdl2.cpp
-index 25e2e745..294d74b2 100644
+index 25e2e745..d4a727dc 100644
 --- a/src/fast/backends/gfx_sdl2.cpp
 +++ b/src/fast/backends/gfx_sdl2.cpp
 @@ -9,6 +9,11 @@
@@ -213,11 +213,13 @@ index 25e2e745..294d74b2 100644
  #include "ship/config/ConsoleVariable.h"
  #include "ship/controller/controldeck/ControlDeck.h"
  #include "ship/window/FileDropMgr.h"
-@@ -50,6 +55,25 @@ LONG_PTR SDL_WndProc;
+@@ -50,6 +55,27 @@ LONG_PTR SDL_WndProc;
  #endif
  
  namespace Fast {
 +#ifdef __IOS__
++extern "C" void SpaghettiPad_OnWindowCreated(struct SDL_Window*);
++
 +static void SaveIOSConfiguration() {
 +    auto context = Ship::Context::GetInstance();
 +    if (context->GetWindow() != nullptr) {
@@ -239,7 +241,7 @@ index 25e2e745..294d74b2 100644
  const SDL_Scancode lus_to_sdl_table[] = {
      SDL_SCANCODE_UNKNOWN,
      SDL_SCANCODE_ESCAPE,
-@@ -232,7 +256,7 @@ void GfxWindowBackendSDL2::SetFullscreenImpl(bool on, bool call_callback) {
+@@ -232,7 +258,7 @@ void GfxWindowBackendSDL2::SetFullscreenImpl(bool on, bool call_callback) {
          }
      }
  
@@ -248,7 +250,20 @@ index 25e2e745..294d74b2 100644
      // Implement fullscreening with native macOS APIs
      if (on != isNativeMacOSFullscreenActive(mWnd)) {
          toggleNativeMacOSFullscreen(mWnd);
-@@ -618,6 +642,29 @@ void GfxWindowBackendSDL2::HandleSingleEvent(SDL_Event& event) {
+@@ -325,3 +351,5 @@ void GfxWindowBackendSDL2::Init(const char* gameName, const char* gfxApiName, bo
+ #endif
+-
++#ifdef __IOS__
++    SDL_SetHint(SDL_HINT_ORIENTATIONS, "LandscapeLeft LandscapeRight");
++#endif
+     SDL_Init(SDL_INIT_VIDEO);
+@@ -385,2 +413,5 @@ void GfxWindowBackendSDL2::Init(const char* gameName, const char* gfxApiName, bo
+     mWnd = SDL_CreateWindow(title, posX, posY, mWindowWidth, mWindowHeight, flags);
++#ifdef __IOS__
++    SpaghettiPad_OnWindowCreated(mWnd);
++#endif
+ #ifdef _WIN32
+@@ -618,6 +649,29 @@ void GfxWindowBackendSDL2::HandleSingleEvent(SDL_Event& event) {
          case SDL_DROPFILE:
              Ship::Context::GetInstance()->GetFileDropMgr()->SetDroppedFile(event.drop.file);
              break;
@@ -278,7 +293,7 @@ index 25e2e745..294d74b2 100644
          case SDL_QUIT:
              Close();
              break;
-@@ -635,7 +682,7 @@ void GfxWindowBackendSDL2::HandleEvents() {
+@@ -635,7 +689,7 @@ void GfxWindowBackendSDL2::HandleEvents() {
      }
  
      // resync fullscreen state
@@ -287,7 +302,7 @@ index 25e2e745..294d74b2 100644
      auto nextFullscreenState = isNativeMacOSFullscreenActive(mWnd);
      if (mFullScreen != nextFullscreenState) {
          mFullScreen = nextFullscreenState;
-@@ -647,7 +694,11 @@ void GfxWindowBackendSDL2::HandleEvents() {
+@@ -647,7 +701,11 @@ void GfxWindowBackendSDL2::HandleEvents() {
  }
  
  bool GfxWindowBackendSDL2::IsFrameReady() {
