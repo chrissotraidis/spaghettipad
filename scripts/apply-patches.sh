@@ -11,6 +11,7 @@ SPAGHETTIKART_TOUCH_PATCH="$ROOT/patches/spaghettikart-ios-touch.patch"
 SPAGHETTIKART_UX_PATCH="$ROOT/patches/spaghettikart-ios-ux.patch"
 LUS_PATCH="$ROOT/patches/libultraship-ios.patch"
 LUS_TOUCH_PATCH="$ROOT/patches/libultraship-ios-touch.patch"
+LUS_CONTROLLER_PATCH="$ROOT/patches/libultraship-ios-controller-ports.patch"
 EXPECTED_SPAGHETTIKART="5b28472d477bab101dee2a0f469fe2aee2c58a01"
 EXPECTED_LUS="f5c3843fe937320b64ff754fa6bf71b13ff5e7a1"
 
@@ -34,6 +35,8 @@ fail() {
 [ -f "$LUS_PATCH" ] || fail "maintained patch is missing: $LUS_PATCH"
 [ -f "$LUS_TOUCH_PATCH" ] ||
     fail "maintained patch is missing: $LUS_TOUCH_PATCH"
+[ -f "$LUS_CONTROLLER_PATCH" ] ||
+    fail "maintained patch is missing: $LUS_CONTROLLER_PATCH"
 [ "$(git -C "$SPAGHETTIKART_DIR" rev-parse HEAD)" = \
     "$EXPECTED_SPAGHETTIKART" ] ||
     fail "SpaghettiKart is not at the planned revision"
@@ -45,27 +48,38 @@ git -C "$LUS_DIR" diff --cached --quiet ||
     fail "libultraship has staged files"
 
 if git -C "$LUS_DIR" apply --reverse --check \
-    "$LUS_TOUCH_PATCH" 2>/dev/null; then
-    echo "libultraship iOS base and touch patches are already applied."
+    "$LUS_CONTROLLER_PATCH" 2>/dev/null; then
+    echo "libultraship iOS base, touch, and controller-port patches are already applied."
 else
     if git -C "$LUS_DIR" apply --reverse --check \
-        "$LUS_PATCH" 2>/dev/null; then
-        echo "libultraship iOS base patch is already applied."
+        "$LUS_TOUCH_PATCH" 2>/dev/null; then
+        echo "libultraship iOS base and touch patches are already applied."
     else
-        git -C "$LUS_DIR" diff --quiet ||
-            fail "libultraship has modified tracked files"
-        git -C "$LUS_DIR" apply --check "$LUS_PATCH"
-        git -C "$LUS_DIR" apply "$LUS_PATCH"
-        git -C "$LUS_DIR" apply --reverse --check "$LUS_PATCH" ||
-            fail "libultraship patch does not pass its reverse check"
-        echo "Applied libultraship iOS patch at $EXPECTED_LUS."
+        if git -C "$LUS_DIR" apply --reverse --check \
+            "$LUS_PATCH" 2>/dev/null; then
+            echo "libultraship iOS base patch is already applied."
+        else
+            git -C "$LUS_DIR" diff --quiet ||
+                fail "libultraship has modified tracked files"
+            git -C "$LUS_DIR" apply --check "$LUS_PATCH"
+            git -C "$LUS_DIR" apply "$LUS_PATCH"
+            git -C "$LUS_DIR" apply --reverse --check "$LUS_PATCH" ||
+                fail "libultraship patch does not pass its reverse check"
+            echo "Applied libultraship iOS patch at $EXPECTED_LUS."
+        fi
+
+        git -C "$LUS_DIR" apply --check "$LUS_TOUCH_PATCH"
+        git -C "$LUS_DIR" apply "$LUS_TOUCH_PATCH"
+        git -C "$LUS_DIR" apply --reverse --check "$LUS_TOUCH_PATCH" ||
+            fail "libultraship touch patch does not pass its reverse check"
+        echo "Applied libultraship iOS touch patch at $EXPECTED_LUS."
     fi
 
-    git -C "$LUS_DIR" apply --check "$LUS_TOUCH_PATCH"
-    git -C "$LUS_DIR" apply "$LUS_TOUCH_PATCH"
-    git -C "$LUS_DIR" apply --reverse --check "$LUS_TOUCH_PATCH" ||
-        fail "libultraship touch patch does not pass its reverse check"
-    echo "Applied libultraship iOS touch patch at $EXPECTED_LUS."
+    git -C "$LUS_DIR" apply --check "$LUS_CONTROLLER_PATCH"
+    git -C "$LUS_DIR" apply "$LUS_CONTROLLER_PATCH"
+    git -C "$LUS_DIR" apply --reverse --check "$LUS_CONTROLLER_PATCH" ||
+        fail "libultraship controller-port patch does not pass its reverse check"
+    echo "Applied libultraship iOS controller-port patch at $EXPECTED_LUS."
 fi
 
 if git -C "$SPAGHETTIKART_DIR" apply --reverse --check \

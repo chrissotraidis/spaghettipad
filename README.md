@@ -11,9 +11,10 @@
 </p>
 
 > **Development preview:** the native iPadOS/iOS Simulator build is playable
-> through touch and the bring-your-own-ROM flow. Physical-iPad validation,
-> controller split-screen, tilt steering, packaging, and release artifacts are
-> still in progress. There is no public IPA yet.
+> through touch and the bring-your-own-ROM flow, and two-controller horizontal
+> split-screen now runs in the iPad Simulator. Physical-iPad validation,
+> Bluetooth-controller performance, tilt steering, packaging, and release
+> artifacts are still in progress. There is no public IPA yet.
 
 ![SpaghettiPad running with its iPad touch layout](docs/screenshots/ipad-touch-controls.png)
 
@@ -30,8 +31,9 @@ four-button C diamond—is available without a keyboard.
   game renders at the phone's native wide aspect ratio without stretching.
 - **Bring your own game.** A legally acquired US 1.0 big-endian `.z64` stays
   in the app's Files-visible container and is extracted locally.
-- **Built toward couch multiplayer.** SpaghettiKart's native split-screen is
-  the foundation for the planned two-controller, one-iPad experience.
+- **Couch multiplayer in progress.** Two controllers now receive independent
+  player ports and render horizontal split-screen in the iPad Simulator. The
+  two-Bluetooth-controller hardware and frame-time gate is still open.
 - **Optional visual upgrades.** Import a compatible `.o2r` through Files,
   detect it in-app, and enable Alternate Assets without a desktop file picker.
   No third-party pack is bundled, fetched, mirrored, or redistributed.
@@ -54,6 +56,17 @@ rendering.
   </tr>
 </table>
 
+## Two racers, one iPad
+
+SpaghettiPad assigns controllers by connection order: the first controller is
+player one, the second is player two, and so on. When any physical controller
+is present, the touch controller parks itself instead of sharing player one's
+inputs. Disconnect the last controller and the touch controller returns.
+
+![Two-player horizontal split-screen running in the iPad Simulator](docs/screenshots/ipad-2p-split-screen.png)
+
+<p align="center"><sub>Live two-player versus rendering in the iPad Simulator. The menu is left open to show that the touch overlay is parked; physical-iPad performance proof is still pending.</sub></p>
+
 ## Where it stands
 
 | Capability | Current proof |
@@ -65,7 +78,7 @@ rendering.
 | Optional texture packs | Import, validation, enable, and persistence workflow passes with a ROM-free test archive in Simulator; real-pack hardware GP pending |
 | Audio and lifecycle | Three-cycle Simulator continuity plus human-confirmed audible resume |
 | Physical iPad | Signing, installation, stability, and touch-only Grand Prix pending |
-| Controllers and split-screen | Planned validation phase |
+| Controllers and split-screen | Independent ports, parked touch input, four-port defaults, and live 2P horizontal rendering pass in Simulator; two-controller hardware GP/frame-time capture pending |
 | Tilt steering | Planned validation phase |
 | Unsigned ROM-free IPA | Final packaging phase |
 

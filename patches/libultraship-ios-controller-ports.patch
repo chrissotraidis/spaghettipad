@@ -1,0 +1,108 @@
+diff --git a/src/ship/controller/controldeck/ControlDeck.cpp b/src/ship/controller/controldeck/ControlDeck.cpp
+index b5298b84..4fcec8cd 100644
+--- a/src/ship/controller/controldeck/ControlDeck.cpp
++++ b/src/ship/controller/controldeck/ControlDeck.cpp
+@@ -24,7 +24,11 @@ ControlDeck::~ControlDeck() {
+ 
+ void ControlDeck::Init(uint8_t* controllerBits) {
+     mControllerBits = controllerBits;
++#ifdef __IOS__
++    *mControllerBits |= 0x0F;
++#else
+     *mControllerBits |= 1 << 0;
++#endif
+ 
+     for (auto port : mPorts) {
+         if (port->GetConnectedController()->HasConfig()) {
+@@ -32,12 +36,26 @@ void ControlDeck::Init(uint8_t* controllerBits) {
+         }
+     }
+ 
++#ifdef __IOS__
++    for (size_t portIndex = 0; portIndex < mPorts.size(); portIndex++) {
++        auto controller = mPorts[portIndex]->GetConnectedController();
++        if (controller->HasConfig()) {
++            continue;
++        }
++        if (portIndex == 0) {
++            controller->AddDefaultMappings(PhysicalDeviceType::Keyboard);
++            controller->AddDefaultMappings(PhysicalDeviceType::Mouse);
++        }
++        controller->AddDefaultMappings(PhysicalDeviceType::SDLGamepad);
++    }
++#else
+     // if we don't have a config for controller 1, set default bindings
+     if (!mPorts[0]->GetConnectedController()->HasConfig()) {
+         mPorts[0]->GetConnectedController()->AddDefaultMappings(PhysicalDeviceType::Keyboard);
+         mPorts[0]->GetConnectedController()->AddDefaultMappings(PhysicalDeviceType::Mouse);
+         mPorts[0]->GetConnectedController()->AddDefaultMappings(PhysicalDeviceType::SDLGamepad);
+     }
++#endif
+ }
+ 
+ bool ControlDeck::ProcessKeyboardEvent(KbEventType eventType, KbScancode scancode) {
+diff --git a/src/ship/controller/physicaldevice/ConnectedPhysicalDeviceManager.cpp b/src/ship/controller/physicaldevice/ConnectedPhysicalDeviceManager.cpp
+index 7f0397e2..6d446611 100644
+--- a/src/ship/controller/physicaldevice/ConnectedPhysicalDeviceManager.cpp
++++ b/src/ship/controller/physicaldevice/ConnectedPhysicalDeviceManager.cpp
+@@ -1,5 +1,8 @@
+ #include "ship/controller/physicaldevice/ConnectedPhysicalDeviceManager.h"
+ #include <spdlog/spdlog.h>
++#if defined(__APPLE__)
++#include <TargetConditionals.h>
++#endif
+ 
+ namespace Ship {
+ ConnectedPhysicalDeviceManager::ConnectedPhysicalDeviceManager() {
+@@ -53,6 +56,10 @@ void ConnectedPhysicalDeviceManager::RefreshConnectedSDLGamepads() {
+     mConnectedSDLGamepads.clear();
+     mConnectedSDLGamepadNames.clear();
+     static SDL_JoystickGUID sZeroGuid;
++#ifdef __IOS__
++    mIgnoredInstanceIds.clear();
++    uint8_t controllerSlot = 0;
++#endif
+ 
+     for (int32_t i = 0; i < SDL_NumJoysticks(); i++) {
+ 
+@@ -83,6 +90,15 @@ void ConnectedPhysicalDeviceManager::RefreshConnectedSDLGamepads() {
+             continue;
+         }
+ 
++#if TARGET_OS_SIMULATOR
++        const char* simulatorControllerName = SDL_GameControllerNameForIndex(i);
++        if (simulatorControllerName != nullptr &&
++            SDL_strcmp(simulatorControllerName, "Gamepad") == 0) {
++            SPDLOG_DEBUG("Ignoring CoreSimulator's placeholder gamepad");
++            continue;
++        }
++#endif
++
+         auto gamepad = SDL_GameControllerOpen(i);
+         if (gamepad == nullptr) {
+             SPDLOG_ERROR("SDL GameControllerOpen error (GUID: {}): {}", deviceGuidCStr, SDL_GetError());
+@@ -100,9 +116,24 @@ void ConnectedPhysicalDeviceManager::RefreshConnectedSDLGamepads() {
+         mConnectedSDLGamepads[instanceId] = gamepad;
+         mConnectedSDLGamepadNames[instanceId] = gamepadName;
+ 
++#ifdef __IOS__
++        for (uint8_t port = 0; port < 4; port++) {
++            if (controllerSlot >= 4 || port != controllerSlot) {
++                mIgnoredInstanceIds[port].insert(instanceId);
++            }
++        }
++        if (controllerSlot < 4) {
++            SPDLOG_INFO("Assigned iOS controller \"{}\" (instance {}) to port {}", gamepadName, instanceId,
++                        controllerSlot + 1);
++        } else {
++            SPDLOG_INFO("Ignoring extra iOS controller \"{}\" (instance {})", gamepadName, instanceId);
++        }
++        controllerSlot++;
++#else
+         for (uint8_t port = 1; port < 4; port++) {
+             mIgnoredInstanceIds[port].insert(instanceId);
+         }
++#endif
+     }
+ }
+ } // namespace Ship

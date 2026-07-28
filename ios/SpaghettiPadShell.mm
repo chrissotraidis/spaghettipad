@@ -7,6 +7,9 @@
 #include <array>
 #include <atomic>
 #include <cmath>
+#if TARGET_OS_SIMULATOR
+#include <vector>
+#endif
 
 #include <SDL.h>
 #include <SDL_syswm.h>
@@ -44,7 +47,12 @@ static std::atomic_bool sTouchControlsMenuVisible(false);
 static std::atomic_bool sTouchStickActive(false);
 static BOOL sTouchControlsDesired;
 static BOOL sControllerWatchInstalled;
+#if TARGET_OS_SIMULATOR
+static std::vector<SDL_Joystick*> sSimulatorTestControllers;
+#endif
 
+static void SpaghettiPad_AttachVirtualController(void);
+static void SpaghettiPad_DetachVirtualController(void);
 static void SpaghettiPad_ApplyTouchControlsState(void);
 
 static void SpaghettiPad_PushKey(SDL_Scancode scancode, BOOL pressed) {
@@ -798,9 +806,9 @@ static void SpaghettiPad_EnsureLandscape(UIWindow* window, int attempt) {
 
 static BOOL SpaghettiPad_HasPhysicalController(void) {
 #if TARGET_OS_SIMULATOR
-    // Simulator exposes a generic SDL gamepad even when no controller is
-    // connected. Keep touch controls available for Simulator validation.
-    return NO;
+    // Virtual test controllers exercise the physical-controller policy without
+    // changing device builds. The normal touch controller does not count.
+    return !sSimulatorTestControllers.empty();
 #else
     int joystickCount = SDL_NumJoysticks();
     for (int index = 0; index < joystickCount; ++index) {
@@ -810,6 +818,68 @@ static BOOL SpaghettiPad_HasPhysicalController(void) {
     }
     return NO;
 #endif
+}
+
+#if TARGET_OS_SIMULATOR
+static void SpaghettiPad_AttachSimulatorTestControllers(void) {
+    NSInteger requested = [NSProcessInfo.processInfo.environment
+        [@"SPAGHETTIPAD_SIMULATED_CONTROLLERS"] integerValue];
+    requested = MAX(0, MIN(requested, 4));
+    for (NSInteger slot = 0; slot < requested; ++slot) {
+        SDL_VirtualJoystickDesc descriptor = {};
+        descriptor.version = SDL_VIRTUAL_JOYSTICK_DESC_VERSION;
+        descriptor.type = SDL_JOYSTICK_TYPE_GAMECONTROLLER;
+        descriptor.naxes = SDL_CONTROLLER_AXIS_MAX;
+        descriptor.nbuttons = SDL_CONTROLLER_BUTTON_MAX;
+        NSString* name = [NSString stringWithFormat:
+            @"SpaghettiPad Simulator Controller %ld", (long)slot + 1];
+        descriptor.name = name.UTF8String;
+        int deviceIndex = SDL_JoystickAttachVirtualEx(&descriptor);
+        SDL_Joystick* joystick =
+            deviceIndex >= 0 ? SDL_JoystickOpen(deviceIndex) : nullptr;
+        if (joystick == nullptr) {
+            SDL_LogError(
+                SDL_LOG_CATEGORY_INPUT,
+                "[SpaghettiPad] simulator controller %ld attach failed: %s",
+                (long)slot + 1, SDL_GetError());
+            continue;
+        }
+        sSimulatorTestControllers.push_back(joystick);
+        SDL_Log(
+            "[SpaghettiPad] attached simulator controller %ld (instance %d)",
+            (long)slot + 1, SDL_JoystickInstanceID(joystick));
+    }
+}
+
+static void SpaghettiPad_ConfigureSimulatorTestControllers(void) {
+    NSTimeInterval delay = [NSProcessInfo.processInfo.environment
+        [@"SPAGHETTIPAD_SIMULATED_CONTROLLER_DELAY"] doubleValue];
+    if (delay <= 0.0) {
+        SpaghettiPad_AttachSimulatorTestControllers();
+        return;
+    }
+    dispatch_after(
+        dispatch_time(
+            DISPATCH_TIME_NOW, (int64_t)(MIN(delay, 10.0) * NSEC_PER_SEC)),
+        dispatch_get_main_queue(), ^{
+            SpaghettiPad_AttachSimulatorTestControllers();
+            SpaghettiPad_ApplyTouchControlsState();
+        });
+}
+#endif
+
+static int SpaghettiPad_VirtualControllerDeviceIndex(void) {
+    if (sVirtualJoystick == nullptr) {
+        return -1;
+    }
+
+    SDL_JoystickID instanceId = SDL_JoystickInstanceID(sVirtualJoystick);
+    for (int index = 0; index < SDL_NumJoysticks(); ++index) {
+        if (SDL_JoystickGetDeviceInstanceID(index) == instanceId) {
+            return index;
+        }
+    }
+    return -1;
 }
 
 static void SpaghettiPad_InstallMenuButton(UIWindow* window) {
@@ -865,9 +935,15 @@ static void SpaghettiPad_ApplyTouchControlsState(void) {
     }
 
     SpaghettiPad_InstallMenuButton(window);
+    BOOL hasPhysicalController = SpaghettiPad_HasPhysicalController();
+    if (hasPhysicalController) {
+        SpaghettiPad_DetachVirtualController();
+    } else {
+        SpaghettiPad_AttachVirtualController();
+    }
     BOOL shouldHide = !sTouchControlsDesired ||
         sTouchControlsMenuVisible.load() ||
-        SpaghettiPad_HasPhysicalController();
+        hasPhysicalController;
     if (shouldHide) {
         SpaghettiPad_ReleaseVisibleInputs();
         [sTouchOverlay removeFromSuperview];
@@ -934,6 +1010,30 @@ static void SpaghettiPad_AttachVirtualController(void) {
         sVirtualDeviceIndex, SDL_JoystickInstanceID(sVirtualJoystick));
 }
 
+static void SpaghettiPad_DetachVirtualController(void) {
+    if (SPAGHETTIPAD_TOUCH_KEYBOARD_FALLBACK || sVirtualJoystick == nullptr) {
+        return;
+    }
+
+    SpaghettiPad_ResetAllInputs();
+    SDL_JoystickID instanceId = SDL_JoystickInstanceID(sVirtualJoystick);
+    int deviceIndex = SpaghettiPad_VirtualControllerDeviceIndex();
+    SDL_JoystickClose(sVirtualJoystick);
+    sVirtualJoystick = nullptr;
+    sVirtualDeviceIndex = -1;
+
+    if (deviceIndex >= 0 && SDL_JoystickDetachVirtual(deviceIndex) == 0) {
+        SDL_Log(
+            "[SpaghettiPad] touch controller parked; physical controller owns port 1 "
+            "(instance %d)",
+            instanceId);
+    } else {
+        SDL_LogError(
+            SDL_LOG_CATEGORY_INPUT,
+            "[SpaghettiPad] virtual controller detach failed: %s", SDL_GetError());
+    }
+}
+
 void SpaghettiPad_OnWindowCreated(SDL_Window* sdlWindow) {
     UIWindow* window = SpaghettiPad_GetSDLWindow(sdlWindow);
     if (window == nil) {
@@ -956,6 +1056,9 @@ int SpaghettiPad_TouchControlsAvailable(void) {
 
 void SpaghettiPad_InitializeTouchControls(void) {
     SDL_SetHint(SDL_HINT_TOUCH_MOUSE_EVENTS, "1");
+#if TARGET_OS_SIMULATOR
+    SpaghettiPad_ConfigureSimulatorTestControllers();
+#endif
     if (!sControllerWatchInstalled) {
         SDL_AddEventWatch(SpaghettiPad_ControllerEventWatch, nullptr);
         sControllerWatchInstalled = YES;
@@ -977,7 +1080,9 @@ void SpaghettiPad_InitializeTouchControls(void) {
                         SpaghettiPad_ReleaseVisibleInputs();
                     }];
     }
-    SpaghettiPad_AttachVirtualController();
+    if (!SpaghettiPad_HasPhysicalController()) {
+        SpaghettiPad_AttachVirtualController();
+    }
 }
 
 void SpaghettiPad_SetTouchControlsEnabled(int enabled) {

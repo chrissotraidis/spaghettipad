@@ -54,13 +54,13 @@ audited ROM-free unsigned IPA.
 | 7 | On-device Files extraction | In progress (hardware replay) | Clean-device extraction, failure recovery, measured time/RSS |
 | 8 | Grip-first full-analog touch controls | In progress (Simulator slice passed; hardware GP pending) | Full touch-only GP and analog/menu/lifecycle checks on hardware |
 | 9 | iPad UX and imported texture pack | In progress (Simulator UX/import slice passed; hardware pack GP pending) | Touch-complete UX plus Reloaded import/enable/full-GP hardware gate |
-| 10 | Controllers and split-screen | Pending | Two-controller 2P session and measured 3P/4P decision |
+| 10 | Controllers and split-screen | In progress (Simulator routing/render slice passed; hardware sessions pending) | Two-controller 2P session and measured 3P/4P decision |
 | 11 | Tilt steering | Pending | Persisted, drift-free tilt GP on hardware |
 | 12 | Package, CI, docs, release | Pending | Clean CI, clean-machine replay, audited IPA and SHA-256 |
 
 ## Active gate
 
-**Phase 6/7/8/9 owner hardware replay; Phase 10 is the next unblocked Simulator gate.**
+**Phase 6/7/8/9/10 owner hardware replay; Phase 11 is the next unblocked Simulator gate.**
 
 Expected:
 
@@ -84,14 +84,83 @@ Boundary:
 - Remote work therefore continues with the explicitly Simulator-valid part of
   Phase 7: empty-container guidance, ROM validation, recovery, extraction, and
   relaunch behavior, plus the Simulator-valid touch and imported-pack UI
-  slices of Phases 8 and 9. Hardware time/RSS, Files/iPad behavior, sustained
-  touch ergonomics, and real texture-pack performance remain owner replay
-  items even when their Simulator equivalents pass.
+  slices of Phases 8 and 9, plus deterministic controller routing and
+  split-screen rendering for Phase 10. Hardware time/RSS, Files/iPad behavior,
+  sustained touch ergonomics, real texture-pack performance, Bluetooth
+  controller behavior, and split-screen frame time remain owner replay items
+  even when their Simulator equivalents pass.
 - Simulator evidence does not prove signing, installation, watchdog behavior,
   or audio on physical hardware. Touch, extraction, performance, controller,
   texture-pack, and package behavior also remain unclaimed.
 
 ## Evidence log
+
+### 2026-07-28 — Phase 10 controller routing and split-screen Simulator slice passed; hardware sessions pending
+
+- Controller ownership: on iOS, libultraship now creates default SDL mappings
+  for all four N64 ports and assigns recognized controllers in stable SDL
+  connection order: first controller to port/player 1, second to port/player
+  2, then players 3 and 4. Extra controllers remain ignored. This matches
+  SpaghettiKart's fixed `gControllers[i]` to human-player `i` relationship.
+- Touch/physical handoff: `ios/SpaghettiPadShell.mm` releases every held input,
+  closes and detaches the virtual touch controller, and removes the gameplay
+  overlay when a physical controller appears. When no physical controller is
+  present, it reattaches the virtual controller and restores touch. The
+  persistent `•••` menu control remains available in both modes.
+- Simulator realism: CoreSimulator exposes a permanent generic controller
+  named `Gamepad`. The iOS controller manager ignores only that exact
+  Simulator placeholder, while named pass-through controllers remain
+  eligible. A Simulator-only, inert-unless-requested
+  `SPAGHETTIPAD_SIMULATED_CONTROLLERS` hook creates up to four virtual test
+  controllers; no device-build behavior or release setting is attached to
+  that hook.
+- Live handoff proof: a second replay started in normal touch mode, logged the
+  touch controller on port 1, then attached the same two test controllers
+  after a two-second Simulator-only delay. The shell logged the touch
+  controller being parked, and the next refresh assigned the new controllers
+  to ports 1 and 2. This exercises the actual add-event handoff rather than
+  only the two possible startup states.
+- Two-controller proof: launching the iPad Pro 11-inch (M4), iOS 18.5
+  Simulator `7D6115C9-2ACC-4E72-A53A-3777D50E7037` with
+  `SPAGHETTIPAD_SIMULATED_CONTROLLERS=2` logged controller 1 on port 1 and
+  controller 2 on port 2 on every refresh. The Files-visible config recorded
+  `HasConfig: 1` for ports 1 through 4; port 2 contained 14 N64 button mapping
+  groups plus all four left-stick directions. No touch controller appeared in
+  the active assignment, and the gameplay overlay was visibly parked.
+- Split-screen render proof: the same process entered
+  `mk:versus_2p`, selected the `mk:versus_2p` human item table, rendered two
+  horizontal viewports, and continued for about 51 seconds before the
+  configured automated course cycle advanced. The 2420×1668 evidence image is
+  `docs/screenshots/ipad-2p-split-screen.png`, SHA-256
+  `a157afb649400b688c2347150a097b836eab8367bee582ac97c71e1f36f6611e`.
+  The open settings sheet makes both viewports and the parked touch overlay
+  boundary visible; this is routing/render evidence, not a claim that two
+  simulated idle controllers completed a race.
+- Touch regression: after clearing the test environment and relaunching, the
+  placeholder `Gamepad` remained ignored, `SpaghettiPad Touch Controller`
+  alone returned to port 1, and the normal touch-mode app remained live.
+- Maintained patch: `patches/libultraship-ios-controller-ports.patch` is 108
+  lines / 4,289 bytes with SHA-256
+  `a213fcae5d77bb529356846cce9339687380bb40e675162acedca576334b658c`.
+  A pristine libultraship clone at
+  `f5c3843fe937320b64ff754fa6bf71b13ff5e7a1` passed base -> touch ->
+  controller-port application, `git diff --check`, and top-patch reverse
+  application. `scripts/apply-patches.sh` also recognizes the complete
+  already-applied stack.
+- Build proof: the final Release arm64 iPhoneSimulator executable SHA-256 is
+  `3df1c62174a9c921baf69cea18e0d44caf39b3f0c9d42140c52f4630cefbcfc2`.
+  The unsigned Release iPhoneOS build completed with `** BUILD SUCCEEDED **`;
+  its ROM-free arm64 audit passed with executable SHA-256
+  `b40cc5aad176172ded7af7c02fa751afb77d994c26e4478cb002221c2b9a7f20`,
+  clean bundled `spaghetti.o2r`
+  `4301e00ac0b2363ea2e0e78f97105f82f4c3da1f85f0f9fb42cb2a63918f2b79`,
+  and controller database
+  `eb002773dc8a16aa96f9ee2609798e231a9deb60c45e21fbdd4e221c9e8b7d77`.
+- Boundary: Phase 10 remains in progress. Only a physical iPad with two
+  Bluetooth controllers can close the 2P GP/VS/battle input, reconnect,
+  frame-time, and sustained-session gates. Three- and four-player modes must
+  then be attempted with measured results to decide whether they ship or are
+  explicitly deferred.
 
 ### 2026-07-28 — Phase 9 device UX and imported-pack Simulator slice passed; hardware GP pending
 
