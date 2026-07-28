@@ -45,8 +45,8 @@ audited ROM-free unsigned IPA.
 | Phase | Gate | State | Required evidence |
 |---|---|---|---|
 | 0 | Repo scaffolding and pinned bootstrap | Complete | Clean bootstrap, exact revisions, disabled pushes, ignore checks, safety audit, clean-directory replay |
-| 1 | Host oracle and clean port archives | Blocked — owner input | macOS title, archive hashes, clean `spaghetti.o2r` audit |
-| 2 | Patched libultraship iOS static library | Pending | arm64 iPhoneOS library, symbol audit, patch replay, macOS regression build |
+| 1 | Host oracle and clean port archives | Complete | macOS title, archive hashes, clean `spaghetti.o2r` audit |
+| 2 | Patched libultraship iOS static library | In progress | arm64 iPhoneOS library, symbol audit, patch replay, macOS regression build |
 | 3 | Full unsigned iOS app links | Pending | iPhoneOS app, platform/min-OS/bundle audit |
 | 4 | Simulator title screen | Pending | Live Metal frame, logs, screenshot, no desktop dialog symbols |
 | 5 | Lifecycle and audio | Pending | Three-cycle continuity, config flush, paused simulation, audible resume |
@@ -60,27 +60,68 @@ audited ROM-free unsigned IPA.
 
 ## Active gate
 
-**Phase 1 — obtain the required US big-endian `.z64`, then build the unmodified
-macOS oracle and generate the two audited port archives.**
+**Phase 2 — backport the maintained libultraship iOS patch and build the
+arm64 iPhoneOS static library without regressing the macOS oracle.**
 
 Expected:
 
-1. The user supplies a legally acquired Mario Kart 64 (US) big-endian `.z64`
-   with SHA-1 `579c48e211ae952530ffc8738709f078d5dd215e` under ignored `ref/`.
-2. The unmodified pinned source builds and runs to the title screen on macOS.
-3. `spaghetti.o2r` and desktop `mk64.o2r` are generated and hashed.
-4. The clean-port-archive audit proves `spaghetti.o2r` contains no
-   ROM-derived entries, and `mk64.o2r` returns to ignored `ref/`.
+1. `patches/libultraship-ios.patch` applies to pristine libultraship
+   `f5c3843fe937320b64ff754fa6bf71b13ff5e7a1`.
+2. The Xcode iPhoneOS build produces an arm64 `libultraship.a`.
+3. The iOS product contains no `toggleNativeMacOSFullscreen` or
+   `CoreAudioAudioPlayer` references.
+4. Reverse-apply and pristine-replay checks pass, and the patched source still
+   builds the macOS oracle.
 
 Boundary:
 
-- The available local ROM is a `.v64`, not the required US big-endian `.z64`.
-  It is not substituted or converted.
-- Phase 0 proves repository/bootstrap safety only. It proves no build,
-  Simulator, device, audio, touch, extraction, performance, or package
-  behavior.
+- Phase 1 proves the pinned desktop baseline, clean port archive, local
+  ROM-derived archive, and title screen only.
+- No iOS library/app, Simulator, device, lifecycle, audio, touch, extraction,
+  performance, controller, texture-pack, or package behavior is claimed yet.
 
 ## Evidence log
+
+### 2026-07-28 — Phase 1 macOS oracle and archive gate passed
+
+- Input: ignored `ref/Mario Kart 64.z64` was identified as big-endian
+  `MARIOKART64`, region/revision `NKTE Rev.00`, with the required SHA-1
+  `579c48e211ae952530ffc8738709f078d5dd215e`. Torch independently reported
+  the same game, country `us`, version `0`, and hash during extraction.
+- Build: `scripts/generate-port-archive.sh` configured the pinned unmodified
+  SpaghettiKart tree as a Release Ninja build with scripting disabled, built
+  the native arm64 Mach-O `build-oracle/Spaghettify`, generated the clean port
+  archive, and generated the desktop game archive. The final bounded replay
+  passed with `ORACLE_BUILD_JOBS=4`.
+- Dependency failure and recovery: a restricted-network configure left
+  CMake's pinned `stb_image.h` download at zero bytes, producing the exact
+  `GuiTexture.cpp:9:9: error: use of undeclared identifier
+  'stbi_image_free'`. The script now fails fast unless that pinned header is
+  nonempty; the authorized network replay fetched the 282,848-byte file and
+  completed without source changes.
+- Archive evidence: final SHA-256
+  `4301e00ac0b2363ea2e0e78f97105f82f4c3da1f85f0f9fb42cb2a63918f2b79`
+  for `build-oracle/spaghetti.o2r` (369 entries, 2.6 MiB), and
+  `26a8d0cf64a9e70276856b8876d41037195ea72cbbe78915257e6efd50179064`
+  for both `build-oracle/mk64.o2r` and ignored `ref/mk64.o2r` (25 MiB).
+  The clean archive was packed from the pinned source `assets/` input and its
+  entry-list audit found no `.z64`, `.n64`, `.v64`, `.rom`, `.otr`, or nested
+  `mk64*.o2r`.
+- Source-boundary replay: the extractor's ten regenerated tracked asset
+  headers were restored by the script's exit trap. Both
+  `sources/spaghettikart/baserom.us.z64` and
+  `sources/spaghettikart/mk64.o2r` were removed, the pinned checkout returned
+  to detached clean `HEAD`, and `scripts/check-repo-safety.sh` passed.
+- Runtime: a fresh launch from `build-oracle/` loaded `spaghetti.o2r`,
+  `mk64.o2r`, all 21 audio banks, and the title-screen sequence. Continuous
+  startup capture visually proved the libultraship splash, Nintendo boot
+  logo, and live Mario Kart 64 title screen with `PUSH START BUTTON`; the
+  local ignored evidence frame is
+  `ref/evidence/phase1-title-screen.png` (SHA-256
+  `a7a1aec2b2ccf764a5e7887f3ab89c1e9a9c70796c8ed74b70a09a27e2d69f93`).
+- Boundary: the desktop attract-mode races rendered and advanced, but this
+  phase does not claim gameplay correctness, controller input, subjective
+  audio quality, or any iOS behavior.
 
 ### 2026-07-28 — Phase 0 pinned bootstrap and clean-directory replay passed
 
