@@ -47,8 +47,8 @@ audited ROM-free unsigned IPA.
 | 0 | Repo scaffolding and pinned bootstrap | Complete | Clean bootstrap, exact revisions, disabled pushes, ignore checks, safety audit, clean-directory replay |
 | 1 | Host oracle and clean port archives | Complete | macOS title, archive hashes, clean `spaghetti.o2r` audit |
 | 2 | Patched libultraship iOS static library | Complete | arm64 iPhoneOS library, symbol audit, patch replay, macOS regression build |
-| 3 | Full unsigned iOS app links | In progress | iPhoneOS app, platform/min-OS/bundle audit |
-| 4 | Simulator title screen | Pending | Live Metal frame, logs, screenshot, no desktop dialog symbols |
+| 3 | Full unsigned iOS app links | Complete | iPhoneOS app, platform/min-OS/bundle audit |
+| 4 | Simulator title screen | In progress | Live Metal frame, logs, screenshot, no desktop dialog symbols |
 | 5 | Lifecycle and audio | Pending | Three-cycle continuity, config flush, paused simulation, audible resume |
 | 6 | Signed physical-iPad boot | Pending | Signed install, title screen, ten-minute stability run |
 | 7 | On-device Files extraction | Pending | Clean-device extraction, failure recovery, measured time/RSS |
@@ -60,28 +60,77 @@ audited ROM-free unsigned IPA.
 
 ## Active gate
 
-**Phase 3 — backport the maintained SpaghettiKart iOS app patch and link a
-complete unsigned iPhoneOS application.**
+**Phase 4 — boot the unsigned application to a live Metal title screen on an
+iPad Pro Simulator.**
 
 Expected:
 
-1. `patches/spaghettikart-ios.patch` applies to pristine SpaghettiKart
-   `5b28472d477bab101dee2a0f469fe2aee2c58a01` after the Phase 2 dependency
-   patch.
-2. The Xcode iPhoneOS build links an unsigned arm64 application bundle.
-3. The application binary and bundle report iPhoneOS platform metadata and
-   the intended minimum OS, with no ROM-derived input embedded.
-4. Reverse-apply and pristine-replay checks pass.
+1. `scripts/configure-ios.sh --simulator` generates the arm64 Simulator
+   project and the `Spaghettify` target builds `SpaghettiPad.app`.
+2. The ignored Phase 1 `ref/mk64.o2r` is staged into the Simulator
+   application's Files-visible Documents container.
+3. A live launch loads `spaghetti.o2r` and `mk64.o2r`, renders the Mario Kart
+   64 title screen through Metal, and a relaunch skips import prompts.
+4. The Simulator binary contains no portable-file-dialog symbols.
 
 Boundary:
 
-- Phase 2 proves only the patched libultraship iPhoneOS static library and
-  macOS build compatibility.
-- No linked iOS app, Simulator, device, lifecycle, audible output, touch,
-  extraction, performance, controller, texture-pack, or package behavior is
-  claimed yet.
+- Phase 3 proves only a linked and audited unsigned iPhoneOS application.
+- No Simulator or physical-device runtime, lifecycle continuity, audible
+  output, touch, extraction, performance, controller, texture-pack, or
+  package behavior is claimed yet.
 
 ## Evidence log
+
+### 2026-07-28 — Phase 3 unsigned iPhoneOS application gate passed
+
+- Maintained patch: `patches/spaghettikart-ios.patch` (297 lines, seven source
+  files, 137 insertions, 48 deletions; SHA-256
+  `7cfe87dc5f386001aad61cb6a42f522bc30904494f4a7fccddfbdc62c9a9c5db`)
+  backports the shell/resource bundle, iOS CMake guards, pinned Ogg/Vorbis
+  fallback, mobile include correction, and iOS-15-safe controller-pak
+  filename construction.
+- Patch replay: both maintained patches reverse-applied to pristine
+  SpaghettiKart `5b28472d477bab101dee2a0f469fe2aee2c58a01` and libultraship
+  `f5c3843fe937320b64ff754fa6bf71b13ff5e7a1`, leaving both inputs clean.
+  `scripts/apply-patches.sh` then restored both patches and both passed
+  reverse-check and `git diff --check`.
+- Build: `scripts/build-ios.sh` configured Xcode 26.6 with the iPhoneOS 26.5
+  SDK, `arm64-apple-ios15.0`, scripting disabled, and unsigned code signing,
+  then linked `build-ios/Release-iphoneos/SpaghettiPad.app`. The clean wrapper
+  replay ended in `** BUILD SUCCEEDED **`.
+- Narrow build fixes: Vorbis 1.3.7 required
+  `CMAKE_POLICY_VERSION_MINIMUM=3.5` under CMake 4.4, and the upstream
+  `std::format` fallback was replaced with simple string concatenation because
+  the iOS SDK marks its floating formatter unavailable before iOS 16.3. The
+  first resource audit also found upstream's escaped Xcode platform variable;
+  iOS runtime directories are now native bundle resources rather than a
+  post-build copy.
+- Binary audit: the final executable is an arm64 Mach-O with `LC_BUILD_VERSION`
+  platform `IOS`, minimum OS 15.0, SDK 26.5, and SHA-256
+  `6de1e0ea7bffa7037951911389840873332fe7f431e3fc4a6b8491cf2be4e2f0`.
+  `codesign -dv` reports `code object is not signed at all`.
+- Bundle audit: `Info.plist` names `SpaghettiPad`, reports `iPhoneOS`,
+  minimum 15.0, and device families `1,2`; Files sharing, landscape
+  orientations, arm64+Metal capability, extended-controller support, indirect
+  input, and ProMotion keys are present. `config.yml`, `yamls/`, `meta/`,
+  `gamecontrollerdb.txt`, and `spaghetti.o2r` are inside the bundle.
+- Safety audit: the bundled clean archive retains SHA-256
+  `4301e00ac0b2363ea2e0e78f97105f82f4c3da1f85f0f9fb42cb2a63918f2b79`;
+  the pinned controller database retains SHA-256
+  `eb002773dc8a16aa96f9ee2609798e231a9deb60c45e21fbdd4e221c9e8b7d77`.
+  `scripts/audit-ios-app.sh` found no ROM, `mk64*.o2r`, `.otr`, signature, or
+  provisioning material, and `scripts/check-repo-safety.sh` passed.
+- Desktop regression: the full patched native arm64 macOS target relinked
+  successfully with final executable SHA-256
+  `eba1ae77c1602a14acbc6a6e967ec91e84e0a686854a6a6494063a875aad1187`.
+  This replay exposed zero-byte results from upstream's unchecked
+  `sse2neon.h` and `semver.hpp` downloads; both are now commit-pinned and
+  hash-verified in the maintained patch, and `scripts/build-oracle.sh`
+  validates those headers plus `stb_image.h`.
+- Boundary: this phase does not claim Simulator or physical-device runtime,
+  lifecycle continuity, audible audio, touch, extraction, performance,
+  controller, texture-pack, or packaging behavior.
 
 ### 2026-07-28 — Phase 2 libultraship iPhoneOS library gate passed
 

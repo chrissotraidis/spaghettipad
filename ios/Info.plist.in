@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>en</string>
+    <key>CFBundleDisplayName</key>
+    <string>SpaghettiPad</string>
+    <key>CFBundleExecutable</key>
+    <string>SpaghettiPad</string>
+    <key>CFBundleIdentifier</key>
+    <string>@BUNDLE_ID@</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>CFBundleName</key>
+    <string>SpaghettiPad</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>@SPAGHETTIPAD_VERSION@</string>
+    <key>CFBundleVersion</key>
+    <string>@SPAGHETTIPAD_BUILD_NUMBER@</string>
+    <key>LSRequiresIPhoneOS</key>
+    <true/>
+    <key>UIFileSharingEnabled</key>
+    <true/>
+    <key>LSSupportsOpeningDocumentsInPlace</key>
+    <true/>
+    <key>UIRequiresFullScreen</key>
+    <true/>
+    <key>UIStatusBarHidden</key>
+    <true/>
+    <key>UILaunchScreen</key>
+    <dict/>
+    <key>UISupportedInterfaceOrientations</key>
+    <array>
+        <string>UIInterfaceOrientationLandscapeLeft</string>
+        <string>UIInterfaceOrientationLandscapeRight</string>
+    </array>
+    <key>UISupportedInterfaceOrientations~ipad</key>
+    <array>
+        <string>UIInterfaceOrientationLandscapeLeft</string>
+        <string>UIInterfaceOrientationLandscapeRight</string>
+    </array>
+    <key>UIRequiredDeviceCapabilities</key>
+    <array>
+        <string>arm64</string>
+        <string>metal</string>
+    </array>
+    <key>GCSupportedGameControllers</key>
+    <array>
+        <dict>
+            <key>ProfileName</key>
+            <string>ExtendedGamepad</string>
+        </dict>
+    </array>
+    <key>GCSupportsControllerUserInteraction</key>
+    <true/>
+    <key>CADisableMinimumFrameDurationOnPhone</key>
+    <true/>
+    <key>UIApplicationSupportsIndirectInputEvents</key>
+    <true/>
+    <key>ITSAppUsesNonExemptEncryption</key>
+    <false/>
+</dict>
+</plist>

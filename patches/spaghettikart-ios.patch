@@ -1,0 +1,297 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 883763dfe..ee3ac3464 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -31,10 +31,6 @@ endif()
+ set(SPAGHETTIKART_IOS OFF)
+ if(IOS OR CMAKE_SYSTEM_NAME STREQUAL "iOS")
+   set(SPAGHETTIKART_IOS ON)
+-  set(PLATFORM "OS64")
+-  include(cmake/ios.toolchain.cmake)
+-  set(CMAKE_XCODE_ATTRIBUTE_DEVELOPMENT_TEAM "YOUR_TEAM_ID")
+-  set(PROJECT_ID "dev.net64.game")
+ endif()
+ 
+ # Toggle for GLES (Required for many ARM/Mobile platforms)
+@@ -116,14 +112,14 @@ list(FILTER ALL_FILES EXCLUDE REGEX ".*.inc.c")
+ list(FILTER ALL_FILES EXCLUDE REGEX "./src/debug/crash_screen_enhancement.c")
+ 
+ if(SPAGHETTIKART_IOS)
+-  set(IOS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/ios)
+-
+-  set(STORYBOARD_FILE ${IOS_DIR}/Launch.storyboard)
+-  set(IMAGE_FILES ${IOS_DIR}/PoweredBy.png)
+-  set(ICON_FILES ${IOS_DIR}/Icon.png)
+-
+-  list(APPEND ALL_FILES ${STORYBOARD_FILE} ${IMAGE_FILES} ${ICON_FILES})
+-
++  if(NOT EXISTS "${SPAGHETTIPAD_SHELL_DIR}/SpaghettiPadShell.m")
++    message(FATAL_ERROR
++      "Set SPAGHETTIPAD_SHELL_DIR to the repo-owned iOS shell directory")
++  endif()
++  if(NOT EXISTS "${SPAGHETTIPAD_PORT_ARCHIVE}")
++    message(FATAL_ERROR
++      "Set SPAGHETTIPAD_PORT_ARCHIVE to the ROM-free spaghetti.o2r")
++  endif()
+ endif()
+ 
+ add_executable(${PROJECT_NAME} ${ALL_FILES})
+@@ -135,14 +131,60 @@ target_include_directories(
+ target_compile_definitions(${PROJECT_NAME} PRIVATE YAML_CPP_STATIC_DEFINE)
+ 
+ if(SPAGHETTIKART_IOS)
+-  target_compile_definitions(${PROJECT_NAME} PRIVATE PLATFORM_IOS=1)
+-  set_xcode_property(${PROJECT_NAME} PRODUCT_BUNDLE_IDENTIFIER ${PROJECT_ID}
+-                     All)
++  target_compile_definitions(${PROJECT_NAME}
++    PRIVATE PLATFORM_IOS=1 __IOS__ MA_NO_DEVICE_IO)
++  set_source_files_properties(src/port/Game.cpp
++    PROPERTIES COMPILE_DEFINITIONS main=SDL_main)
++
++  target_sources(${PROJECT_NAME} PRIVATE
++    "${SPAGHETTIPAD_SHELL_DIR}/SpaghettiPadShell.m"
++    "${SPAGHETTIPAD_SHELL_DIR}/Assets.xcassets"
++    "${SPAGHETTIPAD_PORT_ARCHIVE}"
++    "${CMAKE_CURRENT_SOURCE_DIR}/config.yml"
++    "${CMAKE_CURRENT_SOURCE_DIR}/yamls"
++    "${CMAKE_CURRENT_SOURCE_DIR}/meta")
++  set_source_files_properties(
++    "${SPAGHETTIPAD_SHELL_DIR}/Assets.xcassets"
++    "${SPAGHETTIPAD_PORT_ARCHIVE}"
++    "${CMAKE_CURRENT_SOURCE_DIR}/config.yml"
++    "${CMAKE_CURRENT_SOURCE_DIR}/yamls"
++    "${CMAKE_CURRENT_SOURCE_DIR}/meta"
++    PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
++
++  set(CONTROLLER_DB_COMMIT "03d390c37b1342fcb7d8d294cd9621ab9d640bb3")
++  set(CONTROLLER_DB_SHA256
++    "eb002773dc8a16aa96f9ee2609798e231a9deb60c45e21fbdd4e221c9e8b7d77")
++  set(CONTROLLER_DB_PATH "${CMAKE_BINARY_DIR}/gamecontrollerdb.txt")
++  file(DOWNLOAD
++    "https://raw.githubusercontent.com/mdqinc/SDL_GameControllerDB/${CONTROLLER_DB_COMMIT}/gamecontrollerdb.txt"
++    "${CONTROLLER_DB_PATH}"
++    EXPECTED_HASH SHA256=${CONTROLLER_DB_SHA256}
++    TLS_VERIFY ON)
++  target_sources(${PROJECT_NAME} PRIVATE "${CONTROLLER_DB_PATH}")
++  set_source_files_properties("${CONTROLLER_DB_PATH}"
++    PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
++
++  set(BUNDLE_ID "com.chrissotraidis.spaghettipad" CACHE STRING
++    "iOS application bundle identifier")
++  set(DEVELOPMENT_TEAM "" CACHE STRING "Apple development team")
++  set(SPAGHETTIPAD_VERSION "0.1.0" CACHE STRING "Application version")
++  set(SPAGHETTIPAD_BUILD_NUMBER "1" CACHE STRING "Application build number")
++  configure_file(
++    "${SPAGHETTIPAD_SHELL_DIR}/Info.plist.in"
++    "${CMAKE_BINARY_DIR}/ios/Info.plist"
++    @ONLY)
+   set_target_properties(
+     ${PROJECT_NAME}
+-    PROPERTIES MACOSX_BUNDLE TRUE
+-               MACOSX_BUNDLE_INFO_PLIST ${IOS_DIR}/plist.in
+-               RESOURCE "${IMAGE_FILES};${STORYBOARD_FILE};${ICON_FILES}")
++    PROPERTIES
++      OUTPUT_NAME "SpaghettiPad"
++      MACOSX_BUNDLE TRUE
++      MACOSX_BUNDLE_INFO_PLIST "${CMAKE_BINARY_DIR}/ios/Info.plist"
++      XCODE_ATTRIBUTE_CLANG_ENABLE_OBJC_ARC YES
++      XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "${BUNDLE_ID}"
++      XCODE_ATTRIBUTE_DEVELOPMENT_TEAM "${DEVELOPMENT_TEAM}"
++      XCODE_ATTRIBUTE_CODE_SIGN_STYLE "Automatic"
++      XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "1,2"
++      XCODE_ATTRIBUTE_SKIP_INSTALL "NO")
+ endif()
+ 
+ include(cmake/SetFlags.cmake)
+@@ -204,17 +246,20 @@ endif()
+ # ##############################################################################
+ 
+ 
+-add_custom_command(
+-  TARGET ${PROJECT_NAME}
+-  POST_BUILD
+-  COMMENT "Copying asset yamls..."
+-  COMMAND
+-    ${CMAKE_COMMAND} -DSOURCE_DIR=${CMAKE_SOURCE_DIR}
+-    -DDESTINATION_DIR=$<TARGET_FILE_DIR:${PROJECT_NAME}>
+-    -P ${CMAKE_SOURCE_DIR}/cmake/StageRuntimeFiles.cmake
+-  VERBATIM)
++if(NOT SPAGHETTIKART_IOS)
++  add_custom_command(
++    TARGET ${PROJECT_NAME}
++    POST_BUILD
++    COMMENT "Copying asset yamls..."
++    COMMAND
++      ${CMAKE_COMMAND} -DSOURCE_DIR=${CMAKE_SOURCE_DIR}
++      -DDESTINATION_DIR=$<TARGET_FILE_DIR:${PROJECT_NAME}>
++      -P ${CMAKE_SOURCE_DIR}/cmake/StageRuntimeFiles.cmake
++    VERBATIM)
++endif()
+ 
+-if(NOT CMAKE_SYSTEM_NAME STREQUAL "NintendoSwitch")
++if(NOT CMAKE_SYSTEM_NAME STREQUAL "NintendoSwitch" AND
++   NOT SPAGHETTIKART_IOS)
+   include(ExternalProject)
+   # Torch's pinned spdlog bundles an fmt that trips a consteval error under
+   # newer AppleClang (Xcode 16+): "call to consteval function
+diff --git a/cmake/SetCmakeVar.cmake b/cmake/SetCmakeVar.cmake
+index 934f308ef..2a5a63fb0 100644
+--- a/cmake/SetCmakeVar.cmake
++++ b/cmake/SetCmakeVar.cmake
+@@ -3,7 +3,10 @@ if(APPLE)
+ endif()
+ 
+ # Set the minimum version of CMake and the deployment target for macOS
+-set(CMAKE_OSX_DEPLOYMENT_TARGET "10.15" CACHE STRING "Minimum OS X deployment version")
++if(NOT CMAKE_SYSTEM_NAME STREQUAL "iOS")
++  set(CMAKE_OSX_DEPLOYMENT_TARGET "10.15" CACHE STRING
++      "Minimum OS X deployment version")
++endif()
+ 
+ 
+ # Set the C++ standard and enable the MSVC parallel build option
+diff --git a/cmake/SetFlags.cmake b/cmake/SetFlags.cmake
+index 44bfce2fb..17b421248 100644
+--- a/cmake/SetFlags.cmake
++++ b/cmake/SetFlags.cmake
+@@ -37,9 +37,11 @@ else()
+     -Wno-parentheses
+     -Wno-missing-braces
+     -ffast-math
+-    -flto=auto
+     -pipe)
+-  target_link_options(${PROJECT_NAME} PRIVATE -flto=auto)
++  if(NOT SPAGHETTIKART_IOS)
++    target_compile_options(${PROJECT_NAME} PRIVATE -flto=auto)
++    target_link_options(${PROJECT_NAME} PRIVATE -flto=auto)
++  endif()
+ 
+   set(C_FLAGS -Werror-implicit-function-declaration
+               -Wno-incompatible-pointer-types)
+diff --git a/cmake/dependencies/common.cmake b/cmake/dependencies/common.cmake
+index 65d5741a3..92ad7fb18 100644
+--- a/cmake/dependencies/common.cmake
++++ b/cmake/dependencies/common.cmake
+@@ -1,18 +1,38 @@
+ # =================== SSE2NEON ===================
+ set(SSE2NEON_DIR ${CMAKE_BINARY_DIR}/_deps/sse2neon)
+-file(
+-  DOWNLOAD
+-  "https://raw.githubusercontent.com/DLTcollab/sse2neon/refs/heads/master/sse2neon.h"
+-  "${SSE2NEON_DIR}/sse2neon.h")
++set(SSE2NEON_PATH "${SSE2NEON_DIR}/sse2neon.h")
++set(SSE2NEON_SHA256
++    fab5e1be095ce8db9d2ab0c1fe0b2c6f2a34657b43ce83688e8c84224806df38)
++if(EXISTS "${SSE2NEON_PATH}")
++  file(SHA256 "${SSE2NEON_PATH}" SSE2NEON_EXISTING_SHA256)
++endif()
++if(NOT SSE2NEON_EXISTING_SHA256 STREQUAL SSE2NEON_SHA256)
++  file(
++    DOWNLOAD
++    "https://raw.githubusercontent.com/DLTcollab/sse2neon/3b70b3727edc9a151c113814129258c3423a771c/sse2neon.h"
++    "${SSE2NEON_PATH}"
++    EXPECTED_HASH SHA256=${SSE2NEON_SHA256}
++    TLS_VERIFY ON)
++endif()
+ 
+ target_include_directories(${PROJECT_NAME} PRIVATE ${SSE2NEON_DIR})
+ 
+ # ================== SEMVER ===================
+ set(SEMVER_DIR ${CMAKE_BINARY_DIR}/_deps/semver)
+-file(
+-  DOWNLOAD
+-  "https://raw.githubusercontent.com/Neargye/semver/refs/tags/v1.0.0-rc/include/semver.hpp"
+-  "${SEMVER_DIR}/semver.hpp")
++set(SEMVER_PATH "${SEMVER_DIR}/semver.hpp")
++set(SEMVER_SHA256
++    af2c0c53124dc7f52c58a7205e458ad3efbac2f61ce55addf9c8f94338a04182)
++if(EXISTS "${SEMVER_PATH}")
++  file(SHA256 "${SEMVER_PATH}" SEMVER_EXISTING_SHA256)
++endif()
++if(NOT SEMVER_EXISTING_SHA256 STREQUAL SEMVER_SHA256)
++  file(
++    DOWNLOAD
++    "https://raw.githubusercontent.com/Neargye/semver/ccbbfdf2f862a48498d37d5955743a5082ee49bf/include/semver.hpp"
++    "${SEMVER_PATH}"
++    EXPECTED_HASH SHA256=${SEMVER_SHA256}
++    TLS_VERIFY ON)
++endif()
+ 
+ target_include_directories(${PROJECT_NAME} PRIVATE ${SEMVER_DIR})
+ 
+diff --git a/cmake/dependencies/FindLib.cmake b/cmake/dependencies/FindLib.cmake
+index bbc33549a..a2d5dc8d7 100644
+--- a/cmake/dependencies/FindLib.cmake
++++ b/cmake/dependencies/FindLib.cmake
+@@ -7,6 +7,32 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "CafeOS")
+   set(ADDITIONAL_LIBRARY_DEPENDENCIES "$<$<CONFIG:Debug>:-Wl,--wrap=abort>")
+   target_include_directories(${PROJECT_NAME} PRIVATE
+                              ${DEVKITPRO}/portlibs/wiiu/include/)
++elseif(CMAKE_SYSTEM_NAME STREQUAL "iOS")
++  set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
++  set(BUILD_FRAMEWORK OFF CACHE BOOL "" FORCE)
++  set(INSTALL_DOCS OFF CACHE BOOL "" FORCE)
++  set(INSTALL_CMAKE_PACKAGE_MODULE OFF CACHE BOOL "" FORCE)
++
++  FetchContent_Declare(
++    ogg
++    GIT_REPOSITORY https://github.com/xiph/ogg.git
++    GIT_TAG v1.3.6
++    GIT_SHALLOW TRUE
++    OVERRIDE_FIND_PACKAGE)
++  FetchContent_MakeAvailable(ogg)
++
++  # Vorbis 1.3.7 predates CMake's modern policy declaration syntax.
++  set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
++  FetchContent_Declare(
++    vorbis
++    GIT_REPOSITORY https://github.com/xiph/vorbis.git
++    GIT_TAG v1.3.7
++    GIT_SHALLOW TRUE)
++  FetchContent_MakeAvailable(vorbis)
++
++  add_library(Vorbis::vorbis ALIAS vorbis)
++  add_library(Vorbis::vorbisenc ALIAS vorbisenc)
++  add_library(Vorbis::vorbisfile ALIAS vorbisfile)
+ else()
+   find_package(Ogg REQUIRED)
+   find_package(Vorbis REQUIRED)
+diff --git a/src/port/SpaghettiGui.cpp b/src/port/SpaghettiGui.cpp
+index 56320e2be..1f15522dd 100644
+--- a/src/port/SpaghettiGui.cpp
++++ b/src/port/SpaghettiGui.cpp
+@@ -17,7 +17,7 @@
+ #endif
+ 
+ #if defined(__ANDROID__) || defined(__IOS__)
+-#include "port/mobile/MobileImpl.h"
++#include "ship/port/mobile/MobileImpl.h"
+ #endif
+ 
+ #ifdef ENABLE_OPENGL
+diff --git a/src/port/pak.cpp b/src/port/pak.cpp
+index 4adedd6a0..0bbce094c 100644
+--- a/src/port/pak.cpp
++++ b/src/port/pak.cpp
+@@ -1,12 +1,5 @@
+ #include <filesystem>
+ #include <fstream>
+-#if __has_include(<fmt/format.h>)
+-#include <fmt/format.h>
+-#define fmt(...) fmt::format(__VA_ARGS__)
+-#else
+-#include <format>
+-#define fmt(...) std::format(__VA_ARGS__)
+-#endif
+ 
+ #include <libultraship.h>
+ #include <libultraship/libultra.h>
+@@ -23,7 +16,7 @@ typedef struct ControllerPak {
+ } ControllerPak;
+ 
+ std::string Pfs_PakFile_GetPath(u8 file_no) {
+-    return Ship::Context::GetPathRelativeToAppDirectory(fmt("controllerPak_file_{}.sav", file_no));
++    return Ship::Context::GetPathRelativeToAppDirectory("controllerPak_file_" + std::to_string(file_no) + ".sav");
+ }
+ 
+ std::string Pfs_PakHeader_GetPath() {
