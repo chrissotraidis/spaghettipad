@@ -46,8 +46,8 @@ audited ROM-free unsigned IPA.
 |---|---|---|---|
 | 0 | Repo scaffolding and pinned bootstrap | Complete | Clean bootstrap, exact revisions, disabled pushes, ignore checks, safety audit, clean-directory replay |
 | 1 | Host oracle and clean port archives | Complete | macOS title, archive hashes, clean `spaghetti.o2r` audit |
-| 2 | Patched libultraship iOS static library | In progress | arm64 iPhoneOS library, symbol audit, patch replay, macOS regression build |
-| 3 | Full unsigned iOS app links | Pending | iPhoneOS app, platform/min-OS/bundle audit |
+| 2 | Patched libultraship iOS static library | Complete | arm64 iPhoneOS library, symbol audit, patch replay, macOS regression build |
+| 3 | Full unsigned iOS app links | In progress | iPhoneOS app, platform/min-OS/bundle audit |
 | 4 | Simulator title screen | Pending | Live Metal frame, logs, screenshot, no desktop dialog symbols |
 | 5 | Lifecycle and audio | Pending | Three-cycle continuity, config flush, paused simulation, audible resume |
 | 6 | Signed physical-iPad boot | Pending | Signed install, title screen, ten-minute stability run |
@@ -60,27 +60,59 @@ audited ROM-free unsigned IPA.
 
 ## Active gate
 
-**Phase 2 — backport the maintained libultraship iOS patch and build the
-arm64 iPhoneOS static library without regressing the macOS oracle.**
+**Phase 3 — backport the maintained SpaghettiKart iOS app patch and link a
+complete unsigned iPhoneOS application.**
 
 Expected:
 
-1. `patches/libultraship-ios.patch` applies to pristine libultraship
-   `f5c3843fe937320b64ff754fa6bf71b13ff5e7a1`.
-2. The Xcode iPhoneOS build produces an arm64 `libultraship.a`.
-3. The iOS product contains no `toggleNativeMacOSFullscreen` or
-   `CoreAudioAudioPlayer` references.
-4. Reverse-apply and pristine-replay checks pass, and the patched source still
-   builds the macOS oracle.
+1. `patches/spaghettikart-ios.patch` applies to pristine SpaghettiKart
+   `5b28472d477bab101dee2a0f469fe2aee2c58a01` after the Phase 2 dependency
+   patch.
+2. The Xcode iPhoneOS build links an unsigned arm64 application bundle.
+3. The application binary and bundle report iPhoneOS platform metadata and
+   the intended minimum OS, with no ROM-derived input embedded.
+4. Reverse-apply and pristine-replay checks pass.
 
 Boundary:
 
-- Phase 1 proves the pinned desktop baseline, clean port archive, local
-  ROM-derived archive, and title screen only.
-- No iOS library/app, Simulator, device, lifecycle, audio, touch, extraction,
-  performance, controller, texture-pack, or package behavior is claimed yet.
+- Phase 2 proves only the patched libultraship iPhoneOS static library and
+  macOS build compatibility.
+- No linked iOS app, Simulator, device, lifecycle, audible output, touch,
+  extraction, performance, controller, texture-pack, or package behavior is
+  claimed yet.
 
 ## Evidence log
+
+### 2026-07-28 — Phase 2 libultraship iPhoneOS library gate passed
+
+- Patch replay: `patches/libultraship-ios.patch` (505 lines, 17 source files,
+  176 insertions, 22 deletions; SHA-256
+  `af687f13734f9c3c3d8292003c1695a769a7e54b22fd6cb3a38b122202af29fe`)
+  reverse-applied to pristine libultraship
+  `f5c3843fe937320b64ff754fa6bf71b13ff5e7a1`, passed `git apply --check`,
+  reapplied through `scripts/apply-patches.sh`, and passed reverse-check and
+  `git diff --check`.
+- iPhoneOS build: `scripts/build-ios-lus.sh` configured Xcode 26.6 with the
+  iPhoneOS 26.5 SDK, `arm64-apple-ios15.0`, and scripting disabled, then built
+  `build-ios-lus/src/Release-iphoneos/libultraship.a`. The final archive is
+  arm64, reports `LC_BUILD_VERSION` platform 2 and minimum OS 15.0, and has
+  SHA-256
+  `f8185a4de2681bb5a63fd9fa62d1501ec35d301e8cdb1e0570f8337f0271c1f5`.
+- Symbol audit: the archive has no undefined
+  `toggleNativeMacOSFullscreen` or `CoreAudioAudioPlayer` reference.
+  `WindowIsFrameReady` and the weak
+  `SpaghettiPad_SetTouchControlsMenuVisible` integration hook are present.
+- Scripting guard: an iPhoneOS configure with `ENABLE_SCRIPTING=ON` stopped
+  at CMake with the required `ENABLE_SCRIPTING is unsupported on iOS` fatal
+  error.
+- Desktop regression: the patched dependency rebuilt and linked the complete
+  native arm64 `build-oracle/Spaghettify` target on macOS (340 Ninja steps;
+  final executable SHA-256
+  `0c53480ea6be03a900a5faf2b51ae10e622f6a7321bd72e6da6d630894a3e69a`).
+  The compiler emitted existing upstream warnings but no errors.
+- Boundary: this phase does not claim a linked iOS app, Simulator or physical
+  device runtime, lifecycle continuity, audible audio, touch, extraction,
+  performance, controller, texture-pack, or packaging behavior.
 
 ### 2026-07-28 — Phase 1 macOS oracle and archive gate passed
 
