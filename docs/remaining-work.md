@@ -124,7 +124,14 @@ Boundary:
 - Audio boundary: the game log recorded `Audio thread started` at
   `08:43:19.364`. The lifecycle handler pauses SDL output, clears queued
   samples, and resumes the device on foreground; the live process resumed
-  after every cycle. However, macOS reported `Jump Desktop Audio` as
+  after every cycle. A non-invasive LLDB trace against that same Release
+  process then proved the runtime path directly: background called
+  `SDLAudioPlayer::SetPaused(true)` on SDL device 2, changed its paused byte
+  from 0 to 1, and left `Buffered()` at zero. Foreground called
+  `SetPaused(false)` on the same object, changed 1 to 0, and the audio worker
+  immediately called `DoPlay` with 3,584 bytes, refilling the queue to 896
+  stereo sample frames. LLDB detached cleanly; PID `86185` remained alive and
+  live rendering continued. However, macOS reported `Jump Desktop Audio` as
   `Default Output Device` and `MacBook Air Speakers` only as
   `Default System Output Device`. No human audible-output result is claimed;
   that listening check remains the Phase 5b gate.
