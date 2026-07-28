@@ -13,8 +13,9 @@
 > **Development preview:** the native iPadOS/iOS Simulator build is playable
 > through touch and the bring-your-own-ROM flow, and two-controller horizontal
 > split-screen and optional tilt steering now run in the iPad Simulator.
-> Physical-iPad validation, Bluetooth-controller performance, packaging, and
-> release artifacts are still in progress. There is no public IPA yet.
+> A reproducible ROM-free unsigned IPA can be built from source; physical-iPad
+> validation and Bluetooth-controller performance are still in progress.
+> There is no public IPA download yet.
 
 ![SpaghettiPad running with its iPad touch layout](docs/screenshots/ipad-touch-controls.png)
 
@@ -92,7 +93,7 @@ tap, and recalibrates after the app returns from the background.
 | Physical iPad | Signing, installation, stability, and touch-only Grand Prix pending |
 | Controllers and split-screen | Independent ports, parked touch input, four-port defaults, and live 2P horizontal rendering pass in Simulator; two-controller hardware GP/frame-time capture pending |
 | Tilt steering | 60 Hz analog path, persistence, sensitivity, recenter, touch-stick priority, and foreground recalibration pass in Simulator; physical tilt GP pending |
-| Unsigned ROM-free IPA | Final packaging phase |
+| Unsigned ROM-free IPA | Reproducible local build, bundle audit, packaging, and rejection gates pass; clean-runner CI is the publication gate |
 
 The proof log is intentionally strict: a Simulator result never stands in for
 a physical-device result. Follow the live
@@ -115,8 +116,9 @@ untraceable engine changes:
    signing residue, and platform mistakes before packaging.
 
 The implementation is JIT-free, ROM-free, and designed for reproducible clean
-replay. Developer build and sideload instructions will be published once the
-physical-device and packaging gates pass.
+replay. See [Build SpaghettiPad](docs/BUILDING.md) to reproduce the Simulator
+or arm64 device app and [Install a developer preview](docs/INSTALL_IPA.md) for
+the unsigned-IPA boundary.
 
 ## Bring your own assets
 
@@ -136,6 +138,10 @@ M-series-iPad performance experiment, not a default recommendation.
 
 - [Implementation plan](docs/spaghettikart-implementation-plan.md)
 - [Current queue and proof log](docs/remaining-work.md)
+- [Build from source](docs/BUILDING.md)
+- [Install an unsigned developer preview](docs/INSTALL_IPA.md)
+- [Release checklist](docs/RELEASE_CHECKLIST.md)
+- [Rights and licensing boundary](RIGHTS_AND_LICENSES.md)
 - [iOS feasibility study](docs/spaghettikart-ios-feasibility.md)
 - [Prior-port review and claim boundaries](docs/rebelancap-ports-review.md)
 

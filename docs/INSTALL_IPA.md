@@ -1,0 +1,63 @@
+# Install a SpaghettiPad developer preview
+
+SpaghettiPad currently produces a ROM-free unsigned developer-preview IPA. It
+is not an App Store or TestFlight build, and no public download has been
+published yet.
+
+An unsigned IPA must be re-signed for your own iPhone or iPad with an Apple
+development identity or a compatible personal-signing tool. The IPA contains
+no Mario Kart 64 ROM, extracted game archive, or texture pack.
+
+## Build or obtain the IPA
+
+To create the artifact from source:
+
+```sh
+scripts/build-ios.sh --device
+scripts/package-ios.sh
+```
+
+The packager prints the exact output path and SHA-256. Verify any separately
+provided artifact against its published SHA-256 before signing it.
+
+## Install
+
+Use one of these local development paths:
+
+1. Sign and run the app from Xcode using the instructions in
+   [BUILDING.md](BUILDING.md), or
+2. Re-sign the `-unsigned.ipa` with a compatible sideloading tool that you
+   trust, then install it on your device.
+
+Do not install an artifact containing another maintainer's provisioning
+profile. SpaghettiPad's public packaging contract is an unsigned IPA intended
+to be signed by the person installing it.
+
+After installation:
+
+1. Launch SpaghettiPad once so iOS creates its Files-visible folder.
+2. In Files, copy your legally acquired Mario Kart 64 US 1.0 big-endian
+   `.z64` into `On My iPhone > SpaghettiPad` or
+   `On My iPad > SpaghettiPad`.
+3. Return to SpaghettiPad and follow the import screen.
+4. Keep the app open while extraction runs.
+
+For an optional texture pack, follow the README's
+[visual-upgrade instructions](../README.md#bring-your-own-assets) only after
+the base game launches.
+
+## Updates and saves
+
+Install updates with the same bundle identifier and signing identity, without
+deleting the existing app first. Back up the SpaghettiPad folder in Files
+before updating. Preview signing and sideload tools can expire, fail, or
+replace an app container; save preservation is not claimed until the exact
+physical-device update gate passes.
+
+## Preview boundaries
+
+- No jailbreak or JIT is required by SpaghettiPad.
+- The user supplies all game data.
+- Physical iPhone/iPad installation, long-session stability, controller
+  behavior, performance, and in-place update preservation are still explicit
+  acceptance gates.

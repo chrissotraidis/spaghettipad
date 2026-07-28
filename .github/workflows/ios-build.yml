@@ -1,0 +1,80 @@
+name: SpaghettiPad iOS build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ios-build-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  repository-safety:
+    name: Repository safety
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Check assets, history, scripts, patches, and docs
+        run: scripts/check-repo-safety.sh
+
+  ios-build:
+    name: ROM-free unsigned iPhoneOS app and IPA
+    runs-on: macos-15
+    timeout-minutes: 120
+    needs: repository-safety
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install build dependencies
+        run: >-
+          brew install cmake ninja pkgconf sdl2 glew nlohmann-json libpng
+          libzip tinyxml2 libogg libvorbis opus opusfile sdl2_net ripgrep
+
+      - name: Cache fetched build dependencies
+        uses: actions/cache@v6
+        with:
+          path: |
+            build-oracle/_deps
+            build-ios/_deps
+          key: spaghettipad-ios-${{ runner.os }}-${{ hashFiles('patches/**', 'scripts/*.sh') }}
+
+      - name: Reproduce unsigned arm64 iPhoneOS app
+        run: scripts/build-ios.sh --device
+
+      - name: Package and exercise the signing rejection gate
+        run: |
+          scripts/package-ios.sh
+          if REQUIRE_SIGNED=1 scripts/package-ios.sh; then
+            echo "Unsigned CI app unexpectedly passed REQUIRE_SIGNED=1" >&2
+            exit 1
+          fi
+
+      - name: Publish artifact hash
+        run: |
+          shasum -a 256 artifacts/*.ipa | tee ipa-sha256.txt
+          {
+            echo '### Unsigned ROM-free IPA'
+            echo '```text'
+            cat ipa-sha256.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload unsigned proof artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: SpaghettiPad-unsigned-ipa
+          path: |
+            artifacts/*.ipa
+            ipa-sha256.txt
+          if-no-files-found: error

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Audit the Phase 3 unsigned iPhoneOS application contract.
+# Audit the ROM-free iPhoneOS application contract.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -12,7 +12,7 @@ fail() {
     exit 1
 }
 
-for command in codesign file find lipo plutil rg shasum xcrun; do
+for command in codesign file find lipo plutil rg shasum unzip xcrun; do
     command -v "$command" >/dev/null ||
         fail "required command is unavailable: $command"
 done
@@ -32,7 +32,7 @@ file "$BINARY" | rg -q 'Mach-O 64-bit executable arm64' ||
     fail "application is not an arm64 Mach-O executable"
 
 BUILD_METADATA="$(xcrun vtool -show-build "$BINARY")"
-rg -q 'platform IOS' <<<"$BUILD_METADATA" ||
+rg -q '^[[:space:]]*platform IOS$' <<<"$BUILD_METADATA" ||
     fail "application does not target iPhoneOS"
 rg -q 'minos 15\.0' <<<"$BUILD_METADATA" ||
     fail "application does not target iOS 15.0"
@@ -62,6 +62,13 @@ done
 [ "$(shasum -a 256 "$APP/gamecontrollerdb.txt" | awk '{print $1}')" = \
     "$EXPECTED_CONTROLLER_SHA256" ] || fail "controller database hash changed"
 
+PORT_ENTRIES="$(unzip -Z1 "$APP/spaghetti.o2r")"
+[ -n "$PORT_ENTRIES" ] || fail "clean port archive contains no entries"
+if rg -qi '(^|/).*\.(z64|n64|v64|rom|otr)$|(^|/)mk64[^/]*\.o2r$' \
+    <<<"$PORT_ENTRIES"; then
+    fail "clean port archive contains ROM or ROM-derived data"
+fi
+
 FORBIDDEN_FILES="$(find "$APP" -type f \
     \( -iname '*.z64' -o -iname '*.n64' -o -iname '*.v64' \
        -o -iname '*.rom' -o -iname '*.otr' -o -iname '*.o2r' \) \
@@ -70,17 +77,35 @@ FORBIDDEN_FILES="$(find "$APP" -type f \
     printf '%s\n' "$FORBIDDEN_FILES" >&2
     fail "ROM-derived game data is embedded"
 }
-[ ! -e "$APP/_CodeSignature" ] || fail "stale code signature is present"
-[ ! -e "$APP/embedded.mobileprovision" ] ||
-    fail "provisioning profile is embedded"
-if codesign -dv "$APP" >/dev/null 2>&1; then
-    fail "application is signed; Phase 3 requires an unsigned bundle"
+
+if [ "${REQUIRE_SIGNED:-0}" = "1" ] &&
+   [ "${REQUIRE_UNSIGNED:-0}" = "1" ]; then
+    fail "REQUIRE_SIGNED and REQUIRE_UNSIGNED cannot both be enabled"
+fi
+
+SIGNATURE_STATE="unsigned"
+if codesign --verify --strict "$APP" >/dev/null 2>&1 &&
+   [ -f "$APP/embedded.mobileprovision" ]; then
+    SIGNATURE_STATE="signed"
+elif [ -e "$APP/_CodeSignature" ] ||
+     [ -e "$APP/embedded.mobileprovision" ]; then
+    fail "stale or incomplete signing material is present"
+fi
+
+if [ "${REQUIRE_SIGNED:-0}" = "1" ] &&
+   [ "$SIGNATURE_STATE" != "signed" ]; then
+    fail "REQUIRE_SIGNED=1, but the app lacks a valid signature/profile"
+fi
+if [ "${REQUIRE_UNSIGNED:-0}" = "1" ] &&
+   [ "$SIGNATURE_STATE" != "unsigned" ]; then
+    fail "REQUIRE_UNSIGNED=1, but the app is signed"
 fi
 
 echo
-echo "Unsigned iPhoneOS application audit passed:"
+echo "iPhoneOS application audit passed:"
 echo "  bundle         $APP"
 echo "  architecture   $(lipo -archs "$BINARY")"
+echo "  signing        $SIGNATURE_STATE"
 echo "  binary sha256  $(shasum -a 256 "$BINARY" | awk '{print $1}')"
 echo "  archive sha256 $EXPECTED_PORT_SHA256"
 echo "  controller db  $EXPECTED_CONTROLLER_SHA256"

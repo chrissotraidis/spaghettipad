@@ -56,11 +56,11 @@ audited ROM-free unsigned IPA.
 | 9 | iPad UX and imported texture pack | In progress (Simulator UX/import slice passed; hardware pack GP pending) | Touch-complete UX plus Reloaded import/enable/full-GP hardware gate |
 | 10 | Controllers and split-screen | In progress (Simulator routing/render slice passed; hardware sessions pending) | Two-controller 2P session and measured 3P/4P decision |
 | 11 | Tilt steering | In progress (Simulator slice passed; hardware GP pending) | Persisted, drift-free tilt GP on hardware |
-| 12 | Package, CI, docs, release | Pending | Clean CI, clean-machine replay, audited IPA and SHA-256 |
+| 12 | Package, CI, docs, release | In progress (local gates passed; clean CI pending) | Clean CI, clean-machine replay, audited IPA and SHA-256 |
 
 ## Active gate
 
-**Phase 6/7/8/9/10/11 owner hardware replay; Phase 12 is the next unblocked implementation gate.**
+**Phase 12 clean-runner CI; Phase 6/7/8/9/10/11 owner hardware replay remains separate.**
 
 Expected:
 
@@ -92,9 +92,47 @@ Boundary:
   replay items even when their Simulator equivalents pass.
 - Simulator evidence does not prove signing, installation, watchdog behavior,
   or audio on physical hardware. Touch, extraction, performance, controller,
-  texture-pack, and package behavior also remain unclaimed.
+  and texture-pack behavior also remain unclaimed on hardware. Local packaging
+  proves artifact contents, not device installation or runtime behavior.
 
 ## Evidence log
+
+### 2026-07-28 — Phase 12 local package and documentation gates passed; clean CI pending
+
+- Public build path: `scripts/build-ios.sh --device` replayed the pinned
+  sources, ROM-free port archive, maintained patches, generic iPhoneOS
+  configuration, unsigned Release build, and bundle audit in one command.
+  Xcode 26.6 completed with `** BUILD SUCCEEDED **`; the final arm64 executable
+  SHA-256 is
+  `e9c4d6e57fbac57f27870a575eb74a493432e3b9da74af72d461efea31bf353c`.
+- Bundle audit: the app targets iPhoneOS with a 15.0 minimum, contains both
+  iPhone and iPad device families, enables Files sharing, and has no valid or
+  stale signing material. The only bundled `.o2r` is the hash-pinned ROM-free
+  `spaghetti.o2r`
+  `4301e00ac0b2363ea2e0e78f97105f82f4c3da1f85f0f9fb42cb2a63918f2b79`;
+  the controller database remains
+  `eb002773dc8a16aa96f9ee2609798e231a9deb60c45e21fbdd4e221c9e8b7d77`.
+- IPA proof: `scripts/package-ios.sh` produced
+  `SpaghettiPad-0.1.0-preview.1-unsigned.ipa`, 11,234,757 bytes / 292 ZIP
+  entries, SHA-256
+  `3c5048d0ee5bdf5c19012ebe253cffa64b12378f6570c343655678e8d4ef02f9`.
+  `unzip -t` passed. The payload has no `_CodeSignature`, provisioning profile,
+  ROM, `mk64*.o2r`, or `.otr`; it includes the project rights notice and 32
+  discovered third-party license files.
+- Negative gates: the audit rejected an iPhoneSimulator bundle by exact
+  platform, a changed `spaghetti.o2r`, a rogue `mk64.o2r`, stale signing
+  material, contradictory signed/unsigned requirements, and an unsigned app
+  submitted with `REQUIRE_SIGNED=1`.
+- Public documentation: the README now leads with the live iPad/iPhone product,
+  screenshots, tailored controls, widescreen, split-screen, tilt, and
+  bring-your-own-assets boundaries. `docs/BUILDING.md`,
+  `docs/INSTALL_IPA.md`, `docs/RELEASE_CHECKLIST.md`, and
+  `RIGHTS_AND_LICENSES.md` define reproducible build, sideload, release, and
+  rights boundaries without claiming a public download.
+- Boundary: this closes the local Phase 12 build/package slice, not Phase 12
+  itself. The pushed GitHub Actions run must still reproduce the unsigned
+  artifact on a clean macOS runner. Physical signing, installation, runtime,
+  update, and gameplay gates remain open regardless of CI.
 
 ### 2026-07-28 — Phase 11 tilt-steering Simulator slice passed; hardware GP pending
 

@@ -22,6 +22,14 @@ for command in cmake git; do
     command -v "$command" >/dev/null ||
         fail "required command is unavailable: $command"
 done
+
+SPAGHETTIPAD_VERSION="${SPAGHETTIPAD_VERSION:-0.1.0}"
+SPAGHETTIPAD_BUILD_NUMBER="${SPAGHETTIPAD_BUILD_NUMBER:-1}"
+[[ "$SPAGHETTIPAD_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] ||
+    fail "SPAGHETTIPAD_VERSION must use numeric major.minor.patch form"
+[[ "$SPAGHETTIPAD_BUILD_NUMBER" =~ ^[1-9][0-9]*$ ]] ||
+    fail "SPAGHETTIPAD_BUILD_NUMBER must be a positive integer"
+
 [ -d "$SOURCE_DIR/.git" ] ||
     fail "pinned sources are missing; run scripts/clone-sources.sh first"
 [ -s "$PORT_ARCHIVE" ] ||
@@ -49,6 +57,8 @@ cmake -S "$SOURCE_DIR" -B "$BUILD_DIR" -GXcode \
     -DENABLE_SCRIPTING=OFF \
     -DSPAGHETTIPAD_SHELL_DIR="$ROOT/ios" \
     -DSPAGHETTIPAD_PORT_ARCHIVE="$PORT_ARCHIVE" \
+    -DSPAGHETTIPAD_VERSION="$SPAGHETTIPAD_VERSION" \
+    -DSPAGHETTIPAD_BUILD_NUMBER="$SPAGHETTIPAD_BUILD_NUMBER" \
     -DBUNDLE_ID="${BUNDLE_ID:-com.chrissotraidis.spaghettipad}" \
     -DDEVELOPMENT_TEAM="${DEVELOPMENT_TEAM:-}"
 
