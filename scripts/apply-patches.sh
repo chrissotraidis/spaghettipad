@@ -6,6 +6,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 SPAGHETTIKART_DIR="$ROOT/sources/spaghettikart"
 LUS_DIR="$ROOT/sources/spaghettikart/libultraship"
 SPAGHETTIKART_PATCH="$ROOT/patches/spaghettikart-ios.patch"
+SPAGHETTIKART_FIRSTRUN_PATCH="$ROOT/patches/spaghettikart-ios-firstrun.patch"
 LUS_PATCH="$ROOT/patches/libultraship-ios.patch"
 EXPECTED_SPAGHETTIKART="5b28472d477bab101dee2a0f469fe2aee2c58a01"
 EXPECTED_LUS="f5c3843fe937320b64ff754fa6bf71b13ff5e7a1"
@@ -21,6 +22,8 @@ fail() {
     fail "pinned sources are missing; run scripts/clone-sources.sh first"
 [ -f "$SPAGHETTIKART_PATCH" ] ||
     fail "maintained patch is missing: $SPAGHETTIKART_PATCH"
+[ -f "$SPAGHETTIKART_FIRSTRUN_PATCH" ] ||
+    fail "maintained patch is missing: $SPAGHETTIKART_FIRSTRUN_PATCH"
 [ -f "$LUS_PATCH" ] || fail "maintained patch is missing: $LUS_PATCH"
 [ "$(git -C "$SPAGHETTIKART_DIR" rev-parse HEAD)" = \
     "$EXPECTED_SPAGHETTIKART" ] ||
@@ -57,4 +60,18 @@ else
         "$SPAGHETTIKART_PATCH" ||
         fail "SpaghettiKart patch does not pass its reverse check"
     echo "Applied SpaghettiKart iOS patch at $EXPECTED_SPAGHETTIKART."
+fi
+
+if git -C "$SPAGHETTIKART_DIR" apply --reverse --check \
+    "$SPAGHETTIKART_FIRSTRUN_PATCH" 2>/dev/null; then
+    echo "SpaghettiKart iOS first-run patch is already applied."
+else
+    git -C "$SPAGHETTIKART_DIR" apply --check \
+        "$SPAGHETTIKART_FIRSTRUN_PATCH"
+    git -C "$SPAGHETTIKART_DIR" apply \
+        "$SPAGHETTIKART_FIRSTRUN_PATCH"
+    git -C "$SPAGHETTIKART_DIR" apply --reverse --check \
+        "$SPAGHETTIKART_FIRSTRUN_PATCH" ||
+        fail "SpaghettiKart first-run patch does not pass its reverse check"
+    echo "Applied SpaghettiKart iOS first-run patch at $EXPECTED_SPAGHETTIKART."
 fi

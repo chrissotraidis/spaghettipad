@@ -1,0 +1,228 @@
+diff --git a/src/engine/mods/ModManager.cpp b/src/engine/mods/ModManager.cpp
+index ff2a2b3ef..586befb0b 100644
+--- a/src/engine/mods/ModManager.cpp
++++ b/src/engine/mods/ModManager.cpp
+@@ -21,6 +21,18 @@ void SortModsByDependencies();
+ 
+ std::vector<std::tuple<ModMetadata, std::shared_ptr<Ship::Archive>>> Mods = {};
+ 
++static bool IsUsableGameArchive(const std::string& path) {
++    int errorCode = 0;
++    zip_t* archive = zip_open(path.c_str(), ZIP_RDONLY | ZIP_CHECKCONS, &errorCode);
++    if (archive == nullptr) {
++        return false;
++    }
++
++    const bool hasManifest = zip_name_locate(archive, "mods.toml", 0) >= 0;
++    zip_close(archive);
++    return hasManifest;
++}
++
+ void InitModsSystem() {
+     CheckMK64O2RExists();
+ 
+@@ -58,6 +70,19 @@ void UnloadMods() {
+ // at this point, which segfaults — a crash report on what should be a clean quit (e.g. when
+ // the user declines the first-run "Generate one now?" prompt).
+ void GenerateAssetsMods() {
++#ifdef __IOS__
++    while (!IsUsableGameArchive(Ship::Context::GetPathRelativeToAppDirectory(game_asset_file))) {
++        GameEngine::ShowRescanBox(
++            "Add your game",
++            "SpaghettiPad needs your legally acquired Mario Kart 64 (US 1.0) ROM in big-endian .z64 format.\n\n"
++            "Copy it into Files > On My iPad > SpaghettiPad, return here, then tap Rescan.");
++
++        if (GameEngine::GenAssetFile() &&
++            IsUsableGameArchive(Ship::Context::GetPathRelativeToAppDirectory(game_asset_file))) {
++            return;
++        }
++    }
++#else
+     if (GameEngine::ShowYesNoBox("No O2R Files", "No O2R files found. Generate one now?") == IDYES) {
+         if (!GameEngine::GenAssetFile()) {
+             GameEngine::ShowMessage("Error", "An error occured, no O2R file was generated.\n\nExiting...");
+@@ -66,6 +91,7 @@ void GenerateAssetsMods() {
+     } else {
+         _Exit(1);
+     }
++#endif
+ }
+ 
+ std::vector<std::string> ListMods() {
+@@ -73,7 +99,7 @@ std::vector<std::string> ListMods() {
+     const std::string assets_path = Ship::Context::LocateFileAcrossAppDirs(engine_asset_file);
+ 
+     std::vector<std::string> archiveFiles;
+-    if (std::filesystem::exists(main_path)) {
++    if (IsUsableGameArchive(main_path)) {
+         archiveFiles.push_back(main_path);
+     } else { // should not happen, but just in case
+         GenerateAssetsMods();
+@@ -211,7 +237,7 @@ void AddCoreDependencies() {
+ void CheckMK64O2RExists() {
+     const std::string main_path = Ship::Context::GetPathRelativeToAppDirectory(game_asset_file);
+ 
+-    if (!std::filesystem::exists(main_path)) {
++    if (!IsUsableGameArchive(main_path)) {
+         GenerateAssetsMods();
+     }
+ }
+diff --git a/src/port/Engine.cpp b/src/port/Engine.cpp
+index 5b3b1bcac..1dbd822d2 100644
+--- a/src/port/Engine.cpp
++++ b/src/port/Engine.cpp
+@@ -266,26 +266,60 @@ GameEngine::GameEngine() {
+ }
+ 
+ bool GameEngine::GenAssetFile() {
+-    auto extractor = new GameExtractor();
++    auto extractor = std::make_unique<GameExtractor>();
+ 
+     if (!extractor->SelectGameFromUI()) {
++#ifdef __IOS__
++        ShowMessage("ROM not found",
++                    "No supported ROM was found.\n\nSpaghettiPad requires Mario Kart 64 (US 1.0) in big-endian "
++                    ".z64 format. Wrong-region and byteswapped .n64/.v64 files are not supported.");
++        return false;
++#else
+         ShowMessage("Error", "No ROM selected.\n\nExiting...");
+         // _Exit, not exit: this runs before the game world is initialized, so running the
+         // global World destructor (CleanWorld) would dereference still-null singletons and crash.
+         _Exit(1);
++#endif
+     }
+ 
+     auto game = extractor->ValidateChecksum();
+     if (!game.has_value()) {
++#ifdef __IOS__
++        ShowMessage("Unsupported ROM",
++                    "SpaghettiPad requires Mario Kart 64 (US 1.0) in big-endian .z64 format. Wrong-region and "
++                    "byteswapped .n64/.v64 files are not supported.");
++        return false;
++#else
+         ShowMessage("Unsupported ROM",
+                     "The provided ROM is not supported.\n\nCheck the readme for a list of supported versions.");
+         _Exit(1);
++#endif
+     }
+ 
+     ShowMessage(("Found " + game.value()).c_str(),
+                 "The extraction process will now begin.\n\nThis may take a few minutes.", SDL_MESSAGEBOX_INFORMATION);
+ 
+-    return extractor->GenerateOTR();
++    const auto appDirectory = std::filesystem::path(Ship::Context::GetAppDirectoryPath());
++    const auto hashCache = appDirectory / "torch.hash.yml";
++    const auto gameArchive = appDirectory / game_asset_file;
++    std::error_code error;
++    std::filesystem::remove(hashCache, error);
++    error.clear();
++    std::filesystem::remove(gameArchive, error);
++
++    const bool generated = extractor->GenerateOTR();
++    if (!generated) {
++        error.clear();
++        std::filesystem::remove(hashCache, error);
++        error.clear();
++        std::filesystem::remove(gameArchive, error);
++#ifdef __IOS__
++        ShowMessage("Extraction failed",
++                    "SpaghettiPad could not finish extracting the game archive. Check the ROM, keep the app open, "
++                    "then tap Rescan to try again.");
++#endif
++    }
++    return generated;
+ }
+ 
+ uint32_t GameEngine::GetInterpolationFPS() {
+@@ -318,6 +352,22 @@ void GameEngine::ShowMessage(const char* title, const char* message, SDL_Message
+ #endif
+ }
+ 
++void GameEngine::ShowRescanBox(const char* title, const char* box) {
++#if defined(__SWITCH__)
++    SPDLOG_ERROR(box);
++#else
++    int ret = IDYES;
++    SDL_MessageBoxButtonData button = { SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT, IDYES, "Rescan" };
++    SDL_MessageBoxData boxData = { 0 };
++    boxData.numbuttons = 1;
++    boxData.flags = SDL_MESSAGEBOX_INFORMATION;
++    boxData.message = box;
++    boxData.title = title;
++    boxData.buttons = &button;
++    SDL_ShowMessageBox(&boxData, &ret);
++#endif
++}
++
+ int GameEngine::ShowYesNoBox(const char* title, const char* box) {
+     int ret;
+ #ifdef _WIN32
+diff --git a/src/port/Engine.h b/src/port/Engine.h
+index d5368a92f..d7ded4d4d 100644
+--- a/src/port/Engine.h
++++ b/src/port/Engine.h
+@@ -77,6 +77,7 @@ class GameEngine {
+     static void Destroy();
+     static void ProcessGfxCommands(Gfx* pool);
+     static uint8_t GetBankIdByName(const std::string& name);
++    static void ShowRescanBox(const char* title, const char* box);
+     static int ShowYesNoBox(const char* title, const char* box);
+     static void ShowMessage(const char* title, const char* message, SDL_MessageBoxFlags type = SDL_MESSAGEBOX_ERROR);
+     float OTRGetAspectRatio(void);
+@@ -126,4 +127,3 @@ int32_t GameEngine_ResourceGetTexTypeByName(const char* name);
+ #ifdef __cplusplus
+ }
+ #endif
+-
+diff --git a/src/port/GameExtractor.cpp b/src/port/GameExtractor.cpp
+index 4e8b4dfae..a1d5307f4 100644
+--- a/src/port/GameExtractor.cpp
++++ b/src/port/GameExtractor.cpp
+@@ -5,6 +5,8 @@
+ #pragma comment(lib, "Shlwapi.lib")
+ #endif
+ #include "GameExtractor.h"
++#include <algorithm>
++#include <cctype>
+ #include <cstdio>
+ #include <unordered_map>
+ 
+@@ -86,6 +88,11 @@ bool GameExtractor::SelectGameFromUI() {
+ 
+         romPath = selection[0];
+     }
++#elif defined(__IOS__)
++    if (!foundGame) {
++        SPDLOG_ERROR("No supported .z64 ROM found in the iOS Documents directory");
++        return false;
++    }
+ #else
+     // Mobile: fallback to baserom.us.z64
+     if (!foundGame && !std::filesystem::exists(Ship::Context::GetPathRelativeToAppDirectory("baserom.us.z64"))) {
+@@ -119,7 +126,25 @@ bool GameExtractor::SelectGameFromUI() {
+ }
+ 
+ void GameExtractor::GetRoms(std::vector<std::string>& roms) {
+-#ifdef _WIN32
++#ifdef __IOS__
++    const auto documentsPath = std::filesystem::path(Ship::Context::GetAppDirectoryPath());
++    std::error_code error;
++    for (const auto& file : std::filesystem::directory_iterator(documentsPath, error)) {
++        if (!file.is_regular_file(error)) {
++            continue;
++        }
++
++        auto extension = file.path().extension().string();
++        std::transform(extension.begin(), extension.end(), extension.begin(),
++                       [](unsigned char character) { return std::tolower(character); });
++        if (extension == ".z64") {
++            roms.push_back(file.path().string());
++        }
++    }
++    if (error) {
++        SPDLOG_ERROR("Failed to scan iOS Documents directory {}: {}", documentsPath.string(), error.message());
++    }
++#elif defined(_WIN32)
+     WIN32_FIND_DATAA ffd;
+     HANDLE h = FindFirstFileA(".\\*", &ffd);
+ 

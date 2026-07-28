@@ -51,7 +51,7 @@ audited ROM-free unsigned IPA.
 | 4 | Simulator title screen | Complete | Live Metal frame, logs, screenshot, no desktop dialog symbols |
 | 5 | Lifecycle and audio | Complete | Three-cycle continuity, config flush, paused simulation, audible resume |
 | 6 | Signed physical-iPad boot | In progress | Signed install, title screen, ten-minute stability run |
-| 7 | On-device Files extraction | Pending | Clean-device extraction, failure recovery, measured time/RSS |
+| 7 | On-device Files extraction | In progress (hardware replay) | Clean-device extraction, failure recovery, measured time/RSS |
 | 8 | Grip-first full-analog touch controls | Pending | Full touch-only GP and analog/menu/lifecycle checks on hardware |
 | 9 | iPad UX and imported texture pack | Pending | Touch-complete UX plus Reloaded import/enable/full-GP hardware gate |
 | 10 | Controllers and split-screen | Pending | Two-controller 2P session and measured 3P/4P decision |
@@ -60,13 +60,13 @@ audited ROM-free unsigned IPA.
 
 ## Active gate
 
-**Phase 6 — install a signed build on the physical iPad and prove stable
-title/demo runtime.**
+**Phase 6/7 owner hardware replay; Phase 8 is the next unblocked Simulator gate.**
 
 Expected:
 
-1. A signed arm64 iPhoneOS build installs on the connected physical iPad using
-   an available Apple development team and the SpaghettiPad bundle identifier.
+1. On the maintainer's local Mac, a signed arm64 iPhoneOS build installs on
+   the connected physical iPad using an available Apple development team and
+   the SpaghettiPad bundle identifier.
 2. The user-supplied desktop-generated `mk64.o2r` reaches only the app's
    Files-visible Documents container and retains its recorded hash.
 3. A cold hardware launch loads bundled `spaghetti.o2r` plus local
@@ -78,11 +78,102 @@ Boundary:
 - Phase 5 proves Simulator lifecycle continuity, durable config flush,
   simulation/audio pause and resume, live rendering continuation, container
   integrity, and human-confirmed audible music/audio.
+- The physical iPad is connected to the maintainer's local Mac, not this remote
+  build Mac. This machine has no visible iPad, valid code-signing identity, or
+  provisioning profile, so it cannot perform or claim the Phase 6 install.
+- Remote work therefore continues with the explicitly Simulator-valid part of
+  Phase 7: empty-container guidance, ROM validation, recovery, extraction, and
+  relaunch behavior. Hardware time/RSS and Files/iPad behavior remain owner
+  replay items even when their Simulator equivalents pass.
 - Simulator evidence does not prove signing, installation, watchdog behavior,
   or audio on physical hardware. Touch, extraction, performance, controller,
   texture-pack, and package behavior also remain unclaimed.
 
 ## Evidence log
+
+### 2026-07-28 — Phase 7 Simulator first-run slice passed; hardware pending
+
+- Implementation: maintained patch
+  `patches/spaghettikart-ios-firstrun.patch` (228 lines, 8,534 bytes,
+  SHA-256
+  `6f6701005cf64dbc3cda22b2105bf4d046932c1b8327e0021d173b2d4674103b`)
+  makes the iOS first-run flow recoverable. It scans Files-visible Documents
+  for any case-insensitive `.z64`, accepts only the exact US 1.0 big-endian
+  SHA-1, rejects corrupt/partial O2R archives, removes stale extraction output
+  and cache state, and always returns to a one-button Rescan loop instead of
+  exiting. `scripts/apply-patches.sh` now applies and reverse-checks this patch.
+- Build proof: Release arm64 Simulator build succeeded. Its executable SHA-256
+  is
+  `916d8e963fb89b2349361522b0ef69d887de869bbe8d459a1221ebb8e01ea032`.
+  The shared-source desktop regression build also succeeded; its arm64
+  executable SHA-256 is
+  `1d9a87c162dabaa489aa7511a6c60b69a000107e67bec3f1294a777620b08b75`.
+- Isolation: all runtime testing used the disposable iPad Pro 11-inch (M4),
+  iOS 18.5 Simulator `SpaghettiPad Phase 7`
+  (`7D6115C9-2ACC-4E72-A53A-3777D50E7037`). The supplied ROM was copied only
+  into that app sandbox. It remains ignored and untracked.
+- Recovery proof: an empty container showed the single Rescan prompt and
+  remained in-app after rescanning. A deliberately wrong 1 KiB
+  `Wrong Region.z64` produced the precise US 1.0/big-endian guidance and
+  returned to the loop. A valid US 1.0 ROM was then found without requiring
+  the hard-coded `baserom.us.z64` filename.
+- Stale-state proof: before the valid run, the sandbox contained a deliberately
+  invalid 2 KiB `mk64.o2r` and 1 KiB `torch.hash.yml`. Both were replaced.
+  The generated `mk64.o2r` is a valid 26,664,858-byte ZIP with SHA-256
+  `dc20466705d5dfcad843847aad4fa10dba60317fa72580e03dcfbcb5ffeb3ebb`;
+  `unzip -tq` reports no errors. The new `torch.hash.yml` is 24,209 bytes.
+- Measured Simulator extraction: the external monitor observed a valid archive
+  after 2,893 seconds (48m13s) with peak process RSS 201,088 KiB. Torch logged
+  `Done! Took 2882828ms` (48m02.828s). These are Simulator measurements, not
+  physical-iPad performance claims.
+- Relaunch proof: the final rebuilt app relaunched as PID `44236`, skipped all
+  first-run prompts, and reached a live race. The archive hash, size, and
+  `2026-07-28T10:19:29-0500` modification time were unchanged, and all rotated
+  logs still contain exactly one `Done! Took` extraction completion.
+- Maintenance and safety: the patch passes current reverse application, a
+  pristine temporary base-patch -> first-run-patch replay, nested/root
+  `git diff --check`, `bash -n scripts/apply-patches.sh`, and
+  `scripts/check-repo-safety.sh`.
+- Boundary: this closes the remote Simulator slice only. Phase 7 remains in
+  progress until the owner repeats the Files workflow on the locally attached
+  physical iPad and records hardware extraction time, peak RSS, failure
+  recovery, cold relaunch, and archive validation. Phase 6 hardware signing
+  and stability likewise remain open. The next unblocked remote gate is Phase
+  8 touch controls using the refreshed HarkinianPad reference.
+
+### 2026-07-28 — Remote device boundary and latest HarkinianPad controls fixed
+
+- Device boundary: the maintainer clarified that the physical iPad is attached
+  to the local MacBook in hand, while this agent runs on a remote Mac. The
+  remote USB inventory contains no iPad, `security find-identity -p
+  codesigning` reports `0 valid identities found`, and no provisioning
+  profiles are installed. Phase 6 therefore remains in progress and no
+  physical-device result is inferred from Simulator work.
+- Owner replay required for Phase 6: configure the same source revision with
+  the maintainer's development team and unique bundle identifier, build with
+  provisioning updates enabled, install on the locally attached iPad, copy
+  the recorded `mk64.o2r` only through its Files-visible Documents container,
+  then record the device model, OS, executable hash, cold title boot, and a
+  continuous ten-minute attract/demo run.
+- Reference refresh: ignored `ref/harkinianpad` now exactly overlays every
+  tracked file from the authoritative clean HarkinianPad `main` revision
+  `01523225a3e9d32348e25d608dcb2d391dab5310`; an all-tracked-file comparison
+  reported zero mismatches. This advances the touch reference from
+  `88cefb7` through the compact-display fixes in `e22b3fa` and `0152322`.
+- Touch baselines: the refreshed `docs/touch-controls-design.md`,
+  `patches/shipwright-ios-touch-controls.patch`, and
+  `patches/libultraship-ios.patch` hash respectively to
+  `2eb23d57f8b042eb1ca0c74b1841e315ab81e0ead5bdb50184354055a3928b5b`,
+  `63a5e3ae69930027c9aafe46a8b3688c957c8f447ec6a562f20c436b7f90ee1f`,
+  and
+  `172429323474038338b8d172c6b5bcc88506b7519313d1b0cd7897ada4d7b9db`.
+  SpaghettiPad will reuse the latest grip-first layout, pass-through overlay,
+  persistent menu control, compact-display rules, input-release semantics,
+  and touch-mouse filtering while retaining its plan-mandated virtual SDL
+  controller for full analog steering.
+- Boundary: the ignored reference refresh changes no distributed source or
+  artifact. This entry proves reference provenance and the remote/local
+  device split only; it does not close Phase 6, Phase 7, or Phase 8.
 
 ### 2026-07-28 — Phase 5 audible resume accepted and gate closed
 
