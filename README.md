@@ -1,9 +1,9 @@
 # SpaghettiPad
 
 <p align="center">
-  <strong>Mario Kart 64 on iPhone and iPad—with touch controls made for racing.</strong><br>
-  Native Metal rendering, full-analog steering, local multiplayer foundations,
-  and built-in support for optional enhanced texture packs.
+  <strong>Mario Kart 64 on iPhone and iPad—with touch and Bluetooth controller support.</strong><br>
+  Native Metal rendering, full-analog touch steering, four-player controller
+  routing, local multiplayer, and optional enhanced texture packs.
 </p>
 
 <p align="center">
@@ -11,6 +11,7 @@
   <img alt="iOS and iPadOS 15 or later" src="https://img.shields.io/badge/iOS%20%2F%20iPadOS-15%2B-0A84FF?logo=apple">
   <img alt="Metal renderer" src="https://img.shields.io/badge/renderer-Metal-5E5CE6">
   <img alt="Full analog touch controls" src="https://img.shields.io/badge/touch-full%20analog-32ADE6">
+  <img alt="Bluetooth controller support" src="https://img.shields.io/badge/controllers-Bluetooth-34C759">
   <img alt="Enhanced texture pack support" src="https://img.shields.io/badge/textures-HD%20pack%20support-B65FCF">
   <img alt="Physical iPad tested" src="https://img.shields.io/badge/physical%20iPad-tested-30D158">
   <img alt="ROM not included" src="https://img.shields.io/badge/game%20data-not%20included-FF453A">
@@ -22,7 +23,8 @@ SpaghettiPad packages the full
 [SpaghettiKart](https://github.com/HarbourMasters/SpaghettiKart) source port
 as a native iOS/iPadOS app. It brings Mario Kart 64 to the screen in your
 hands with Metal rendering, true analog touch steering, a grip-first control
-layout, Files-based setup, controller routing, and optional enhanced visuals.
+layout, Files-based setup, built-in Bluetooth controller routing, and optional
+enhanced visuals.
 
 This repository contains the mobile integration, maintained patches, and
 reproducible build scripts. It does **not** contain Mario Kart 64, a ROM,
