@@ -223,8 +223,9 @@ not provide, download, mirror, or relicense them. To use
 Adding or replacing an archive requires one relaunch. Turning the imported
 pack on or off also requires a restart because the engine mounts the archive
 when it starts; the app explains that current race progress will be lost,
-saves the selection, and closes only after you confirm. Cancel leaves the
-running state unchanged. The Texture Packs page reports whether a pack is
+saves the selection, and closes only after you confirm. Reopen SpaghettiPad
+manually from the Home Screen; iOS does not allow an app to relaunch itself.
+Cancel leaves the running state unchanged. The Texture Packs page reports whether a pack is
 absent, detected but awaiting a relaunch, loaded and off, loaded and on, or
 waiting to apply a change. Start with HD. Treat 4K as an M-series-iPad
 performance experiment until it has its own hardware evidence.

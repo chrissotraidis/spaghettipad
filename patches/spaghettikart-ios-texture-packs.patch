@@ -265,7 +265,7 @@
                  .ShowButtons(false)
                  .IsPercentage()
                  .Format("")
-@@ -489,6 +437,109 @@
+@@ -489,6 +437,111 @@
  
  void PortMenu::AddEnhancements() {
      AddMenuEntry("Enhancements", "gSettings.Menu.EnhancementsSidebarSection");
@@ -293,9 +293,10 @@
 +            }
 +
 +            if (GameEngine::ShowYesNoBox(
-+                    "Restart required",
-+                    "Changing the texture pack requires restarting SpaghettiPad. "
++                    "Relaunch required",
++                    "Changing the texture pack requires relaunching SpaghettiPad. "
 +                    "Close the app now and apply this change?\n\n"
++                    "Reopen SpaghettiPad manually from the Home Screen. "
 +                    "Current race progress will be lost. Saved game data is preserved.") == IDYES) {
 +                CVarSetInteger("gOpenMenu", 0);
 +                CVarSave();
@@ -340,7 +341,8 @@
 +            if (!CVarGetInteger("gSettings.SpaghettiPad.ImportedTexturePack", 1) &&
 +                GameEngine::ShowYesNoBox(
 +                    "Texture pack loaded",
-+                    "Enable the enhanced/HD texture pack after restarting SpaghettiPad?") == IDYES) {
++                    "Enable the enhanced/HD texture pack and close SpaghettiPad now?\n\n"
++                    "Reopen SpaghettiPad manually from the Home Screen.") == IDYES) {
 +                CVarSetInteger("gSettings.SpaghettiPad.ImportedTexturePack", 1);
 +                CVarSetInteger("gOpenMenu", 0);
 +                CVarSave();
