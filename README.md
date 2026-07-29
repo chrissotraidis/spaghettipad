@@ -285,7 +285,7 @@ M-series-iPad performance experiment until it has its own hardware evidence.
 | Controllers | Four-port routing and split-screen rendering pass deterministic Simulator tests; physical model, reconnect, and multiplayer sessions remain |
 | Tilt | The persisted motion-to-stick path, recentering, touch priority, and foreground recalibration pass Simulator tests; physical feel and a tilt GP remain |
 | Packaging | Preview 2 is an audited, ROM-free unsigned IPA; its exact payload has been re-signed and launched on a physical iPad |
-| CI | Hosted jobs are blocked before runner start by an account billing/spending-limit restriction; local success is not reported as green hosted CI |
+| CI | Repository safety and the ROM-free unsigned iPhoneOS build/package workflow pass on hosted GitHub Actions |
 
 The project deliberately keeps build, Simulator, process, and physical-device
 evidence separate. The [remaining-work ledger](docs/remaining-work.md) records

@@ -53,11 +53,12 @@ audited ROM-free unsigned IPA.
 | 9 | iPad UX and imported texture pack | In progress (Simulator UX/import slice passed; hardware pack GP pending) | Touch-complete UX plus Reloaded import/enable/full-GP hardware gate |
 | 10 | Controllers and split-screen | In progress (Simulator routing/render slice passed; hardware sessions pending) | Two-controller 2P session and measured 3P/4P decision |
 | 11 | Tilt steering | In progress (Simulator slice passed; hardware GP pending) | Persisted, drift-free tilt GP on hardware |
-| 12 | Package, CI, docs, release | In progress (initial unsigned preview published; CI externally blocked before runner start) | Clean CI, clean-machine replay, audited IPA and SHA-256 |
+| 12 | Package, CI, docs, release | In progress (Preview 2 published; clean hosted CI and package workflow passed) | Final physical update/save-preservation acceptance |
 
 ## Active gate
 
-**Phase 12 GitHub billing/run availability; Phase 6/7/8/9/10/11 owner hardware replay remains separate.**
+**Phase 6/7/8/9/10/11 owner hardware replay and final Phase 12
+update/save-preservation acceptance remain open.**
 
 Expected:
 
@@ -180,8 +181,12 @@ Boundary:
   prerelease.
 - Boundary: the device check proves installation and process launch, not
   visible title/demo responsiveness or the remaining physical gameplay gates.
-  Hosted CI remains blocked before runner start by the account-level
-  billing/spending-limit restriction.
+- Hosted CI: repository safety plus the ROM-free unsigned iPhoneOS
+  build/package workflow passed at the release head in
+  [run 30453167211](https://github.com/chrissotraidis/spaghettipad/actions/runs/30453167211).
+  The subsequently combined `main` branch, including the separately reviewed
+  iPhone touch refinement, passed the same workflow in
+  [run 30455493658](https://github.com/chrissotraidis/spaghettipad/actions/runs/30455493658).
 
 ### 2026-07-29 — Initial unsigned preview IPA published
 
