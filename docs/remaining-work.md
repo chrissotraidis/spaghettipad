@@ -167,7 +167,7 @@ Boundary:
   `13a0123bf384c89d96485a7cc783be69081b41c1cc1697b61b725f428db80b6c`.
 - IPA audit: `SpaghettiPad-0.1.0-preview.2-unsigned.ipa` is 11,220,542 bytes
   with 293 ZIP entries and SHA-256
-  `3aafab0c010fd49897a21b2f3804efe33624ef4ae6165ce2c97d59fa2a63dbeb`.
+  `51717d5645e2b8d126a952e6ef8f8b9c7033b918d1c1a6f22e815320025c6de7`.
   It contains no ROM, `mk64*.o2r`, `.otr`, imported texture pack,
   `_CodeSignature`, provisioning profile, certificate, or signing identity.
 - Exact-artifact device check: a temporary extracted copy of the unsigned IPA
