@@ -69,8 +69,8 @@ This is the final gate for a public source snapshot or downloadable IPA.
   The physical iPhone install and the complete hardware replay matrix remain
   open.
 - Preview 2 corrects third-party notices and makes unsigned packaging the safe
-  default. It does not convert any remaining hardware or hosted-CI gate into a
-  pass.
+  default. Hosted repository safety and unsigned build/package jobs pass; the
+  remaining physical-hardware gates are still open.
 
 These blockers may be stated as developer-preview limitations, but they must
 not be described as passed.
