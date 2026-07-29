@@ -9,7 +9,22 @@ if [[ "$APP" != /* ]]; then
     APP="$ROOT/$APP"
 fi
 
-REQUIRE_SIGNED="${REQUIRE_SIGNED:-0}" "$ROOT/scripts/audit-ios-app.sh" "$APP"
+REQUIRE_SIGNED="${REQUIRE_SIGNED:-0}"
+case "$REQUIRE_SIGNED" in
+    0)
+        REQUIRE_UNSIGNED=1
+        ;;
+    1)
+        REQUIRE_UNSIGNED=0
+        ;;
+    *)
+        echo "REQUIRE_SIGNED must be 0 or 1." >&2
+        exit 2
+        ;;
+esac
+
+REQUIRE_SIGNED="$REQUIRE_SIGNED" REQUIRE_UNSIGNED="$REQUIRE_UNSIGNED" \
+    "$ROOT/scripts/audit-ios-app.sh" "$APP"
 
 INFO="$APP/Info.plist"
 VERSION="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$INFO")"
@@ -37,6 +52,10 @@ fi
     echo "Required rights and licensing notice is missing." >&2
     exit 1
 }
+[ -f "$ROOT/THIRD_PARTY_NOTICES/SDL_GameControllerDB.LICENSE" ] || {
+    echo "SDL_GameControllerDB license notice is missing." >&2
+    exit 1
+}
 
 mkdir -p "$(dirname "$OUTPUT")"
 PACKAGE_ROOT="$(mktemp -d /tmp/spaghettipad-package.XXXXXX)"
@@ -46,8 +65,10 @@ ditto "$APP" "$PACKAGE_ROOT/Payload/SpaghettiPad.app"
 cp "$ROOT/RIGHTS_AND_LICENSES.md" "$PACKAGE_ROOT/RIGHTS_AND_LICENSES.md"
 
 LICENSES_DIR="$PACKAGE_ROOT/ThirdPartyLicenses"
-LICENSE_COUNT=0
 mkdir "$LICENSES_DIR"
+cp "$ROOT/THIRD_PARTY_NOTICES/SDL_GameControllerDB.LICENSE" \
+    "$LICENSES_DIR/SDL_GameControllerDB.LICENSE"
+LICENSE_COUNT=1
 while IFS= read -r -d '' LICENSE_FILE; do
     RELATIVE="${LICENSE_FILE#"$ROOT/"}"
     DESTINATION="$LICENSES_DIR/$RELATIVE"
@@ -77,6 +98,8 @@ rg -q '^RIGHTS_AND_LICENSES\.md$' <<<"$IPA_ENTRIES" ||
     { echo "IPA rights notice is missing: $OUTPUT" >&2; exit 1; }
 rg -q '^ThirdPartyLicenses/' <<<"$IPA_ENTRIES" ||
     { echo "IPA third-party licenses are missing: $OUTPUT" >&2; exit 1; }
+rg -q '^ThirdPartyLicenses/SDL_GameControllerDB\.LICENSE$' <<<"$IPA_ENTRIES" ||
+    { echo "IPA controller database license is missing: $OUTPUT" >&2; exit 1; }
 
 if rg -qi '\.(z64|n64|v64|rom)$|Payload/.*/mk64[^/]*\.o2r$|\.otr$' \
     <<<"$IPA_ENTRIES"; then
