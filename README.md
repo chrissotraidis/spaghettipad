@@ -12,7 +12,7 @@
   <img alt="Full analog touch controls" src="https://img.shields.io/badge/touch-full%20analog-32ADE6">
   <img alt="Bluetooth controller routing" src="https://img.shields.io/badge/controllers-Bluetooth%20routing-34C759">
   <img alt="Enhanced texture pack support" src="https://img.shields.io/badge/textures-HD%20pack%20support-B65FCF">
-  <img alt="Physical iPad tested" src="https://img.shields.io/badge/physical%20iPad-tested-30D158">
+  <img alt="Physical iPhone and iPad tested" src="https://img.shields.io/badge/physical%20iPhone%20%2F%20iPad-tested-30D158">
   <img alt="ROM not included" src="https://img.shields.io/badge/game%20data-not%20included-FF453A">
 </p>
 
@@ -36,9 +36,9 @@ material.
 ## Built for racing on glass
 
 The touch layout keeps the controls under your thumbs and the race visible.
-The left side puts L, Z, and R above a full-analog stick. The right side keeps
-A held for acceleration while a second Z stays available for items. Start is
-deliberately separated from the action controls.
+The left side puts L and Z above a full-analog stick. The right side keeps R
+and a second Z above A and B, with Start deliberately separated from the
+action controls.
 
 Touch is not painted over the whole display: empty space still belongs to the
 game, the settings menu hides the race controls while open, and the persistent
@@ -101,15 +101,19 @@ downloaded, mirrored, or redistributed by this project.
 | App Store / TestFlight | **Not announced** | No App Store listing or public TestFlight exists. |
 
 The current development build has been signed, update-installed, and played
-on a physical iPad. Files import, local `mk64.o2r` loading, touch gameplay,
-menus, audio, saves, local multiplayer paths, and MK64 Reloaded HD have all
-been exercised on that hardware.
+on a physical iPad and iPhone. Files import, local `mk64.o2r` loading, touch
+gameplay, menus, audio, saves, local multiplayer paths, and MK64 Reloaded HD
+have been exercised on iPad. The customizable phone layout, A hold assist,
+safe-area menu placement, texture-pack rendering, and Grand Prix play have
+also been exercised on iPhone.
 
 Those results do not certify every configuration. The published preview
 artifact has been audited and its exact payload has been installed and
-launched on a physical iPad. Physical iPhone play, Bluetooth-controller
-mapping and reconnect behavior, sustained multiplayer performance, a complete
-tilt-driven Grand Prix, and final acceptance remain explicit validation gates.
+launched on a physical iPad; the latest development build has also been
+installed, launched, and touch-tested on a physical iPhone.
+Bluetooth-controller mapping and reconnect behavior, sustained multiplayer
+performance, a complete touch-only Grand Prix, and a complete tilt-driven
+Grand Prix remain explicit validation gates.
 
 ## Get started
 
@@ -190,24 +194,34 @@ its contents.
 
 The current controller is arranged for landscape play:
 
-- **Left:** equal-size L, Z, and R buttons above the full-analog control stick.
-- **Right:** Start above the second Z, plus A, B, and the four C buttons.
+- **Left:** L and Z above the full-analog control stick.
+- **Right:** Z and R above A and B, plus Start and the four C buttons.
 - **Menu:** the persistent `•••` button opens settings and stays reachable
   when gameplay controls are hidden.
+- **Layout editor:** use **Settings → Controls → Customize Touch Layout** to
+  move controls, resize them from 70% to 150%, or hide unused buttons.
 - **Touch toggle:** use **Settings → Controls → Touch Controls** to hide or
   restore the gameplay overlay.
+- **Legacy toggle:** use **Settings → Controls → Legacy Touch Controls** to
+  restore the original fixed layout without customization or A hold assist.
 - **Tilt:** opt-in steering, sensitivity, and recenter controls are under
   **Settings → Controls**.
 
 The touch D-pad is intentionally omitted because Mario Kart 64's normal racing
-controls do not use it. Two Z buttons are provided so an item can be used
-while A remains held for acceleration. Opening the menu hides the gameplay
-controls; closing it restores them only when Touch Controls is enabled.
+controls do not use it. Hold A for 0.65 seconds during a race, then lift your
+finger to keep accelerating; the `A •` label and a short haptic confirm the
+hold. Tap A again to release it. Z and R always remain momentary. Opening the
+menu releases held input and hides the gameplay controls; closing it restores
+them only when Touch Controls is enabled.
+
+Phone and tablet layouts are saved separately and survive relaunches. See
+[Touch controls](docs/TOUCH_CONTROLS.md) for editor behavior, safety releases,
+legacy mode, and current physical-device validation.
 
 | Touch control | Mario Kart 64 action |
 |---|---|
 | Analog stick | Steer and navigate |
-| A | Accelerate / confirm |
+| A | Accelerate / confirm; race-only hold assist |
 | B | Brake, reverse / cancel |
 | Z | Use or hold an item |
 | R | Hop, drift, and powerslide |
