@@ -11,6 +11,7 @@ SPAGHETTIKART_TOUCH_PATCH="$ROOT/patches/spaghettikart-ios-touch.patch"
 SPAGHETTIKART_UX_PATCH="$ROOT/patches/spaghettikart-ios-ux.patch"
 SPAGHETTIKART_TILT_PATCH="$ROOT/patches/spaghettikart-ios-tilt.patch"
 SPAGHETTIKART_TEXTURE_PACKS_PATCH="$ROOT/patches/spaghettikart-ios-texture-packs.patch"
+SPAGHETTIKART_CUSTOM_TOUCH_PATCH="$ROOT/patches/spaghettikart-ios-custom-touch.patch"
 LUS_PATCH="$ROOT/patches/libultraship-ios.patch"
 LUS_TOUCH_PATCH="$ROOT/patches/libultraship-ios-touch.patch"
 LUS_CONTROLLER_PATCH="$ROOT/patches/libultraship-ios-controller-ports.patch"
@@ -38,6 +39,8 @@ fail() {
     fail "maintained patch is missing: $SPAGHETTIKART_TILT_PATCH"
 [ -f "$SPAGHETTIKART_TEXTURE_PACKS_PATCH" ] ||
     fail "maintained patch is missing: $SPAGHETTIKART_TEXTURE_PACKS_PATCH"
+[ -f "$SPAGHETTIKART_CUSTOM_TOUCH_PATCH" ] ||
+    fail "maintained patch is missing: $SPAGHETTIKART_CUSTOM_TOUCH_PATCH"
 [ -f "$LUS_PATCH" ] || fail "maintained patch is missing: $LUS_PATCH"
 [ -f "$LUS_TOUCH_PATCH" ] ||
     fail "maintained patch is missing: $LUS_TOUCH_PATCH"
@@ -88,6 +91,10 @@ else
     echo "Applied libultraship iOS controller-port patch at $EXPECTED_LUS."
 fi
 
+if git -C "$SPAGHETTIKART_DIR" apply --reverse --check \
+    "$SPAGHETTIKART_CUSTOM_TOUCH_PATCH" 2>/dev/null; then
+    echo "SpaghettiKart iOS base, first-run, touch, UX, tilt, texture-pack, and custom-touch patches are already applied."
+else
 if git -C "$SPAGHETTIKART_DIR" apply --reverse --check \
     "$SPAGHETTIKART_TEXTURE_PACKS_PATCH" 2>/dev/null; then
     echo "SpaghettiKart iOS base, first-run, touch, UX, tilt, and texture-pack patches are already applied."
@@ -173,4 +180,14 @@ else
         "$SPAGHETTIKART_TEXTURE_PACKS_PATCH" ||
         fail "SpaghettiKart texture-pack patch does not pass its reverse check"
     echo "Applied SpaghettiKart iOS texture-pack patch at $EXPECTED_SPAGHETTIKART."
+fi
+
+git -C "$SPAGHETTIKART_DIR" apply --check \
+    "$SPAGHETTIKART_CUSTOM_TOUCH_PATCH"
+git -C "$SPAGHETTIKART_DIR" apply \
+    "$SPAGHETTIKART_CUSTOM_TOUCH_PATCH"
+git -C "$SPAGHETTIKART_DIR" apply --reverse --check \
+    "$SPAGHETTIKART_CUSTOM_TOUCH_PATCH" ||
+    fail "SpaghettiKart custom-touch patch does not pass its reverse check"
+echo "Applied SpaghettiKart iOS custom-touch patch at $EXPECTED_SPAGHETTIKART."
 fi

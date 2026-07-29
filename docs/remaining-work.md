@@ -49,7 +49,7 @@ audited ROM-free unsigned IPA.
 | 5 | Lifecycle and audio | Complete | Three-cycle continuity, config flush, paused simulation, audible resume |
 | 6 | Signed physical-iPad boot | In progress | Signed install, title screen, ten-minute stability run |
 | 7 | On-device Files extraction | In progress (hardware replay) | Clean-device extraction, failure recovery, measured time/RSS |
-| 8 | Grip-first full-analog touch controls | In progress (Simulator slice passed; hardware GP pending) | Full touch-only GP and analog/menu/lifecycle checks on hardware |
+| 8 | Grip-first full-analog touch controls | In progress (iPad editor and A-hold slice passed; full GP pending) | Full touch-only GP and analog/menu/lifecycle checks on hardware |
 | 9 | iPad UX and imported texture pack | In progress (Simulator UX/import slice passed; hardware pack GP pending) | Touch-complete UX plus Reloaded import/enable/full-GP hardware gate |
 | 10 | Controllers and split-screen | In progress (Simulator routing/render slice passed; hardware sessions pending) | Two-controller 2P session and measured 3P/4P decision |
 | 11 | Tilt steering | In progress (Simulator slice passed; hardware GP pending) | Persisted, drift-free tilt GP on hardware |

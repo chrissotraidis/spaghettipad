@@ -190,24 +190,34 @@ its contents.
 
 The current controller is arranged for landscape play:
 
-- **Left:** equal-size L, Z, and R buttons above the full-analog control stick.
-- **Right:** Start above the second Z, plus A, B, and the four C buttons.
+- **Left:** L and Z above the full-analog control stick.
+- **Right:** Z and R above A and B, plus Start and the four C buttons.
 - **Menu:** the persistent `•••` button opens settings and stays reachable
   when gameplay controls are hidden.
+- **Layout editor:** use **Settings → Controls → Customize Touch Layout** to
+  move controls, resize them from 70% to 150%, or hide unused buttons.
 - **Touch toggle:** use **Settings → Controls → Touch Controls** to hide or
   restore the gameplay overlay.
+- **Legacy toggle:** use **Settings → Controls → Legacy Touch Controls** to
+  restore the original fixed layout without customization or A hold assist.
 - **Tilt:** opt-in steering, sensitivity, and recenter controls are under
   **Settings → Controls**.
 
 The touch D-pad is intentionally omitted because Mario Kart 64's normal racing
-controls do not use it. Two Z buttons are provided so an item can be used
-while A remains held for acceleration. Opening the menu hides the gameplay
-controls; closing it restores them only when Touch Controls is enabled.
+controls do not use it. Hold A for 0.65 seconds during a race, then lift your
+finger to keep accelerating; the `A •` label and a short haptic confirm the
+hold. Tap A again to release it. Z and R always remain momentary. Opening the
+menu releases held input and hides the gameplay controls; closing it restores
+them only when Touch Controls is enabled.
+
+Phone and tablet layouts are saved separately and survive relaunches. See
+[Touch controls](docs/TOUCH_CONTROLS.md) for editor behavior, safety releases,
+legacy mode, and current physical-device validation.
 
 | Touch control | Mario Kart 64 action |
 |---|---|
 | Analog stick | Steer and navigate |
-| A | Accelerate / confirm |
+| A | Accelerate / confirm; race-only hold assist |
 | B | Brake, reverse / cancel |
 | Z | Use or hold an item |
 | R | Hop, drift, and powerslide |

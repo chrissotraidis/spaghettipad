@@ -46,7 +46,11 @@ static int sVirtualDeviceIndex = -1;
 static std::array<int, SpaghettiPadActionCount> sActionPressCounts = {};
 static std::atomic_bool sTouchControlsMenuVisible(false);
 static std::atomic_bool sTouchStickActive(false);
+static std::atomic_bool sGameplayActive(false);
 static BOOL sTouchControlsDesired;
+static BOOL sLegacyTouchControls;
+static BOOL sLayoutEditorRequested;
+static BOOL sLayoutEditorActive;
 static BOOL sControllerWatchInstalled;
 static CMMotionManager* sMotionManager;
 static BOOL sTiltEnabled;
@@ -371,9 +375,14 @@ static void SpaghettiPad_ResetAllInputs(void) {
 
 @property(nonatomic) SpaghettiPadAction action;
 @property(nonatomic) BOOL inputPressed;
+@property(nonatomic) BOOL outputPressed;
+@property(nonatomic) BOOL holdAssistEnabled;
+@property(nonatomic) BOOL holdLocked;
+@property(nonatomic) BOOL layoutEditing;
 @property(nonatomic) CFTimeInterval inputDownTime;
 @property(nonatomic) NSUInteger releaseGeneration;
 @property(nonatomic) BOOL usesPillShape;
+@property(nonatomic, copy) NSString* normalLabel;
 @property(nonatomic, strong) UIColor* idleColor;
 @property(nonatomic, strong) UIColor* pressedColor;
 
@@ -383,6 +392,9 @@ static void SpaghettiPad_ResetAllInputs(void) {
 - (void)applyIdleColor:(UIColor*)idleColor
           pressedColor:(UIColor*)pressedColor;
 - (void)cancelInput;
+- (void)cancelHoldAssist;
+- (void)updateOutput;
+- (void)updateAppearance;
 
 @end
 
@@ -394,6 +406,7 @@ static void SpaghettiPad_ResetAllInputs(void) {
     self = [super initWithFrame:CGRectZero];
     if (self != nil) {
         self.action = action;
+        self.normalLabel = label;
         self.usesPillShape = pill;
         self.multipleTouchEnabled = YES;
         self.idleColor = [UIColor colorWithWhite:0.04 alpha:0.38];
@@ -422,7 +435,7 @@ static void SpaghettiPad_ResetAllInputs(void) {
           pressedColor:(UIColor*)pressedColor {
     self.idleColor = idleColor;
     self.pressedColor = pressedColor;
-    self.backgroundColor = self.inputPressed ? pressedColor : idleColor;
+    [self updateAppearance];
 }
 
 - (void)layoutSubviews {
@@ -433,17 +446,47 @@ static void SpaghettiPad_ResetAllInputs(void) {
 }
 
 - (void)inputDown {
+    if (self.layoutEditing) {
+        return;
+    }
     self.releaseGeneration += 1;
     if (self.inputPressed) {
         return;
     }
+    BOOL wasLocked = self.holdLocked;
+    self.holdLocked = NO;
     self.inputPressed = YES;
     self.inputDownTime = CACurrentMediaTime();
-    self.backgroundColor = self.pressedColor;
-    SpaghettiPad_SetAction(self.action, YES);
+    [self updateOutput];
+    [self updateAppearance];
+
+    if (self.holdAssistEnabled && !wasLocked &&
+        self.action == SpaghettiPadActionA && sGameplayActive.load()) {
+        NSUInteger generation = self.releaseGeneration;
+        dispatch_after(
+            dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.65 * NSEC_PER_SEC)),
+            dispatch_get_main_queue(), ^{
+                if (self.releaseGeneration != generation ||
+                    !self.inputPressed || !self.holdAssistEnabled ||
+                    !sGameplayActive.load()) {
+                    return;
+                }
+                self.holdLocked = YES;
+                [self updateOutput];
+                [self updateAppearance];
+                UIImpactFeedbackGenerator* feedback =
+                    [[UIImpactFeedbackGenerator alloc]
+                        initWithStyle:UIImpactFeedbackStyleMedium];
+                [feedback impactOccurred];
+                SDL_Log("[SpaghettiPad] A hold assist locked");
+            });
+    }
 }
 
 - (void)inputUp {
+    if (self.layoutEditing) {
+        return;
+    }
     if (!self.inputPressed) {
         return;
     }
@@ -470,13 +513,52 @@ static void SpaghettiPad_ResetAllInputs(void) {
         return;
     }
     self.inputPressed = NO;
-    self.backgroundColor = self.idleColor;
-    SpaghettiPad_SetAction(self.action, NO);
+    [self updateOutput];
+    [self updateAppearance];
+}
+
+- (void)updateOutput {
+    BOOL shouldPress = self.inputPressed || self.holdLocked;
+    if (self.outputPressed == shouldPress) {
+        return;
+    }
+    self.outputPressed = shouldPress;
+    SpaghettiPad_SetAction(self.action, shouldPress);
+}
+
+- (void)updateAppearance {
+    BOOL active = self.inputPressed || self.holdLocked;
+    self.backgroundColor = active ? self.pressedColor : self.idleColor;
+    if (self.holdLocked) {
+        [self setTitle:@"A •" forState:UIControlStateNormal];
+        self.layer.borderColor =
+            [UIColor colorWithRed:0.42 green:0.88 blue:1.0 alpha:0.95].CGColor;
+        self.layer.borderWidth = 4.0;
+        self.accessibilityValue = @"Acceleration locked";
+    } else {
+        [self setTitle:self.normalLabel forState:UIControlStateNormal];
+        self.layer.borderColor = [UIColor colorWithWhite:1.0 alpha:0.58].CGColor;
+        self.layer.borderWidth = 2.0;
+        self.accessibilityValue = nil;
+    }
+}
+
+- (void)cancelHoldAssist {
+    self.releaseGeneration += 1;
+    if (!self.holdLocked) {
+        return;
+    }
+    self.holdLocked = NO;
+    [self updateOutput];
+    [self updateAppearance];
 }
 
 - (void)cancelInput {
     self.releaseGeneration += 1;
-    [self finishInputRelease];
+    self.inputPressed = NO;
+    self.holdLocked = NO;
+    [self updateOutput];
+    [self updateAppearance];
 }
 
 @end
@@ -484,6 +566,7 @@ static void SpaghettiPad_ResetAllInputs(void) {
 @interface SpaghettiPadTouchStick : UIView
 
 @property(nonatomic, strong) UIView* knob;
+@property(nonatomic) BOOL layoutEditing;
 
 - (void)cancelInput;
 
@@ -546,6 +629,9 @@ static void SpaghettiPad_ResetAllInputs(void) {
 }
 
 - (void)touchesBegan:(NSSet<UITouch*>*)touches withEvent:(UIEvent*)event {
+    if (self.layoutEditing) {
+        return;
+    }
     UITouch* touch = touches.anyObject;
     if (touch == nil) {
         return;
@@ -555,6 +641,9 @@ static void SpaghettiPad_ResetAllInputs(void) {
 }
 
 - (void)touchesMoved:(NSSet<UITouch*>*)touches withEvent:(UIEvent*)event {
+    if (self.layoutEditing) {
+        return;
+    }
     UITouch* touch = touches.anyObject;
     if (touch != nil) {
         [self updateForPoint:[touch locationInView:self]];
@@ -581,6 +670,15 @@ static CGRect SpaghettiPad_CenteredFrame(CGPoint center, CGFloat width, CGFloat 
     return CGRectMake(center.x - width * 0.5, center.y - height * 0.5, width, height);
 }
 
+static CGRect SpaghettiPad_CompactMenuFrame(
+    CGRect bounds, UIEdgeInsets safe, CGFloat size) {
+    return CGRectMake(
+        CGRectGetWidth(bounds) - size - 6.0,
+        safe.top + 4.0, size, size);
+}
+
+static SpaghettiPadTouchButton* sMenuButton;
+
 @interface SpaghettiPadTouchOverlay : UIView
 
 @property(nonatomic, strong) SpaghettiPadTouchStick* controlStick;
@@ -596,8 +694,27 @@ static CGRect SpaghettiPad_CenteredFrame(CGPoint center, CGFloat width, CGFloat 
 @property(nonatomic, strong) SpaghettiPadTouchButton* cDown;
 @property(nonatomic, strong) SpaghettiPadTouchButton* cLeft;
 @property(nonatomic, strong) SpaghettiPadTouchButton* cRight;
+@property(nonatomic) BOOL customizableControls;
+@property(nonatomic) BOOL layoutEditing;
+@property(nonatomic, strong) NSArray<UIView*>* editableControls;
+@property(nonatomic, strong) NSMutableArray<UIGestureRecognizer*>* editGestures;
+@property(nonatomic, strong) NSMutableDictionary<NSString*, NSArray<NSNumber*>*>* layoutCenters;
+@property(nonatomic, strong) NSMutableDictionary<NSString*, NSNumber*>* layoutScales;
+@property(nonatomic, strong) NSMutableSet<NSString*>* hiddenControls;
+@property(nonatomic, strong) NSMutableDictionary<NSString*, NSValue*>* defaultSizes;
+@property(nonatomic, copy) NSString* layoutProfile;
+@property(nonatomic, strong) UIView* selectedControl;
+@property(nonatomic, strong) UIView* editorPanel;
+@property(nonatomic, strong) UILabel* editorLabel;
+@property(nonatomic, strong) UISlider* sizeSlider;
+@property(nonatomic, strong) UIButton* visibilityButton;
+@property(nonatomic, strong) UIButton* resetButton;
+@property(nonatomic, strong) UIButton* doneButton;
 
 - (void)cancelAllInputs;
+- (void)setCustomizableControlsEnabled:(BOOL)enabled;
+- (void)beginLayoutEditing;
+- (void)endLayoutEditing;
 
 @end
 
@@ -662,10 +779,35 @@ static CGRect SpaghettiPad_CenteredFrame(CGPoint center, CGFloat width, CGFloat 
             self.buttonZStick, self.buttonZRight, self.buttonR, self.buttonStart,
             self.cUp, self.cDown, self.cLeft, self.cRight,
         ];
+        self.layoutCenters = [NSMutableDictionary dictionary];
+        self.layoutScales = [NSMutableDictionary dictionary];
+        self.hiddenControls = [NSMutableSet set];
+        self.defaultSizes = [NSMutableDictionary dictionary];
+        self.editGestures = [NSMutableArray array];
+
+        self.controlStick.accessibilityIdentifier = @"stick";
+        self.buttonA.accessibilityIdentifier = @"a";
+        self.buttonB.accessibilityIdentifier = @"b";
+        self.buttonL.accessibilityIdentifier = @"l";
+        self.buttonZStick.accessibilityIdentifier = @"z-left";
+        self.buttonZRight.accessibilityIdentifier = @"z-right";
+        self.buttonR.accessibilityIdentifier = @"r";
+        self.buttonStart.accessibilityIdentifier = @"start";
+        self.cUp.accessibilityIdentifier = @"c-up";
+        self.cDown.accessibilityIdentifier = @"c-down";
+        self.cLeft.accessibilityIdentifier = @"c-left";
+        self.cRight.accessibilityIdentifier = @"c-right";
+        self.editableControls = @[
+            self.controlStick, self.buttonA, self.buttonB, self.buttonL,
+            self.buttonZStick, self.buttonZRight, self.buttonR, self.buttonStart,
+            self.cUp, self.cDown, self.cLeft, self.cRight,
+        ];
+
         [self addSubview:self.controlStick];
         for (SpaghettiPadTouchButton* button in self.buttons) {
             [self addSubview:button];
         }
+        [self installLayoutEditor];
     }
     return self;
 }
@@ -713,20 +855,29 @@ static CGRect SpaghettiPad_CenteredFrame(CGPoint center, CGFloat width, CGFloat 
         CGFloat rightCenterX = width - right - 58.0;
         CGFloat faceCenterY = height - safe.bottom - 82.0;
         CGFloat faceSize = 52.0;
+        CGFloat aSize = 58.0;
+        CGFloat bSize = 54.0;
         self.buttonA.frame = SpaghettiPad_CenteredFrame(
-            CGPointMake(rightCenterX + 22.0, faceCenterY + 18.0), faceSize, faceSize);
+            CGPointMake(rightCenterX + 22.0, faceCenterY + 18.0), aSize, aSize);
         self.buttonB.frame = SpaghettiPad_CenteredFrame(
-            CGPointMake(rightCenterX - 34.0, faceCenterY + 2.0), faceSize, faceSize);
+            CGPointMake(rightCenterX - 34.0, faceCenterY + 2.0), bSize, bSize);
         self.buttonZRight.frame = SpaghettiPad_CenteredFrame(
             CGPointMake(rightCenterX + 12.0, faceCenterY - 44.0), faceSize, faceSize);
+        CGFloat compactMenuSize = 38.0;
+        CGRect menuFrame =
+            SpaghettiPad_CompactMenuFrame(self.bounds, safe, compactMenuSize);
+        CGFloat startGap = 6.0;
         self.buttonStart.frame = SpaghettiPad_CenteredFrame(
-            CGPointMake(CGRectGetMidX(self.buttonZRight.frame),
-                        top + shoulderHeight * 0.5),
+            CGPointMake(CGRectGetMidX(menuFrame),
+                        CGRectGetMaxY(menuFrame) +
+                            startGap + shoulderHeight * 0.5),
             shoulderHeight, shoulderHeight);
 
         CGFloat cSize = 40.0;
         CGFloat cRadius = 34.0;
-        CGPoint cCenter = CGPointMake(rightCenterX, top + shoulderHeight + 80.0);
+        CGPoint cCenter = CGPointMake(
+            width - safe.right - cRadius - cSize * 0.5 - 4.0,
+            top + shoulderHeight + 75.0);
         self.cUp.frame = SpaghettiPad_CenteredFrame(
             CGPointMake(cCenter.x, cCenter.y - cRadius), cSize, cSize);
         self.cDown.frame = SpaghettiPad_CenteredFrame(
@@ -740,8 +891,13 @@ static CGRect SpaghettiPad_CenteredFrame(CGPoint center, CGFloat width, CGFloat 
             button.titleLabel.font =
                 [UIFont systemFontOfSize:15.0 weight:UIFontWeightSemibold];
         }
+        self.buttonA.titleLabel.font =
+            [UIFont systemFontOfSize:18.0 weight:UIFontWeightBold];
+        self.buttonB.titleLabel.font =
+            [UIFont systemFontOfSize:17.0 weight:UIFontWeightBold];
         self.buttonStart.titleLabel.font =
             [UIFont systemFontOfSize:15.0 weight:UIFontWeightBold];
+        [self finishControlLayoutForCompact:YES];
         return;
     }
 
@@ -814,6 +970,7 @@ static CGRect SpaghettiPad_CenteredFrame(CGPoint center, CGFloat width, CGFloat 
     }
     self.buttonStart.titleLabel.font =
         [UIFont systemFontOfSize:18.0 * scale weight:UIFontWeightBold];
+    [self finishControlLayoutForCompact:NO];
 }
 
 - (void)cancelAllInputs {
@@ -824,10 +981,448 @@ static CGRect SpaghettiPad_CenteredFrame(CGPoint center, CGFloat width, CGFloat 
     SpaghettiPad_ResetAllInputs();
 }
 
+- (void)setCustomizableControlsEnabled:(BOOL)enabled {
+    if (self.customizableControls == enabled) {
+        return;
+    }
+    [self cancelAllInputs];
+    self.customizableControls = enabled;
+    self.buttonA.holdAssistEnabled = enabled;
+    if (!enabled && self.layoutEditing) {
+        [self endLayoutEditing];
+    }
+    [self setNeedsLayout];
+}
+
+- (UIButton*)editorButtonWithTitle:(NSString*)title
+                            action:(SEL)action {
+    UIButton* button = [UIButton buttonWithType:UIButtonTypeSystem];
+    [button setTitle:title forState:UIControlStateNormal];
+    [button setTitleColor:UIColor.whiteColor forState:UIControlStateNormal];
+    button.titleLabel.font =
+        [UIFont systemFontOfSize:14.0 weight:UIFontWeightSemibold];
+    button.backgroundColor = [UIColor colorWithWhite:1.0 alpha:0.14];
+    button.layer.cornerRadius = 10.0;
+    [button addTarget:self action:action forControlEvents:UIControlEventTouchUpInside];
+    return button;
+}
+
+- (void)installLayoutEditor {
+    self.editorPanel = [[UIView alloc] initWithFrame:CGRectZero];
+    self.editorPanel.backgroundColor = [UIColor colorWithWhite:0.04 alpha:0.88];
+    self.editorPanel.layer.borderColor =
+        [UIColor colorWithWhite:1.0 alpha:0.24].CGColor;
+    self.editorPanel.layer.borderWidth = 1.0;
+    self.editorPanel.layer.cornerRadius = 16.0;
+    self.editorPanel.hidden = YES;
+
+    self.editorLabel = [[UILabel alloc] initWithFrame:CGRectZero];
+    self.editorLabel.textColor = UIColor.whiteColor;
+    self.editorLabel.numberOfLines = 2;
+    self.editorLabel.font =
+        [UIFont systemFontOfSize:14.0 weight:UIFontWeightSemibold];
+    [self.editorPanel addSubview:self.editorLabel];
+
+    self.sizeSlider = [[UISlider alloc] initWithFrame:CGRectZero];
+    self.sizeSlider.minimumValue = 0.70f;
+    self.sizeSlider.maximumValue = 1.50f;
+    self.sizeSlider.value = 1.0f;
+    self.sizeSlider.minimumTrackTintColor =
+        [UIColor colorWithRed:0.28 green:0.68 blue:1.0 alpha:1.0];
+    [self.sizeSlider addTarget:self
+                        action:@selector(editorSizeChanged:)
+              forControlEvents:UIControlEventValueChanged];
+    [self.editorPanel addSubview:self.sizeSlider];
+
+    self.visibilityButton =
+        [self editorButtonWithTitle:@"Hide" action:@selector(toggleSelectedVisibility)];
+    self.resetButton =
+        [self editorButtonWithTitle:@"Reset" action:@selector(resetCurrentLayout)];
+    self.doneButton =
+        [self editorButtonWithTitle:@"Done" action:@selector(endLayoutEditing)];
+    self.doneButton.backgroundColor =
+        [UIColor colorWithRed:0.10 green:0.48 blue:0.92 alpha:0.88];
+    [self.editorPanel addSubview:self.visibilityButton];
+    [self.editorPanel addSubview:self.resetButton];
+    [self.editorPanel addSubview:self.doneButton];
+    self.resetButton.accessibilityIdentifier = @"touch-layout-reset";
+    self.doneButton.accessibilityIdentifier = @"touch-layout-done";
+
+    [self addSubview:self.editorPanel];
+
+    for (UIView* control in self.editableControls) {
+        UIPanGestureRecognizer* pan =
+            [[UIPanGestureRecognizer alloc] initWithTarget:self
+                                                    action:@selector(moveControl:)];
+        UITapGestureRecognizer* tap =
+            [[UITapGestureRecognizer alloc] initWithTarget:self
+                                                    action:@selector(selectControlGesture:)];
+        pan.enabled = NO;
+        tap.enabled = NO;
+        [control addGestureRecognizer:pan];
+        [control addGestureRecognizer:tap];
+        [self.editGestures addObject:pan];
+        [self.editGestures addObject:tap];
+    }
+}
+
+- (void)layoutEditorPanel {
+    if (self.editorPanel.hidden) {
+        return;
+    }
+    UIEdgeInsets safe = self.safeAreaInsets;
+    CGFloat width = CGRectGetWidth(self.bounds);
+    CGFloat panelWidth =
+        MIN(620.0, width - safe.left - safe.right - 20.0);
+    CGFloat panelHeight = CGRectGetHeight(self.bounds) < 560.0 ? 76.0 : 86.0;
+    self.editorPanel.frame = CGRectMake(
+        CGRectGetMidX(self.bounds) - panelWidth * 0.5,
+        safe.top + 8.0, panelWidth, panelHeight);
+
+    CGFloat inset = 12.0;
+    CGFloat buttonWidth = 70.0;
+    CGFloat gap = 8.0;
+    CGFloat contentHeight = panelHeight - inset * 2.0;
+    CGFloat trailingButtonsWidth = buttonWidth * 3.0 + gap * 2.0;
+    CGFloat labelWidth = MIN(150.0, panelWidth * 0.23);
+    CGFloat sliderX = inset + labelWidth + gap;
+    CGFloat sliderWidth =
+        panelWidth - inset * 2.0 - labelWidth - gap -
+        trailingButtonsWidth - gap;
+    self.editorLabel.frame =
+        CGRectMake(inset, inset, labelWidth, contentHeight);
+    self.sizeSlider.frame =
+        CGRectMake(sliderX, inset, MAX(80.0, sliderWidth), contentHeight);
+
+    CGFloat buttonX = panelWidth - inset - trailingButtonsWidth;
+    NSArray<UIButton*>* buttons = @[
+        self.visibilityButton, self.resetButton, self.doneButton,
+    ];
+    for (UIButton* button in buttons) {
+        button.frame =
+            CGRectMake(buttonX, inset, buttonWidth, contentHeight);
+        buttonX += buttonWidth + gap;
+    }
+}
+
+- (NSString*)profileForCompact:(BOOL)compact {
+    return compact ? @"phone-v1" : @"tablet-v1";
+}
+
+- (NSString*)storageKeyForProfile:(NSString*)profile {
+    return [@"SpaghettiPad.TouchLayout." stringByAppendingString:profile];
+}
+
+- (NSString*)legacyStorageKeyForProfile:(NSString*)profile {
+    return [@"SpaghettiPad.ExperimentalTouchLayout." stringByAppendingString:profile];
+}
+
+- (void)loadLayoutForProfile:(NSString*)profile {
+    if ([self.layoutProfile isEqualToString:profile]) {
+        return;
+    }
+    self.layoutProfile = profile;
+    [self.layoutCenters removeAllObjects];
+    [self.layoutScales removeAllObjects];
+    [self.hiddenControls removeAllObjects];
+
+    NSUserDefaults* defaults = NSUserDefaults.standardUserDefaults;
+    NSString* storageKey = [self storageKeyForProfile:profile];
+    NSDictionary* stored = [defaults dictionaryForKey:storageKey];
+    if (stored == nil) {
+        stored = [defaults
+            dictionaryForKey:[self legacyStorageKeyForProfile:profile]];
+        if (stored != nil) {
+            // Preserve layouts created before customizable controls became
+            // the default without retaining the old user-facing mode.
+            [defaults setObject:stored forKey:storageKey];
+        }
+    }
+    NSDictionary* centers = stored[@"centers"];
+    NSDictionary* scales = stored[@"scales"];
+    NSArray* hidden = stored[@"hidden"];
+    if ([centers isKindOfClass:NSDictionary.class]) {
+        [self.layoutCenters addEntriesFromDictionary:centers];
+    }
+    if ([scales isKindOfClass:NSDictionary.class]) {
+        [self.layoutScales addEntriesFromDictionary:scales];
+    }
+    if ([hidden isKindOfClass:NSArray.class]) {
+        [self.hiddenControls addObjectsFromArray:hidden];
+    }
+}
+
+- (void)saveCurrentLayout {
+    if (self.layoutProfile.length == 0) {
+        return;
+    }
+    NSDictionary* stored = @{
+        @"centers": [self.layoutCenters copy],
+        @"scales": [self.layoutScales copy],
+        @"hidden": self.hiddenControls.allObjects,
+    };
+    [NSUserDefaults.standardUserDefaults
+        setObject:stored
+           forKey:[self storageKeyForProfile:self.layoutProfile]];
+}
+
+- (void)applyCustomizableDefaultsForCompact:(BOOL)compact {
+    if (compact) {
+        CGFloat width = CGRectGetWidth(self.bounds);
+        CGFloat height = CGRectGetHeight(self.bounds);
+        UIEdgeInsets safe = self.safeAreaInsets;
+        CGFloat rightCenterX = width - safe.right - 68.0;
+        CGFloat faceCenterY = height - safe.bottom - 82.0;
+        self.buttonA.frame = SpaghettiPad_CenteredFrame(
+            CGPointMake(rightCenterX + 22.0, faceCenterY + 18.0), 66.0, 66.0);
+        self.buttonB.frame = SpaghettiPad_CenteredFrame(
+            CGPointMake(rightCenterX - 42.0, faceCenterY + 6.0), 58.0, 58.0);
+        self.buttonZRight.frame = SpaghettiPad_CenteredFrame(
+            CGPointMake(rightCenterX - 40.0, faceCenterY - 52.0), 54.0, 54.0);
+        self.buttonR.frame = SpaghettiPad_CenteredFrame(
+            CGPointMake(rightCenterX + 22.0, faceCenterY - 52.0), 56.0, 56.0);
+        for (SpaghettiPadTouchButton* cButton in
+             @[ self.cUp, self.cDown, self.cLeft, self.cRight ]) {
+            cButton.center =
+                CGPointMake(cButton.center.x, cButton.center.y - 14.0);
+        }
+
+        CGFloat leftCenter = CGRectGetMidX(self.buttonZStick.frame);
+        CGFloat topCenter = CGRectGetMidY(self.buttonZStick.frame);
+        self.buttonL.frame = SpaghettiPad_CenteredFrame(
+            CGPointMake(leftCenter - 29.0, topCenter), 50.0, 50.0);
+        self.buttonZStick.frame = SpaghettiPad_CenteredFrame(
+            CGPointMake(leftCenter + 29.0, topCenter), 50.0, 50.0);
+        return;
+    }
+
+    CGFloat unit = CGRectGetWidth(self.buttonA.frame);
+    CGPoint aCenter = self.buttonA.center;
+    CGPoint upperCenter =
+        CGPointMake(aCenter.x, CGRectGetMinY(self.buttonA.frame) - 28.0 - unit * 0.5);
+    self.buttonZRight.frame = SpaghettiPad_CenteredFrame(
+        CGPointMake(upperCenter.x - unit * 0.54, upperCenter.y), unit, unit);
+    self.buttonR.frame = SpaghettiPad_CenteredFrame(
+        CGPointMake(upperCenter.x + unit * 0.54, upperCenter.y), unit, unit);
+    self.buttonB.center =
+        CGPointMake(self.buttonB.center.x - 16.0, self.buttonB.center.y);
+
+    CGFloat leftUnit = CGRectGetWidth(self.buttonZStick.frame);
+    CGFloat leftCenter = CGRectGetMidX(self.buttonZStick.frame);
+    CGFloat topCenter = CGRectGetMidY(self.buttonZStick.frame);
+    self.buttonL.frame = SpaghettiPad_CenteredFrame(
+        CGPointMake(leftCenter - leftUnit * 0.55, topCenter),
+        leftUnit, leftUnit);
+    self.buttonZStick.frame = SpaghettiPad_CenteredFrame(
+        CGPointMake(leftCenter + leftUnit * 0.55, topCenter),
+        leftUnit, leftUnit);
+}
+
+- (void)clampControlToSafeBounds:(UIView*)control {
+    UIEdgeInsets safe = self.safeAreaInsets;
+    CGFloat halfWidth = CGRectGetWidth(control.bounds) * 0.5;
+    CGFloat halfHeight = CGRectGetHeight(control.bounds) * 0.5;
+    CGFloat minX = safe.left + halfWidth + 4.0;
+    CGFloat maxX = CGRectGetWidth(self.bounds) - safe.right - halfWidth - 4.0;
+    CGFloat minY = safe.top + halfHeight + 4.0;
+    CGFloat maxY = CGRectGetHeight(self.bounds) - safe.bottom - halfHeight - 4.0;
+    control.center = CGPointMake(
+        std::clamp(control.center.x, minX, MAX(minX, maxX)),
+        std::clamp(control.center.y, minY, MAX(minY, maxY)));
+}
+
+- (void)finishControlLayoutForCompact:(BOOL)compact {
+    if (!self.customizableControls) {
+        for (UIView* control in self.editableControls) {
+            control.hidden = NO;
+            control.alpha = 1.0;
+            control.layer.shadowOpacity = 0.0;
+        }
+        [self layoutEditorPanel];
+        return;
+    }
+
+    [self applyCustomizableDefaultsForCompact:compact];
+    [self loadLayoutForProfile:[self profileForCompact:compact]];
+    [self.defaultSizes removeAllObjects];
+    CGFloat width = CGRectGetWidth(self.bounds);
+    CGFloat height = CGRectGetHeight(self.bounds);
+    for (UIView* control in self.editableControls) {
+        NSString* key = control.accessibilityIdentifier;
+        if (key.length == 0) {
+            continue;
+        }
+        CGSize defaultSize = control.bounds.size;
+        self.defaultSizes[key] = [NSValue valueWithCGSize:defaultSize];
+        CGFloat controlScale =
+            std::clamp(self.layoutScales[key].doubleValue, 0.70, 1.50);
+        if (self.layoutScales[key] == nil) {
+            controlScale = 1.0;
+        }
+        control.bounds = CGRectMake(
+            0.0, 0.0,
+            defaultSize.width * controlScale,
+            defaultSize.height * controlScale);
+        NSArray<NSNumber*>* center = self.layoutCenters[key];
+        if ([center isKindOfClass:NSArray.class] && center.count == 2) {
+            control.center = CGPointMake(
+                center[0].doubleValue * width,
+                center[1].doubleValue * height);
+        }
+        [self clampControlToSafeBounds:control];
+        BOOL hidden = [self.hiddenControls containsObject:key];
+        control.hidden = self.layoutEditing ? NO : hidden;
+        control.alpha = self.layoutEditing && hidden ? 0.28 : 1.0;
+        BOOL selected = self.layoutEditing && control == self.selectedControl;
+        control.layer.shadowColor =
+            [UIColor colorWithRed:1.0 green:0.78 blue:0.16 alpha:1.0].CGColor;
+        control.layer.shadowRadius = selected ? 8.0 : 0.0;
+        control.layer.shadowOpacity = selected ? 1.0 : 0.0;
+        control.layer.shadowOffset = CGSizeZero;
+    }
+    [self layoutEditorPanel];
+    [self bringSubviewToFront:self.editorPanel];
+}
+
+- (void)selectControl:(UIView*)control {
+    if (!self.layoutEditing || control == nil) {
+        return;
+    }
+    self.selectedControl = control;
+    NSString* label = control.accessibilityLabel;
+    if (label.length == 0) {
+        label = control.accessibilityIdentifier;
+    }
+    self.editorLabel.text =
+        [NSString stringWithFormat:@"%@\nDrag to move • Size", label];
+    NSString* key = control.accessibilityIdentifier;
+    self.sizeSlider.value =
+        self.layoutScales[key] == nil ? 1.0f : self.layoutScales[key].floatValue;
+    BOOL hidden = [self.hiddenControls containsObject:key];
+    [self.visibilityButton setTitle:(hidden ? @"Show" : @"Hide")
+                           forState:UIControlStateNormal];
+    self.visibilityButton.enabled = ![key isEqualToString:@"stick"];
+    self.visibilityButton.alpha = self.visibilityButton.enabled ? 1.0 : 0.4;
+    [self setNeedsLayout];
+}
+
+- (void)selectControlGesture:(UITapGestureRecognizer*)gesture {
+    [self selectControl:gesture.view];
+}
+
+- (void)moveControl:(UIPanGestureRecognizer*)gesture {
+    UIView* control = gesture.view;
+    if (!self.layoutEditing || control == nil) {
+        return;
+    }
+    if (gesture.state == UIGestureRecognizerStateBegan) {
+        [self selectControl:control];
+    }
+    CGPoint translation = [gesture translationInView:self];
+    control.center = CGPointMake(
+        control.center.x + translation.x,
+        control.center.y + translation.y);
+    [gesture setTranslation:CGPointZero inView:self];
+    [self clampControlToSafeBounds:control];
+    self.layoutCenters[control.accessibilityIdentifier] = @[
+        @(control.center.x / CGRectGetWidth(self.bounds)),
+        @(control.center.y / CGRectGetHeight(self.bounds)),
+    ];
+}
+
+- (void)editorSizeChanged:(UISlider*)slider {
+    UIView* control = self.selectedControl;
+    NSString* key = control.accessibilityIdentifier;
+    NSValue* sizeValue = self.defaultSizes[key];
+    if (control == nil || key.length == 0 || sizeValue == nil) {
+        return;
+    }
+    CGFloat scale = slider.value;
+    self.layoutScales[key] = @(scale);
+    CGSize baseSize = sizeValue.CGSizeValue;
+    control.bounds = CGRectMake(
+        0.0, 0.0, baseSize.width * scale, baseSize.height * scale);
+    [self clampControlToSafeBounds:control];
+    self.layoutCenters[key] = @[
+        @(control.center.x / CGRectGetWidth(self.bounds)),
+        @(control.center.y / CGRectGetHeight(self.bounds)),
+    ];
+}
+
+- (void)toggleSelectedVisibility {
+    NSString* key = self.selectedControl.accessibilityIdentifier;
+    if (key.length == 0 || [key isEqualToString:@"stick"]) {
+        return;
+    }
+    if ([self.hiddenControls containsObject:key]) {
+        [self.hiddenControls removeObject:key];
+    } else {
+        [self.hiddenControls addObject:key];
+    }
+    [self selectControl:self.selectedControl];
+}
+
+- (void)resetCurrentLayout {
+    if (self.layoutProfile.length == 0) {
+        return;
+    }
+    [self.layoutCenters removeAllObjects];
+    [self.layoutScales removeAllObjects];
+    [self.hiddenControls removeAllObjects];
+    [NSUserDefaults.standardUserDefaults
+        removeObjectForKey:[self storageKeyForProfile:self.layoutProfile]];
+    [NSUserDefaults.standardUserDefaults
+        removeObjectForKey:[self legacyStorageKeyForProfile:self.layoutProfile]];
+    [self setNeedsLayout];
+    [self selectControl:self.buttonA];
+}
+
+- (void)beginLayoutEditing {
+    if (!self.customizableControls || self.layoutEditing) {
+        return;
+    }
+    [self cancelAllInputs];
+    self.layoutEditing = YES;
+    self.buttonA.layoutEditing = YES;
+    for (SpaghettiPadTouchButton* button in self.buttons) {
+        button.layoutEditing = YES;
+    }
+    self.controlStick.layoutEditing = YES;
+    for (UIGestureRecognizer* gesture in self.editGestures) {
+        gesture.enabled = YES;
+    }
+    self.editorPanel.hidden = NO;
+    sLayoutEditorActive = YES;
+    sMenuButton.hidden = YES;
+    [self selectControl:self.buttonA];
+    [self setNeedsLayout];
+    SDL_Log("[SpaghettiPad] touch layout editor opened");
+}
+
+- (void)endLayoutEditing {
+    if (!self.layoutEditing) {
+        return;
+    }
+    [self saveCurrentLayout];
+    self.layoutEditing = NO;
+    for (SpaghettiPadTouchButton* button in self.buttons) {
+        button.layoutEditing = NO;
+    }
+    self.controlStick.layoutEditing = NO;
+    for (UIGestureRecognizer* gesture in self.editGestures) {
+        gesture.enabled = NO;
+    }
+    self.editorPanel.hidden = YES;
+    self.selectedControl = nil;
+    sLayoutEditorActive = NO;
+    sMenuButton.hidden = NO;
+    [self setNeedsLayout];
+    SDL_Log("[SpaghettiPad] touch layout saved");
+}
+
 @end
 
 static SpaghettiPadTouchOverlay* sTouchOverlay;
-static SpaghettiPadTouchButton* sMenuButton;
 
 static UIWindow* SpaghettiPad_GetSDLWindow(SDL_Window* sdlWindow) {
     SDL_SysWMinfo info;
@@ -995,13 +1590,16 @@ static void SpaghettiPad_InstallMenuButton(UIWindow* window) {
     UIEdgeInsets safe = window.safeAreaInsets;
     CGFloat height = CGRectGetHeight(window.bounds);
     BOOL compact = height < 560.0;
-    CGFloat size = compact ? 44.0 : 38.0;
+    CGFloat size = 38.0;
     BOOL menuVisible = sTouchControlsMenuVisible.load();
     BOOL compactMenuVisible = compact && menuVisible;
     if (compactMenuVisible) {
         sMenuButton.frame = CGRectMake(
             CGRectGetMidX(window.bounds) - size * 0.5,
             height - safe.bottom - size - 8.0, size, size);
+    } else if (compact) {
+        sMenuButton.frame =
+            SpaghettiPad_CompactMenuFrame(window.bounds, safe, size);
     } else {
         sMenuButton.frame = CGRectMake(
             CGRectGetWidth(window.bounds) - safe.right - size - 8.0,
@@ -1012,6 +1610,7 @@ static void SpaghettiPad_InstallMenuButton(UIWindow* window) {
         [sMenuButton removeFromSuperview];
         [window addSubview:sMenuButton];
     }
+    sMenuButton.hidden = sLayoutEditorActive;
     [window bringSubviewToFront:sMenuButton];
 }
 
@@ -1042,6 +1641,7 @@ static void SpaghettiPad_ApplyTouchControlsState(void) {
         sTouchControlsMenuVisible.load() ||
         hasPhysicalController;
     if (shouldHide) {
+        [sTouchOverlay endLayoutEditing];
         SpaghettiPad_ReleaseVisibleInputs();
         [sTouchOverlay removeFromSuperview];
         sTouchOverlay = nil;
@@ -1050,6 +1650,8 @@ static void SpaghettiPad_ApplyTouchControlsState(void) {
 
     if (sTouchOverlay == nil) {
         sTouchOverlay = [[SpaghettiPadTouchOverlay alloc] initWithFrame:window.bounds];
+        [sTouchOverlay
+            setCustomizableControlsEnabled:!sLegacyTouchControls];
         sTouchOverlay.autoresizingMask =
             UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     }
@@ -1061,6 +1663,10 @@ static void SpaghettiPad_ApplyTouchControlsState(void) {
     [sTouchOverlay setNeedsLayout];
     [window bringSubviewToFront:sTouchOverlay];
     [window bringSubviewToFront:sMenuButton];
+    if (sLayoutEditorRequested && !sLegacyTouchControls) {
+        sLayoutEditorRequested = NO;
+        [sTouchOverlay beginLayoutEditing];
+    }
 }
 
 static int SpaghettiPad_ControllerEventWatch(void* userdata, SDL_Event* event) {
@@ -1198,6 +1804,53 @@ void SpaghettiPad_SetTouchControlsEnabled(int enabled) {
     });
 }
 
+void SpaghettiPad_SetLegacyTouchControlsEnabled(int enabled) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        BOOL legacyEnabled = enabled != 0;
+#if TARGET_OS_SIMULATOR
+        NSDictionary<NSString*, NSString*>* environment =
+            NSProcessInfo.processInfo.environment;
+        if ([environment[@"SPAGHETTIPAD_SIMULATE_LEGACY_TOUCH"]
+                boolValue]) {
+            legacyEnabled = YES;
+        }
+        BOOL shouldOpenEditor =
+            [environment[@"SPAGHETTIPAD_SIMULATE_TOUCH_LAYOUT_EDITOR"]
+                boolValue];
+#else
+        BOOL shouldOpenEditor = NO;
+#endif
+        sLegacyTouchControls = legacyEnabled;
+        if (legacyEnabled) {
+            sLayoutEditorRequested = NO;
+        } else if (shouldOpenEditor) {
+            sLayoutEditorRequested = YES;
+        }
+        [sTouchOverlay setCustomizableControlsEnabled:!legacyEnabled];
+        SpaghettiPad_ApplyTouchControlsState();
+        SDL_Log(
+            "[SpaghettiPad] legacy touch controls %s",
+            legacyEnabled ? "enabled" : "disabled");
+    });
+}
+
+void SpaghettiPad_BeginTouchLayoutEditing(void) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if (sLegacyTouchControls || !sTouchControlsDesired) {
+            SDL_Log(
+                "[SpaghettiPad] layout editor requires customizable touch controls");
+            return;
+        }
+        sLayoutEditorRequested = YES;
+        if (sTouchControlsMenuVisible.load()) {
+            SpaghettiPad_PushKey(SDL_SCANCODE_ESCAPE, YES);
+            SpaghettiPad_PushKey(SDL_SCANCODE_ESCAPE, NO);
+        } else {
+            SpaghettiPad_ApplyTouchControlsState();
+        }
+    });
+}
+
 void SpaghettiPad_SetTouchControlsMenuVisible(int visible) {
     bool menuVisible = visible != 0;
     if (sTouchControlsMenuVisible.exchange(menuVisible) == menuVisible) {
@@ -1206,6 +1859,16 @@ void SpaghettiPad_SetTouchControlsMenuVisible(int visible) {
     dispatch_async(dispatch_get_main_queue(), ^{
         SpaghettiPad_ApplyTouchControlsState();
     });
+}
+
+void SpaghettiPad_SetGameplayActive(int active) {
+    bool isActive = active != 0;
+    bool wasActive = sGameplayActive.exchange(isActive);
+    if (wasActive && !isActive) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [sTouchOverlay.buttonA cancelHoldAssist];
+        });
+    }
 }
 
 void SpaghettiPad_SetTiltSteeringEnabled(int enabled) {

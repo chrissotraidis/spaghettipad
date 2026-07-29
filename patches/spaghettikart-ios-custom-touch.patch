@@ -1,0 +1,84 @@
+diff --git a/src/port/Engine.cpp b/src/port/Engine.cpp
+index fd329f36f..aa8c18f6c 100644
+--- a/src/port/Engine.cpp
++++ b/src/port/Engine.cpp
+@@ -414,11 +414,16 @@ void GameEngine::Create() {
+ #elif defined(__IOS__)
+     CVarSetInteger(CVAR_IMGUI_CONTROLLER_NAV, 1);
+     CVarRegisterInteger("gSettings.SpaghettiPad.TouchControls", 1);
++    CVarRegisterInteger(
++        "gSettings.SpaghettiPad.LegacyTouchControls", 0);
+     CVarRegisterInteger("gSettings.SpaghettiPad.TiltSteering", 0);
+     CVarRegisterFloat("gSettings.SpaghettiPad.TiltSensitivity", 1.0f);
+     SpaghettiPad_InitializeTouchControls();
+     SpaghettiPad_SetTouchControlsEnabled(
+         CVarGetInteger("gSettings.SpaghettiPad.TouchControls", 1));
++    SpaghettiPad_SetLegacyTouchControlsEnabled(
++        CVarGetInteger(
++            "gSettings.SpaghettiPad.LegacyTouchControls", 0));
+     SpaghettiPad_SetTiltSensitivity(
+         CVarGetFloat("gSettings.SpaghettiPad.TiltSensitivity", 1.0f));
+     SpaghettiPad_SetTiltSteeringEnabled(
+diff --git a/src/port/Game.cpp b/src/port/Game.cpp
+index 6e2811f79..f55c48c8d 100644
+--- a/src/port/Game.cpp
++++ b/src/port/Game.cpp
+@@ -4,6 +4,10 @@
+ #include "Game.h"
+ #include "port/Engine.h"
+ 
++#ifdef __IOS__
++#include "SpaghettiPadTouchControls.h"
++#endif
++
+ #include <fast/Fast3dWindow.h>
+ #include <memory>
+ #include <atomic>
+@@ -979,6 +983,9 @@ static void ApplyPendingReset() {
+ 
+ void push_frame() {
+     ApplyPendingReset();
++#ifdef __IOS__
++    SpaghettiPad_SetGameplayActive(gGamestate == RACING);
++#endif
+     GameEngine::StartAudioFrame();
+     GameEngine::Instance->StartFrame();
+     thread5_iteration();
+diff --git a/src/port/ui/PortMenu.cpp b/src/port/ui/PortMenu.cpp
+index 21cea973e..3418e0fba 100644
+--- a/src/port/ui/PortMenu.cpp
++++ b/src/port/ui/PortMenu.cpp
+@@ -385,6 +385,33 @@ void PortMenu::AddSettings() {
+         .Options(CheckboxOptions()
+                      .DefaultValue(true)
+                      .Tooltip("Shows the low-grip touch controller. The menu button remains available when disabled."));
++    AddWidget(path, "Legacy Touch Controls", WIDGET_CVAR_CHECKBOX)
++        .CVar("gSettings.SpaghettiPad.LegacyTouchControls")
++        .Callback([](WidgetInfo& info) {
++            SpaghettiPad_SetLegacyTouchControlsEnabled(
++                CVarGetInteger(
++                    "gSettings.SpaghettiPad.LegacyTouchControls", 0));
++        })
++        .Options(CheckboxOptions()
++                     .DefaultValue(false)
++                     .Tooltip("Restores the original fixed touch layout. Custom positioning, "
++                              "resizing, hiding, and A-button hold assist are unavailable."));
++    AddWidget(path, "Customize Touch Layout", WIDGET_BUTTON)
++        .PreFunc([](WidgetInfo& info) {
++            bool available =
++                CVarGetInteger("gSettings.SpaghettiPad.TouchControls", 1) &&
++                !CVarGetInteger(
++                    "gSettings.SpaghettiPad.LegacyTouchControls", 0);
++            info.options->disabled = !available;
++            info.options->disabledTooltip =
++                "Enable Touch Controls and turn off Legacy Touch Controls first.";
++        })
++        .Callback([](WidgetInfo& info) {
++            SpaghettiPad_BeginTouchLayoutEditing();
++        })
++        .Options(ButtonOptions().Tooltip(
++            "Closes Settings and opens the native layout editor. Drag controls, "
++            "resize the selected control, hide unused buttons, or reset the layout."));
+     AddWidget(path, "Tilt Steering", WIDGET_CVAR_CHECKBOX)
+         .CVar("gSettings.SpaghettiPad.TiltSteering")
+         .Callback([](WidgetInfo& info) {
