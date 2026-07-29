@@ -49,7 +49,7 @@ audited ROM-free unsigned IPA.
 | 5 | Lifecycle and audio | Complete | Three-cycle continuity, config flush, paused simulation, audible resume |
 | 6 | Signed physical-iPad boot | In progress | Signed install, title screen, ten-minute stability run |
 | 7 | On-device Files extraction | In progress (hardware replay) | Clean-device extraction, failure recovery, measured time/RSS |
-| 8 | Grip-first full-analog touch controls | In progress (iPad editor and A-hold slice passed; full GP pending) | Full touch-only GP and analog/menu/lifecycle checks on hardware |
+| 8 | Grip-first full-analog touch controls | In progress (iPad/iPhone layout and A-hold slices passed; full GP pending) | Full touch-only GP and analog/menu/lifecycle checks on hardware |
 | 9 | iPad UX and imported texture pack | In progress (Simulator UX/import slice passed; hardware pack GP pending) | Touch-complete UX plus Reloaded import/enable/full-GP hardware gate |
 | 10 | Controllers and split-screen | In progress (Simulator routing/render slice passed; hardware sessions pending) | Two-controller 2P session and measured 3P/4P decision |
 | 11 | Tilt steering | In progress (Simulator slice passed; hardware GP pending) | Persisted, drift-free tilt GP on hardware |
@@ -94,6 +94,27 @@ Boundary:
   proves artifact contents, not device installation or runtime behavior.
 
 ## Evidence log
+
+### 2026-07-29 — customizable iPad and iPhone controls physically accepted
+
+- The customizable controller is now the default, with the prior fixed
+  controller available through **Legacy Touch Controls**.
+- On a physical 12.9-inch iPad Pro, layout movement, resizing A and Z, hiding
+  controls, returning to a live race, engaging A hold assist, and tapping A to
+  release it were exercised successfully. The accepted saved layout became
+  the normalized tablet default.
+- On a physical iPhone 14, the saved racing layout became the normalized phone
+  default. Grand Prix play, A hold assist, texture-pack rendering, the
+  safe-area-inset menu, and Start alignment were exercised and accepted.
+- Fresh phone and tablet defaults were also rendered in Simulator layout-edit
+  mode so visible control spacing and full touch hit frames could be inspected.
+  In particular, R and the lower C control remain separated.
+- The final signed arm64 development build was installed in place on the
+  iPhone, preserving app data, and remained live after launch. The exact
+  accepted touch-code commit is `6dcf4a1`; its executable SHA-256 is
+  `bd97648f0dc2bb0475047dc7ae642602cf8ba965de252f4d0895bba52f9d22e3`.
+- Boundary: these sessions accept the new layouts and native touch behavior;
+  a complete touch-only Grand Prix remains the Phase 8 endurance gate.
 
 ### 2026-07-29 — Phase 6 runner control-flow replay passed; hardware still pending
 

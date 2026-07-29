@@ -68,7 +68,6 @@ toggle returns to the saved customizable layout.
   controls, returning to a live race, engaging A hold assist, and tapping A to
   release it were exercised successfully on 2026-07-29.
 - On a physical iPhone 14, the customizable controls, A hold assist, texture
-  pack, and Grand Prix play were exercised successfully on 2026-07-29. The
-  safe-area menu correction and promoted phone default still require a final
-  device recheck.
+  pack, Grand Prix play, safe-area menu placement, Start alignment, and the
+  promoted phone default were exercised and accepted on 2026-07-29.
 - A full touch-only Grand Prix remains open.
