@@ -41,11 +41,24 @@ index b5298b84..4fcec8cd 100644
  }
  
  bool ControlDeck::ProcessKeyboardEvent(KbEventType eventType, KbScancode scancode) {
+diff --git a/include/ship/controller/physicaldevice/ConnectedPhysicalDeviceManager.h b/include/ship/controller/physicaldevice/ConnectedPhysicalDeviceManager.h
+index 33f9a664..939eb158 100644
+--- a/include/ship/controller/physicaldevice/ConnectedPhysicalDeviceManager.h
++++ b/include/ship/controller/physicaldevice/ConnectedPhysicalDeviceManager.h
+@@ -83,6 +83,8 @@ class ConnectedPhysicalDeviceManager {
+     void RefreshConnectedSDLGamepads();
+ 
+   private:
++    void CloseConnectedSDLGamepads();
++
+     std::unordered_map<int32_t, SDL_GameController*> mConnectedSDLGamepads;
+     std::unordered_map<int32_t, std::string> mConnectedSDLGamepadNames;
+     std::unordered_map<uint8_t, std::unordered_set<int32_t>> mIgnoredInstanceIds;
 diff --git a/src/ship/controller/physicaldevice/ConnectedPhysicalDeviceManager.cpp b/src/ship/controller/physicaldevice/ConnectedPhysicalDeviceManager.cpp
-index 7f0397e2..6d446611 100644
+index 7f0397e2..aba2c8e7 100644
 --- a/src/ship/controller/physicaldevice/ConnectedPhysicalDeviceManager.cpp
 +++ b/src/ship/controller/physicaldevice/ConnectedPhysicalDeviceManager.cpp
-@@ -1,5 +1,8 @@
+@@ -1,11 +1,24 @@
  #include "ship/controller/physicaldevice/ConnectedPhysicalDeviceManager.h"
  #include <spdlog/spdlog.h>
 +#if defined(__APPLE__)
@@ -54,9 +67,29 @@ index 7f0397e2..6d446611 100644
  
  namespace Ship {
  ConnectedPhysicalDeviceManager::ConnectedPhysicalDeviceManager() {
-@@ -53,6 +56,10 @@ void ConnectedPhysicalDeviceManager::RefreshConnectedSDLGamepads() {
-     mConnectedSDLGamepads.clear();
-     mConnectedSDLGamepadNames.clear();
+ }
+ 
+ ConnectedPhysicalDeviceManager::~ConnectedPhysicalDeviceManager() {
++    CloseConnectedSDLGamepads();
++}
++
++void ConnectedPhysicalDeviceManager::CloseConnectedSDLGamepads() {
++    for (const auto& [instanceId, gamepad] : mConnectedSDLGamepads) {
++        (void)instanceId;
++        SDL_GameControllerClose(gamepad);
++    }
++    mConnectedSDLGamepads.clear();
++    mConnectedSDLGamepadNames.clear();
+ }
+ 
+ std::unordered_map<int32_t, SDL_GameController*>
+@@ -50,9 +63,12 @@ void ConnectedPhysicalDeviceManager::HandlePhysicalDeviceDisconnect(int32_t sdlJ
+ }
+ 
+ void ConnectedPhysicalDeviceManager::RefreshConnectedSDLGamepads() {
+-    mConnectedSDLGamepads.clear();
+-    mConnectedSDLGamepadNames.clear();
++    CloseConnectedSDLGamepads();
      static SDL_JoystickGUID sZeroGuid;
 +#ifdef __IOS__
 +    mIgnoredInstanceIds.clear();
@@ -65,7 +98,7 @@ index 7f0397e2..6d446611 100644
  
      for (int32_t i = 0; i < SDL_NumJoysticks(); i++) {
  
-@@ -83,6 +90,15 @@ void ConnectedPhysicalDeviceManager::RefreshConnectedSDLGamepads() {
+@@ -76,6 +92,15 @@ void ConnectedPhysicalDeviceManager::RefreshConnectedSDLGamepads() {
              continue;
          }
  
@@ -81,7 +114,7 @@ index 7f0397e2..6d446611 100644
          auto gamepad = SDL_GameControllerOpen(i);
          if (gamepad == nullptr) {
              SPDLOG_ERROR("SDL GameControllerOpen error (GUID: {}): {}", deviceGuidCStr, SDL_GetError());
-@@ -100,9 +116,24 @@ void ConnectedPhysicalDeviceManager::RefreshConnectedSDLGamepads() {
+@@ -100,9 +125,24 @@ void ConnectedPhysicalDeviceManager::RefreshConnectedSDLGamepads() {
          mConnectedSDLGamepads[instanceId] = gamepad;
          mConnectedSDLGamepadNames[instanceId] = gamepadName;
  

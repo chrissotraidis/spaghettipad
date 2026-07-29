@@ -43,12 +43,18 @@ This is the final gate for a public source snapshot or downloadable IPA.
 
 ## Current blockers
 
-- Physical iPhone/iPad signing, installation, performance, lifecycle, and
-  update-preservation validation remain open.
+- A signed development build has been update-installed and played on a
+  physical iPad with its app data preserved. The complete ten-minute Phase 6
+  evidence gate, final update/save-preservation replay, and all physical
+  iPhone checks remain open.
 - Two-controller Bluetooth Grand Prix and physical tilt-steering feel remain
   open.
-- A real MK64 Reloaded hardware Grand Prix remains open; the pack is never
-  bundled or mirrored.
+- MK64 Reloaded HD has been imported and rendered on the physical iPad. Its
+  off/on restart-confirmation replay, full hardware Grand Prix, and 4K
+  performance attempt remain open; the pack is never bundled or mirrored.
+- The final unsigned IPA must still be built from the release commit, audited,
+  re-signed, update-installed, and replayed through the physical device
+  matrix before publication.
 
 These blockers may be stated as developer-preview limitations, but they must
 not be described as passed.

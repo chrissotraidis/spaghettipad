@@ -1,0 +1,377 @@
+--- a/src/engine/mods/ModManager.cpp
++++ b/src/engine/mods/ModManager.cpp
+@@ -3,6 +3,7 @@
+ #include "ship/resource/archive/FolderArchive.h"
+ #include "ship/resource/archive/O2rArchive.h"
+ #include "port/Engine.h"
++#include "libultraship/bridge/consolevariablebridge.h"
+ #include "semver.hpp"
+ #include "utils/StringHelper.h"
+ #include <cstdlib>
+@@ -21,6 +22,12 @@
+ 
+ std::vector<std::tuple<ModMetadata, std::shared_ptr<Ship::Archive>>> Mods = {};
+ 
++static bool sImportedO2RDetected = false;
++static bool sImportedO2RLoaded = false;
++static bool sImportedO2REnabled = false;
++static std::string sImportedO2RDisplayName;
++static std::filesystem::path sImportedO2RPath;
++
+ static bool IsUsableGameArchive(const std::string& path) {
+     int errorCode = 0;
+     zip_t* archive = zip_open(path.c_str(), ZIP_RDONLY | ZIP_CHECKCONS, &errorCode);
+@@ -33,6 +40,53 @@
+     return hasManifest;
+ }
+ 
++static std::optional<std::filesystem::path> FindImportedO2RMod() {
++    const std::filesystem::path modsPath =
++        Ship::Context::GetPathRelativeToAppDirectory("mods");
++    std::error_code error;
++    if (!std::filesystem::is_directory(modsPath, error)) {
++        return std::nullopt;
++    }
++
++    for (std::filesystem::directory_iterator iterator(modsPath, error), end;
++         !error && iterator != end; iterator.increment(error)) {
++        if (iterator->is_regular_file(error) &&
++            StringHelper::IEquals(iterator->path().extension().string(), ".o2r") &&
++            IsUsableGameArchive(iterator->path().string())) {
++            return iterator->path();
++        }
++    }
++    return std::nullopt;
++}
++
++void RefreshImportedO2RModStatus() {
++    sImportedO2RDetected = false;
++    sImportedO2RLoaded = false;
++    sImportedO2RDisplayName.clear();
++    sImportedO2RPath.clear();
++
++    const auto importedPath = FindImportedO2RMod();
++    if (!importedPath.has_value()) {
++        return;
++    }
++
++    sImportedO2RDetected = true;
++    sImportedO2RDisplayName = importedPath->filename().string();
++    const auto normalizedPath = importedPath->lexically_normal();
++    sImportedO2RPath = normalizedPath;
++    for (const auto& [metadata, archive] : Mods) {
++        if (archive == nullptr ||
++            std::filesystem::path(archive->GetPath()).lexically_normal() != normalizedPath) {
++            continue;
++        }
++        sImportedO2RLoaded = archive->IsLoaded();
++        if (!metadata.name.empty()) {
++            sImportedO2RDisplayName = metadata.name;
++        }
++        break;
++    }
++}
++
+ void InitModsSystem() {
+     CheckMK64O2RExists();
+ 
+@@ -45,23 +99,34 @@
+     DetectOutdatedDependencies();
+ 
+     SortModsByDependencies();
++    RefreshImportedO2RModStatus();
+ 
++    const bool enableImportedTexturePack =
++        CVarGetInteger("gSettings.SpaghettiPad.ImportedTexturePack", 1);
+     std::vector<std::shared_ptr<Ship::Archive>> loadedArchives;
+     loadedArchives.reserve(Mods.size());
+     for (const auto& [_, archive] : Mods) {
+         if (archive == nullptr) {
+             continue;
+         }
++        if (!enableImportedTexturePack && !sImportedO2RPath.empty() &&
++            std::filesystem::path(archive->GetPath()).lexically_normal() == sImportedO2RPath) {
++            continue;
++        }
+         loadedArchives.push_back(archive);
+     }
+     auto context = GameEngine::Instance->context;
+     auto resourceManager = context->GetResourceManager();
+     auto archiveManager = resourceManager->GetArchiveManager();
+     archiveManager->SetArchives(std::make_shared<std::vector<std::shared_ptr<Ship::Archive>>>(loadedArchives));
++    sImportedO2REnabled =
++        sImportedO2RDetected && sImportedO2RLoaded && enableImportedTexturePack;
+ }
+ 
+ void UnloadMods() {
+     Mods.clear();
++    sImportedO2REnabled = false;
++    RefreshImportedO2RModStatus();
+ }
+ 
+ // These bail-outs all run during InitModsSystem(), i.e. before the game world is set up.
+@@ -131,22 +196,32 @@
+ }
+ 
+ bool HasImportedO2RMod() {
+-    const std::filesystem::path modsPath =
+-        Ship::Context::GetPathRelativeToAppDirectory("mods");
+-    std::error_code error;
+-    if (!std::filesystem::is_directory(modsPath, error)) {
+-        return false;
+-    }
+-
+-    for (std::filesystem::directory_iterator iterator(modsPath, error), end;
+-         !error && iterator != end; iterator.increment(error)) {
+-        if (iterator->is_regular_file(error) &&
+-            StringHelper::IEquals(iterator->path().extension().string(), ".o2r") &&
+-            IsUsableGameArchive(iterator->path().string())) {
+-            return true;
+-        }
++    return sImportedO2RDetected;
++}
++
++bool IsImportedO2RModLoaded() {
++    return sImportedO2RLoaded;
++}
++
++bool IsImportedO2RModEnabled() {
++    return sImportedO2REnabled;
++}
++
++std::string GetImportedO2RModStatusText(bool requestedEnabled) {
++    if (!sImportedO2RDetected) {
++        return "Status: Original graphics (no optional pack installed)";
+     }
+-    return false;
++    if (!sImportedO2RLoaded) {
++        return "Status: Detected - relaunch required\n" + sImportedO2RDisplayName;
++    }
++    if (requestedEnabled != sImportedO2REnabled) {
++        return "Status: Restart required - will turn " +
++            std::string(requestedEnabled ? "on\n" : "off\n") +
++            sImportedO2RDisplayName;
++    }
++    return "Status: Loaded - currently " +
++        std::string(sImportedO2REnabled ? "on\n" : "off\n") +
++        sImportedO2RDisplayName;
+ }
+ 
+ std::optional<std::vector<std::string>> CheckCyclicDependencies() {
+--- a/src/engine/mods/ModManager.h
++++ b/src/engine/mods/ModManager.h
+@@ -1,5 +1,11 @@
+ #pragma once
+ 
++#include <string>
++
+ void InitModsSystem();
+ void UnloadMods();
+ bool HasImportedO2RMod();
++bool IsImportedO2RModLoaded();
++bool IsImportedO2RModEnabled();
++void RefreshImportedO2RModStatus();
++std::string GetImportedO2RModStatusText(bool requestedEnabled);
+--- a/src/port/Engine.cpp
++++ b/src/port/Engine.cpp
+@@ -423,18 +423,6 @@
+         CVarGetFloat("gSettings.SpaghettiPad.TiltSensitivity", 1.0f));
+     SpaghettiPad_SetTiltSteeringEnabled(
+         CVarGetInteger("gSettings.SpaghettiPad.TiltSteering", 0));
+-    if (HasImportedO2RMod() &&
+-        !CVarGetInteger("gEnhancements.Mods.AlternateAssets", 0) &&
+-        ShowYesNoBox(
+-            "Texture pack found",
+-            "SpaghettiPad found an imported .o2r in the mods folder.\n\n"
+-            "Enable Use Alternate Assets now?") == IDYES) {
+-        CVarSetInteger("gEnhancements.Mods.AlternateAssets", 1);
+-        Ship::Context::GetInstance()
+-            ->GetWindow()
+-            ->GetGui()
+-            ->SaveConsoleVariablesNextFrame();
+-    }
+ #endif
+ }
+ 
+--- a/src/port/ui/PortMenu.cpp
++++ b/src/port/ui/PortMenu.cpp
+@@ -102,58 +102,6 @@
+     AddSidebarEntry("Settings", "General", 3);
+     WidgetPath path = { "Settings", "General", SECTION_COLUMN_1 };
+ 
+-#ifdef __IOS__
+-    AddWidget(path, "Use Alternate Assets", WIDGET_CVAR_CHECKBOX)
+-        .CVar("gEnhancements.Mods.AlternateAssets")
+-        .Options(CheckboxOptions()
+-                     .DefaultValue(false)
+-                     .Tooltip("Uses replacement textures from imported .o2r packs."));
+-    AddWidget(path, "Check Imported Texture Pack", WIDGET_BUTTON)
+-        .Callback([](WidgetInfo& info) {
+-            if (!HasImportedO2RMod()) {
+-                GameEngine::ShowMessage(
+-                    "No texture pack found",
+-                    "Copy an official SpaghettiKart .o2r into Files > On My iPad > "
+-                    "SpaghettiPad > mods, then return here.",
+-                    SDL_MESSAGEBOX_INFORMATION);
+-                return;
+-            }
+-            if (!CVarGetInteger("gEnhancements.Mods.AlternateAssets", 0) &&
+-                GameEngine::ShowYesNoBox(
+-                    "Texture pack found",
+-                    "An imported .o2r is present.\n\nEnable Use Alternate Assets now?") == IDYES) {
+-                CVarSetInteger("gEnhancements.Mods.AlternateAssets", 1);
+-                Ship::Context::GetInstance()
+-                    ->GetWindow()
+-                    ->GetGui()
+-                    ->SaveConsoleVariablesNextFrame();
+-            } else {
+-                GameEngine::ShowMessage(
+-                    "Texture pack found",
+-                    "An imported .o2r is present. If you copied it while SpaghettiPad "
+-                    "was open, relaunch once so the archive is loaded.",
+-                    SDL_MESSAGEBOX_INFORMATION);
+-            }
+-        })
+-        .Options(ButtonOptions().Tooltip("Detects imported .o2r files and offers to enable them."));
+-    AddWidget(path, "Texture Pack Files Steps", WIDGET_BUTTON)
+-        .Callback([](WidgetInfo& info) {
+-            GameEngine::ShowMessage(
+-                "Import a texture pack",
+-                "1. Download the SpaghettiKart HD .o2r from the official MK64 Reloaded page.\n"
+-                "2. In Files, move it to On My iPad > SpaghettiPad > mods.\n"
+-                "3. Return here and tap Check Imported Texture Pack.\n\n"
+-                "Use HD first. Try 4K only on an M-series iPad.",
+-                SDL_MESSAGEBOX_INFORMATION);
+-        })
+-        .Options(ButtonOptions().Tooltip("Shows the Files import path and device guidance."));
+-    AddWidget(path, "Get MK64 Reloaded", WIDGET_BUTTON)
+-        .Callback([](WidgetInfo& info) {
+-            SDL_OpenURL("https://evilgames.eu/texture-packs/mk64-reloaded.htm");
+-        })
+-        .Options(ButtonOptions().Tooltip("Opens the pack author's official project page in Safari."));
+-#endif
+-
+ #if !defined(__SWITCH__) && !defined(__IOS__)
+     static bool isFullscreen = false;
+     AddWidget(path, "Toggle Fullscreen", WIDGET_CHECKBOX)
+@@ -316,8 +264,8 @@
+         })
+         .Options(
+             FloatSliderOptions()
+-                .Tooltip("Multiplies your output resolution by the value inputted, as a more intensive but effective "
+-                         "form of anti-aliasing.")
++                .Tooltip("Changes the game's internal rendering resolution immediately. Higher values can look "
++                         "sharper, but use more GPU power.")
+                 .ShowButtons(false)
+                 .IsPercentage()
+                 .Format("")
+@@ -489,6 +437,109 @@
+ 
+ void PortMenu::AddEnhancements() {
+     AddMenuEntry("Enhancements", "gSettings.Menu.EnhancementsSidebarSection");
++#ifdef __IOS__
++    WidgetPath texturePath = { "Enhancements", "Texture Packs", SECTION_COLUMN_1 };
++    AddSidebarEntry("Enhancements", "Texture Packs", 1);
++    AddWidget(texturePath,
++              "Optional visual upgrade. Enhanced or HD texture packs replace the original artwork; they are not "
++              "required to play.",
++              WIDGET_TEXT);
++    AddWidget(texturePath, "Use Enhanced / HD Texture Pack", WIDGET_CVAR_CHECKBOX)
++        .CVar("gSettings.SpaghettiPad.ImportedTexturePack")
++        .PreFunc([](WidgetInfo& info) {
++            const bool loaded = IsImportedO2RModLoaded();
++            info.options->disabled = !loaded;
++            info.options->disabledTooltip =
++                loaded ? "" : "Import an optional enhanced/HD .o2r pack and relaunch SpaghettiPad first.";
++        })
++        .Callback([](WidgetInfo& info) {
++            const bool requestedEnabled =
++                CVarGetInteger("gSettings.SpaghettiPad.ImportedTexturePack", 1);
++            const bool currentEnabled = IsImportedO2RModEnabled();
++            if (requestedEnabled == currentEnabled) {
++                return;
++            }
++
++            if (GameEngine::ShowYesNoBox(
++                    "Restart required",
++                    "Changing the texture pack requires restarting SpaghettiPad. "
++                    "Close the app now and apply this change?\n\n"
++                    "Current race progress will be lost. Saved game data is preserved.") == IDYES) {
++                CVarSetInteger("gOpenMenu", 0);
++                CVarSave();
++                Ship::Context::GetInstance()->GetWindow()->Close();
++                return;
++            }
++
++            CVarSetInteger("gSettings.SpaghettiPad.ImportedTexturePack", currentEnabled);
++            Ship::Context::GetInstance()
++                ->GetWindow()
++                ->GetGui()
++                ->SaveConsoleVariablesNextFrame();
++        })
++        .Options(CheckboxOptions()
++                     .DefaultValue(true)
++                     .Tooltip("Switches between the original graphics and the optional enhanced/HD pack after a "
++                              "restart."));
++    AddWidget(texturePath, "Status: Checking...", WIDGET_TEXT)
++        .PreFunc([](WidgetInfo& info) {
++            info.name = GetImportedO2RModStatusText(
++                CVarGetInteger("gSettings.SpaghettiPad.ImportedTexturePack", 1));
++        });
++    AddWidget(texturePath, "Check Again", WIDGET_BUTTON)
++        .Callback([](WidgetInfo& info) {
++            RefreshImportedO2RModStatus();
++            if (!HasImportedO2RMod()) {
++                GameEngine::ShowMessage(
++                    "No texture pack found",
++                    "No optional texture pack is installed. SpaghettiPad will continue using the original graphics.\n\n"
++                    "To add one, copy an official SpaghettiKart .o2r into Files > On My iPad or "
++                    "iPhone > SpaghettiPad > mods, then return here.",
++                    SDL_MESSAGEBOX_INFORMATION);
++                return;
++            }
++            if (!IsImportedO2RModLoaded()) {
++                GameEngine::ShowMessage(
++                    "Texture pack detected",
++                    "The archive is valid. Relaunch SpaghettiPad once to load it.",
++                    SDL_MESSAGEBOX_INFORMATION);
++                return;
++            }
++            if (!CVarGetInteger("gSettings.SpaghettiPad.ImportedTexturePack", 1) &&
++                GameEngine::ShowYesNoBox(
++                    "Texture pack loaded",
++                    "Enable the enhanced/HD texture pack after restarting SpaghettiPad?") == IDYES) {
++                CVarSetInteger("gSettings.SpaghettiPad.ImportedTexturePack", 1);
++                CVarSetInteger("gOpenMenu", 0);
++                CVarSave();
++                Ship::Context::GetInstance()->GetWindow()->Close();
++                return;
++            }
++            GameEngine::ShowMessage(
++                "Texture pack loaded",
++                "Use the switch above to change between original and imported textures. "
++                "SpaghettiPad will ask before closing to apply the change.",
++                SDL_MESSAGEBOX_INFORMATION);
++        })
++        .Options(ButtonOptions().Tooltip("Rechecks the Files-visible mods folder."));
++    AddWidget(texturePath, "Installation Instructions", WIDGET_BUTTON)
++        .Callback([](WidgetInfo& info) {
++            GameEngine::ShowMessage(
++                "Install an optional HD texture pack",
++                "This visual upgrade is optional and separate from the Mario Kart 64 game archive.\n\n"
++                "1. Download the SpaghettiKart HD .o2r from the official MK64 Reloaded page.\n"
++                "2. In Files, move it to On My iPad or iPhone > SpaghettiPad > mods.\n"
++                "3. Relaunch SpaghettiPad once, then use the switch above.\n\n"
++                "Use HD first. Try 4K only on an M-series iPad.",
++                SDL_MESSAGEBOX_INFORMATION);
++        })
++        .Options(ButtonOptions().Tooltip("Shows the Files path and device guidance."));
++    AddWidget(texturePath, "Open Official MK64 Reloaded Page", WIDGET_BUTTON)
++        .Callback([](WidgetInfo& info) {
++            SDL_OpenURL("https://evilgames.eu/texture-packs/mk64-reloaded.htm");
++        })
++        .Options(ButtonOptions().Tooltip("Opens the pack author's official page in Safari."));
++#endif
+     WidgetPath path = { "Enhancements", "General", SECTION_COLUMN_1 };
+     AddSidebarEntry("Enhancements", "General", 3);
+     AddWidget(path, "No multiplayer feature cuts", WIDGET_CVAR_CHECKBOX)

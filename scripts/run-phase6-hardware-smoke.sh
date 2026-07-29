@@ -104,7 +104,7 @@ while :; do
     ELAPSED="$(($(date +%s) - START_EPOCH))"
     SAMPLE_PATH="$EVIDENCE_DIR/process-$ELAPSED.json"
     xcrun devicectl device info processes --device "$DEVICE" \
-        --filter "Name == '$EXECUTABLE_NAME'" --timeout 30 \
+        --filter "Executable.lastPathComponent == '$EXECUTABLE_NAME'" --timeout 30 \
         --json-output "$SAMPLE_PATH" \
         --log-output "$EVIDENCE_DIR/process-$ELAPSED.log" >/dev/null ||
         fail "process query failed after $ELAPSED seconds"

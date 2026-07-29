@@ -158,12 +158,15 @@ static void SpaghettiPad_EmitAction(SpaghettiPadAction action, BOOL pressed) {
     if (!SPAGHETTIPAD_TOUCH_KEYBOARD_FALLBACK &&
         action != SpaghettiPadActionMenu &&
         sVirtualJoystick != nullptr) {
-        Sint16 axisValue = pressed ? SDL_JOYSTICK_AXIS_MAX : 0;
         if (action == SpaghettiPadActionZ) {
+            // SDL normalizes virtual triggers from MIN (released) to MAX
+            // (pressed); zero is a half-pressed trigger, not its resting state.
             SDL_JoystickSetVirtualAxis(
-                sVirtualJoystick, SDL_CONTROLLER_AXIS_TRIGGERLEFT, axisValue);
+                sVirtualJoystick, SDL_CONTROLLER_AXIS_TRIGGERLEFT,
+                pressed ? SDL_JOYSTICK_AXIS_MAX : SDL_JOYSTICK_AXIS_MIN);
             return;
         }
+        Sint16 axisValue = pressed ? SDL_JOYSTICK_AXIS_MAX : 0;
         if (action == SpaghettiPadActionCUp) {
             SDL_JoystickSetVirtualAxis(
                 sVirtualJoystick, SDL_CONTROLLER_AXIS_RIGHTY, -axisValue);
@@ -585,14 +588,10 @@ static CGRect SpaghettiPad_CenteredFrame(CGPoint center, CGFloat width, CGFloat 
 @property(nonatomic, strong) SpaghettiPadTouchButton* buttonA;
 @property(nonatomic, strong) SpaghettiPadTouchButton* buttonB;
 @property(nonatomic, strong) SpaghettiPadTouchButton* buttonL;
-@property(nonatomic, strong) SpaghettiPadTouchButton* buttonZLeft;
+@property(nonatomic, strong) SpaghettiPadTouchButton* buttonZStick;
 @property(nonatomic, strong) SpaghettiPadTouchButton* buttonZRight;
 @property(nonatomic, strong) SpaghettiPadTouchButton* buttonR;
 @property(nonatomic, strong) SpaghettiPadTouchButton* buttonStart;
-@property(nonatomic, strong) SpaghettiPadTouchButton* dUp;
-@property(nonatomic, strong) SpaghettiPadTouchButton* dDown;
-@property(nonatomic, strong) SpaghettiPadTouchButton* dLeft;
-@property(nonatomic, strong) SpaghettiPadTouchButton* dRight;
 @property(nonatomic, strong) SpaghettiPadTouchButton* cUp;
 @property(nonatomic, strong) SpaghettiPadTouchButton* cDown;
 @property(nonatomic, strong) SpaghettiPadTouchButton* cLeft;
@@ -616,23 +615,15 @@ static CGRect SpaghettiPad_CenteredFrame(CGPoint center, CGFloat width, CGFloat 
         self.buttonB = [[SpaghettiPadTouchButton alloc]
             initWithLabel:@"B" action:SpaghettiPadActionB pill:NO];
         self.buttonL = [[SpaghettiPadTouchButton alloc]
-            initWithLabel:@"L" action:SpaghettiPadActionL pill:YES];
-        self.buttonZLeft = [[SpaghettiPadTouchButton alloc]
+            initWithLabel:@"L" action:SpaghettiPadActionL pill:NO];
+        self.buttonZStick = [[SpaghettiPadTouchButton alloc]
             initWithLabel:@"Z" action:SpaghettiPadActionZ pill:NO];
         self.buttonZRight = [[SpaghettiPadTouchButton alloc]
             initWithLabel:@"Z" action:SpaghettiPadActionZ pill:NO];
         self.buttonR = [[SpaghettiPadTouchButton alloc]
-            initWithLabel:@"R" action:SpaghettiPadActionR pill:YES];
+            initWithLabel:@"R" action:SpaghettiPadActionR pill:NO];
         self.buttonStart = [[SpaghettiPadTouchButton alloc]
             initWithLabel:@"▶" action:SpaghettiPadActionStart pill:NO];
-        self.dUp = [[SpaghettiPadTouchButton alloc]
-            initWithLabel:@"▲" action:SpaghettiPadActionDUp pill:NO];
-        self.dDown = [[SpaghettiPadTouchButton alloc]
-            initWithLabel:@"▼" action:SpaghettiPadActionDDown pill:NO];
-        self.dLeft = [[SpaghettiPadTouchButton alloc]
-            initWithLabel:@"◀" action:SpaghettiPadActionDLeft pill:NO];
-        self.dRight = [[SpaghettiPadTouchButton alloc]
-            initWithLabel:@"▶" action:SpaghettiPadActionDRight pill:NO];
         self.cUp = [[SpaghettiPadTouchButton alloc]
             initWithLabel:@"▲" action:SpaghettiPadActionCUp pill:NO];
         self.cDown = [[SpaghettiPadTouchButton alloc]
@@ -659,21 +650,16 @@ static CGRect SpaghettiPad_CenteredFrame(CGPoint center, CGFloat width, CGFloat 
         }
 
         self.buttonStart.accessibilityLabel = @"Start";
-        self.buttonZLeft.accessibilityLabel = @"Z left";
+        self.buttonZStick.accessibilityLabel = @"Z above steering";
         self.buttonZRight.accessibilityLabel = @"Z right";
-        self.dUp.accessibilityLabel = @"D-pad Up";
-        self.dDown.accessibilityLabel = @"D-pad Down";
-        self.dLeft.accessibilityLabel = @"D-pad Left";
-        self.dRight.accessibilityLabel = @"D-pad Right";
         self.cUp.accessibilityLabel = @"C Up";
         self.cDown.accessibilityLabel = @"C Down";
         self.cLeft.accessibilityLabel = @"C Left";
         self.cRight.accessibilityLabel = @"C Right";
 
         self.buttons = @[
-            self.buttonA, self.buttonB, self.buttonL, self.buttonZLeft,
-            self.buttonZRight, self.buttonR, self.buttonStart,
-            self.dUp, self.dDown, self.dLeft, self.dRight,
+            self.buttonA, self.buttonB, self.buttonL,
+            self.buttonZStick, self.buttonZRight, self.buttonR, self.buttonStart,
             self.cUp, self.cDown, self.cLeft, self.cRight,
         ];
         [self addSubview:self.controlStick];
@@ -703,33 +689,26 @@ static CGRect SpaghettiPad_CenteredFrame(CGPoint center, CGFloat width, CGFloat 
         CGFloat right = safe.right + 10.0;
         CGFloat top = safe.top + 36.0;
         CGFloat shoulderHeight = 44.0;
-        CGFloat shoulderWidth = 76.0;
-
-        self.buttonL.frame = CGRectMake(left, top, shoulderWidth, shoulderHeight);
-        self.buttonZLeft.frame =
-            CGRectMake(CGRectGetMaxX(self.buttonL.frame) + 8.0, top, shoulderHeight, shoulderHeight);
-        self.buttonR.frame =
-            CGRectMake(width - right - shoulderWidth, top, shoulderWidth, shoulderHeight);
-        self.buttonStart.frame =
-            CGRectMake(CGRectGetMinX(self.buttonR.frame) - shoulderHeight - 8.0, top,
-                       shoulderHeight, shoulderHeight);
-
-        CGFloat dSize = 44.0;
-        CGFloat dRadius = 38.0;
-        CGPoint dCenter = CGPointMake(left + 54.0, top + shoulderHeight + 80.0);
-        self.dUp.frame = SpaghettiPad_CenteredFrame(
-            CGPointMake(dCenter.x, dCenter.y - dRadius), dSize, dSize);
-        self.dDown.frame = SpaghettiPad_CenteredFrame(
-            CGPointMake(dCenter.x, dCenter.y + dRadius), dSize, dSize);
-        self.dLeft.frame = SpaghettiPad_CenteredFrame(
-            CGPointMake(dCenter.x - dRadius, dCenter.y), dSize, dSize);
-        self.dRight.frame = SpaghettiPad_CenteredFrame(
-            CGPointMake(dCenter.x + dRadius, dCenter.y), dSize, dSize);
 
         CGFloat stickSize = 116.0;
         CGPoint stickCenter = CGPointMake(left + 88.0, height - safe.bottom - 88.0);
         self.controlStick.frame =
             SpaghettiPad_CenteredFrame(stickCenter, stickSize, stickSize);
+        CGFloat stickZSize = 50.0;
+        CGFloat stickZGap = 8.0;
+        self.buttonZStick.frame = SpaghettiPad_CenteredFrame(
+            CGPointMake(stickCenter.x,
+                        CGRectGetMinY(self.controlStick.frame) -
+                            stickZGap - stickZSize * 0.5),
+            stickZSize, stickZSize);
+        self.buttonL.frame = SpaghettiPad_CenteredFrame(
+            CGPointMake(stickCenter.x - stickZSize - stickZGap,
+                        CGRectGetMidY(self.buttonZStick.frame)),
+            stickZSize, stickZSize);
+        self.buttonR.frame = SpaghettiPad_CenteredFrame(
+            CGPointMake(stickCenter.x + stickZSize + stickZGap,
+                        CGRectGetMidY(self.buttonZStick.frame)),
+            stickZSize, stickZSize);
 
         CGFloat rightCenterX = width - right - 58.0;
         CGFloat faceCenterY = height - safe.bottom - 82.0;
@@ -740,6 +719,10 @@ static CGRect SpaghettiPad_CenteredFrame(CGPoint center, CGFloat width, CGFloat 
             CGPointMake(rightCenterX - 34.0, faceCenterY + 2.0), faceSize, faceSize);
         self.buttonZRight.frame = SpaghettiPad_CenteredFrame(
             CGPointMake(rightCenterX + 12.0, faceCenterY - 44.0), faceSize, faceSize);
+        self.buttonStart.frame = SpaghettiPad_CenteredFrame(
+            CGPointMake(CGRectGetMidX(self.buttonZRight.frame),
+                        top + shoulderHeight * 0.5),
+            shoulderHeight, shoulderHeight);
 
         CGFloat cSize = 40.0;
         CGFloat cRadius = 34.0;
@@ -763,20 +746,14 @@ static CGRect SpaghettiPad_CenteredFrame(CGPoint center, CGFloat width, CGFloat 
     }
 
     CGFloat scale = MAX(0.78, MIN(1.12, height / 834.0));
-    CGFloat edge = 18.0 * scale;
-    CGFloat left = safe.left + edge;
-    CGFloat right = safe.right + edge;
     CGFloat usableWidth = width - safe.left - safe.right;
     CGFloat railWidth = MIN(250.0 * scale, usableWidth * 0.22);
     CGFloat leftCenter = safe.left + railWidth * 0.5;
     CGFloat rightCenter = width - safe.right - railWidth * 0.5;
-    CGFloat gripTopY = MAX(safe.top + edge, height * 0.38);
     CGFloat middleCenterY = height * 0.60;
     CGFloat lowCenterY = height * 0.86;
     CGFloat stickCenterX = leftCenter + 65.0 * scale;
     CGFloat stickCenterY = lowCenterY - 70.0 * scale;
-    CGFloat dpadCenterX = leftCenter - 30.0 * scale;
-    CGFloat dpadCenterY = middleCenterY + 5.0 * scale;
     CGFloat faceCenterX = rightCenter + 24.0 * scale;
     CGFloat faceCenterY = middleCenterY + 30.0 * scale;
     CGFloat cpadCenterX = rightCenter + 24.0 * scale;
@@ -785,26 +762,21 @@ static CGRect SpaghettiPad_CenteredFrame(CGPoint center, CGFloat width, CGFloat 
     CGFloat stickSize = 150.0 * scale;
     self.controlStick.frame = SpaghettiPad_CenteredFrame(
         CGPointMake(stickCenterX, stickCenterY), stickSize, stickSize);
-
-    CGFloat pillHeight = 54.0 * scale;
-    CGFloat shoulderWidth = 106.0 * scale;
-    CGFloat leftRowY = gripTopY + 55.0 * scale;
-    self.buttonL.frame = CGRectMake(left, leftRowY, shoulderWidth, pillHeight);
-    self.buttonZLeft.frame =
-        CGRectMake(CGRectGetMaxX(self.buttonL.frame) + 10.0 * scale, leftRowY,
-                   pillHeight, pillHeight);
-
-    CGFloat dSize = 52.0 * scale;
-    CGFloat dRadius = 48.0 * scale;
-    CGPoint dCenter = CGPointMake(dpadCenterX, dpadCenterY);
-    self.dUp.frame = SpaghettiPad_CenteredFrame(
-        CGPointMake(dCenter.x, dCenter.y - dRadius), dSize, dSize);
-    self.dDown.frame = SpaghettiPad_CenteredFrame(
-        CGPointMake(dCenter.x, dCenter.y + dRadius), dSize, dSize);
-    self.dLeft.frame = SpaghettiPad_CenteredFrame(
-        CGPointMake(dCenter.x - dRadius, dCenter.y), dSize, dSize);
-    self.dRight.frame = SpaghettiPad_CenteredFrame(
-        CGPointMake(dCenter.x + dRadius, dCenter.y), dSize, dSize);
+    CGFloat stickZSize = 56.0 * scale;
+    CGFloat stickZGap = 12.0 * scale;
+    self.buttonZStick.frame = SpaghettiPad_CenteredFrame(
+        CGPointMake(stickCenterX,
+                    CGRectGetMinY(self.controlStick.frame) -
+                        stickZGap - stickZSize * 0.5),
+        stickZSize, stickZSize);
+    self.buttonL.frame = SpaghettiPad_CenteredFrame(
+        CGPointMake(stickCenterX - stickZSize - stickZGap,
+                    CGRectGetMidY(self.buttonZStick.frame)),
+        stickZSize, stickZSize);
+    self.buttonR.frame = SpaghettiPad_CenteredFrame(
+        CGPointMake(stickCenterX + stickZSize + stickZGap,
+                    CGRectGetMidY(self.buttonZStick.frame)),
+        stickZSize, stickZSize);
 
     CGFloat faceSize = 66.0 * scale;
     CGFloat faceX = faceCenterX - faceSize * 0.5;
@@ -815,6 +787,13 @@ static CGRect SpaghettiPad_CenteredFrame(CGPoint center, CGFloat width, CGFloat 
         faceSize, faceSize);
     self.buttonZRight.frame = CGRectMake(
         faceX, faceCenterY - faceSize - 12.0 * scale, faceSize, faceSize);
+    CGFloat startSize = 54.0 * scale;
+    CGFloat startGap = 12.0 * scale;
+    self.buttonStart.frame = SpaghettiPad_CenteredFrame(
+        CGPointMake(CGRectGetMidX(self.buttonZRight.frame),
+                    CGRectGetMinY(self.buttonZRight.frame) -
+                        startGap - startSize * 0.5),
+        startSize, startSize);
 
     CGFloat cSize = 46.0 * scale;
     CGFloat cRadius = 44.0 * scale;
@@ -827,13 +806,6 @@ static CGRect SpaghettiPad_CenteredFrame(CGPoint center, CGFloat width, CGFloat 
         CGPointMake(cCenter.x - cRadius, cCenter.y), cSize, cSize);
     self.cRight.frame = SpaghettiPad_CenteredFrame(
         CGPointMake(cCenter.x + cRadius, cCenter.y), cSize, cSize);
-
-    CGFloat rightRowY = gripTopY + 55.0 * scale;
-    self.buttonR.frame =
-        CGRectMake(width - right - shoulderWidth, rightRowY, shoulderWidth, pillHeight);
-    self.buttonStart.frame =
-        CGRectMake(CGRectGetMinX(self.buttonR.frame) - pillHeight - 12.0 * scale,
-                   rightRowY, pillHeight, pillHeight);
 
     CGFloat labelSize = 18.0 * scale;
     for (SpaghettiPadTouchButton* button in self.buttons) {
@@ -1024,17 +996,16 @@ static void SpaghettiPad_InstallMenuButton(UIWindow* window) {
     CGFloat height = CGRectGetHeight(window.bounds);
     BOOL compact = height < 560.0;
     CGFloat size = compact ? 44.0 : 38.0;
-    if (compact) {
-        BOOL menuVisible = sTouchControlsMenuVisible.load();
-        CGFloat y = menuVisible
-            ? height - safe.bottom - size - 8.0
-            : safe.top + 8.0;
+    BOOL menuVisible = sTouchControlsMenuVisible.load();
+    BOOL compactMenuVisible = compact && menuVisible;
+    if (compactMenuVisible) {
         sMenuButton.frame = CGRectMake(
-            CGRectGetMidX(window.bounds) - size * 0.5, y, size, size);
+            CGRectGetMidX(window.bounds) - size * 0.5,
+            height - safe.bottom - size - 8.0, size, size);
     } else {
         sMenuButton.frame = CGRectMake(
             CGRectGetWidth(window.bounds) - safe.right - size - 8.0,
-            safe.top + 76.0, size, size);
+            safe.top + (menuVisible ? 76.0 : 8.0), size, size);
     }
 
     if (sMenuButton.superview != window) {
