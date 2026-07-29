@@ -1,36 +1,92 @@
 # SpaghettiPad
 
 <p align="center">
-  <img src="ios/Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png" width="144" alt="SpaghettiPad app icon">
-</p>
-
-<p align="center">
-  <strong>Mario Kart 64 via SpaghettiKart, rebuilt for iPhone and iPad.</strong><br>
-  Native Metal rendering, full-analog touch steering, Files-based setup,
-  optional texture packs, and an iOS game-controller path.
+  <strong>Mario Kart 64 on iPhone and iPad—with touch controls made for racing.</strong><br>
+  Native Metal rendering, full-analog steering, local multiplayer foundations,
+  and built-in support for optional enhanced texture packs.
 </p>
 
 <p align="center">
   <a href="https://github.com/chrissotraidis/spaghettipad/actions/workflows/ios-build.yml"><img alt="SpaghettiPad iOS build" src="https://github.com/chrissotraidis/spaghettipad/actions/workflows/ios-build.yml/badge.svg"></a>
   <img alt="iOS and iPadOS 15 or later" src="https://img.shields.io/badge/iOS%20%2F%20iPadOS-15%2B-0A84FF?logo=apple">
   <img alt="Metal renderer" src="https://img.shields.io/badge/renderer-Metal-5E5CE6">
+  <img alt="Full analog touch controls" src="https://img.shields.io/badge/touch-full%20analog-32ADE6">
+  <img alt="Enhanced texture pack support" src="https://img.shields.io/badge/textures-HD%20pack%20support-B65FCF">
   <img alt="Physical iPad tested" src="https://img.shields.io/badge/physical%20iPad-tested-30D158">
   <img alt="ROM not included" src="https://img.shields.io/badge/game%20data-not%20included-FF453A">
 </p>
 
-![SpaghettiPad running a Mario Kart 64 Grand Prix race with MK64 Reloaded HD on a physical iPad](docs/screenshots/ipad-race-hd.png)
+![SpaghettiPad racing on Toad's Turnpike with full touch controls on a physical iPad](docs/screenshots/ipad-race-highway.jpg)
 
 SpaghettiPad packages the full
-[SpaghettiKart](https://github.com/HarbourMasters/SpaghettiKart) source port as
-a native iOS/iPadOS app. It renders through Metal, imports a user-provided
-Mario Kart 64 ROM through Files, and provides a landscape touch controller
-designed around holding the device at both edges.
+[SpaghettiKart](https://github.com/HarbourMasters/SpaghettiKart) source port
+as a native iOS/iPadOS app. It brings Mario Kart 64 to the screen in your
+hands with Metal rendering, true analog touch steering, a grip-first control
+layout, Files-based setup, controller routing, and optional enhanced visuals.
 
 This repository contains the mobile integration, maintained patches, and
 reproducible build scripts. It does **not** contain Mario Kart 64, a ROM,
 Nintendo assets, a playable ROM-derived archive, or MK64 Reloaded. Read the
 scoped [rights and licensing boundary](RIGHTS_AND_LICENSES.md); it does not
 relicense SpaghettiKart, its dependencies, texture packs, or game material.
+
+## Built for racing on glass
+
+The touch layout keeps the controls under your thumbs and the race visible.
+The left side puts L, Z, and R above a full-analog stick. The right side keeps
+A held for acceleration while a second Z stays available for items. Start is
+deliberately separated from the action controls.
+
+Touch is not painted over the whole display: empty space still belongs to the
+game, the settings menu hides the race controls while open, and the persistent
+`•••` button always provides a way back.
+
+## Current screenshots
+
+<table>
+  <tr>
+    <td width="50%">
+      <img src="docs/screenshots/ipad-race-triple-shells.jpg" alt="SpaghettiPad racing with triple red shells and the full touch controller">
+    </td>
+    <td width="50%">
+      <img src="docs/screenshots/ipad-race-jungle-hd.jpg" alt="SpaghettiPad racing through DK's Jungle Parkway with enhanced textures">
+    </td>
+  </tr>
+  <tr>
+    <td align="center"><strong>Every race control, within reach</strong><br>Hold A, steer with full analog input, drift with R, and fire items from either Z.</td>
+    <td align="center"><strong>Enhanced tracks, native workflow</strong><br>Import a compatible HD pack through Files and switch between original and enhanced graphics in-app.</td>
+  </tr>
+</table>
+
+These are current physical-iPad captures using locally supplied game data.
+The ROM and optional texture pack used to create them are not part of this
+repository.
+
+## Local multiplayer is part of the port
+
+![Four-player Mario Kart 64 character selection running in SpaghettiPad on iPad](docs/screenshots/ipad-four-player-select.jpg)
+
+SpaghettiPad carries four N64 controller ports, deterministic connection-order
+assignment, and SpaghettiKart's split-screen modes into the native iOS build.
+The touch controller parks itself when hardware controllers are present and
+returns after the last one disconnects.
+
+Four-player selection is working, and two-player split-screen rendering has
+been exercised. Full physical-controller Grand Prix, VS, battle, reconnect,
+and sustained three/four-player performance remain documented hardware gates;
+the README does not turn a working menu into an unearned compatibility claim.
+
+## Enhanced textures, built into the experience
+
+Optional texture packs are first-class app content, not a manual desktop
+patch. Copy a compatible SpaghettiKart `.o2r` into the Files-visible `mods`
+folder, relaunch, then use **Enhancements → Texture Packs** to choose original
+or enhanced graphics. SpaghettiPad reports whether the pack is missing,
+detected, loaded, enabled, or waiting for a relaunch.
+
+[MK64 Reloaded](https://evilgames.eu/texture-packs/mk64-reloaded.htm) HD has
+been imported and rendered on a physical iPad. No texture pack is bundled,
+downloaded, mirrored, or redistributed by this project.
 
 ## Install status
 
@@ -42,32 +98,14 @@ relicense SpaghettiKart, its dependencies, texture packs, or game material.
 | App Store / TestFlight | **Not announced** | No App Store listing or public TestFlight exists. |
 
 The current development build has been signed, update-installed, and played
-on a physical iPad. Files import, local `mk64.o2r` loading, the touch
-controller, menus, audio, saves, and the MK64 Reloaded HD import path have all
+on a physical iPad. Files import, local `mk64.o2r` loading, touch gameplay,
+menus, audio, saves, local multiplayer paths, and MK64 Reloaded HD have all
 been exercised on that hardware.
 
 Those results do not certify every configuration. Physical iPhone play,
 Bluetooth-controller mapping and reconnect behavior, sustained multiplayer
 performance, a complete tilt-driven Grand Prix, and the final audited release
 artifact remain explicit validation gates.
-
-## What makes it a mobile port
-
-- **Grip-first touch controls.** The race controls live at the lower edges,
-  with true analog steering and transparent space left open for the game.
-- **Separate iPad and iPhone layouts.** The phone layout has its own geometry
-  and native wide rendering instead of shrinking the tablet controls.
-- **Files-based setup.** The app validates and extracts a supported ROM inside
-  its own Files-visible container after installation.
-- **Optional visual upgrades.** A compatible SpaghettiKart `.o2r` texture
-  pack can be imported through Files, detected in-app, and enabled without
-  bundling or redistributing it.
-- **Controller and multiplayer foundations.** SDL's iOS game-controller path,
-  four N64 ports, deterministic port assignment, and split-screen rendering
-  are present. The physical-controller matrix is documented separately from
-  Simulator proof.
-- **Optional tilt steering.** Tilt can drive the analog stick while the
-  on-screen stick takes priority whenever it is held.
 
 ## Get started
 
@@ -225,10 +263,10 @@ pack on or off also requires a restart because the engine mounts the archive
 when it starts; the app explains that current race progress will be lost,
 saves the selection, and closes only after you confirm. Reopen SpaghettiPad
 manually from the Home Screen; iOS does not allow an app to relaunch itself.
-Cancel leaves the running state unchanged. The Texture Packs page reports whether a pack is
-absent, detected but awaiting a relaunch, loaded and off, loaded and on, or
-waiting to apply a change. Start with HD. Treat 4K as an M-series-iPad
-performance experiment until it has its own hardware evidence.
+Cancel leaves the running state unchanged. The Texture Packs page reports
+whether a pack is absent, detected but awaiting a relaunch, loaded and off,
+loaded and on, or waiting to apply a change. Start with HD. Treat 4K as an
+M-series-iPad performance experiment until it has its own hardware evidence.
 
 ## Current validation
 
@@ -360,6 +398,7 @@ grant rights to Nintendo material or third-party texture packs.
 | [`scripts/package-ios.sh`](scripts/package-ios.sh) | Audited unsigned/signed IPA packaging |
 | [`scripts/check-repo-safety.sh`](scripts/check-repo-safety.sh) | Tracked-asset, history, patch, script, and documentation gate |
 | [`patches/`](patches/) | Reviewable SpaghettiPad changes replayed onto pinned upstream source |
+| [`docs/screenshots/README.md`](docs/screenshots/README.md) | Current physical-iPad screenshot gallery and capture notes |
 | [`docs/BUILDING.md`](docs/BUILDING.md) | Full build, signing, and package-audit guide |
 | [`docs/INSTALL_IPA.md`](docs/INSTALL_IPA.md) | Unsigned developer-preview installation boundary |
 | [`docs/HARDWARE_ACCEPTANCE.md`](docs/HARDWARE_ACCEPTANCE.md) | Physical-device validation workflow |
