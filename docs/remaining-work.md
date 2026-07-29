@@ -164,10 +164,10 @@ Boundary:
   [SpaghettiKart issue #731](https://github.com/HarbourMasters/SpaghettiKart/issues/731).
 - Build: the unsigned arm64 iPhoneOS Release app is version `0.1.0`, build
   number `2`, minimum iOS/iPadOS 15.0, with executable SHA-256
-  `9a5483067ab3c739bf745d0d075484fd53648085d804055534c430563b93645c`.
-- IPA audit: `SpaghettiPad-0.1.0-preview.2-unsigned.ipa` is 11,114,629 bytes
+  `13a0123bf384c89d96485a7cc783be69081b41c1cc1697b61b725f428db80b6c`.
+- IPA audit: `SpaghettiPad-0.1.0-preview.2-unsigned.ipa` is 11,220,542 bytes
   with 293 ZIP entries and SHA-256
-  `d47e6cd2072e8313850f4a6d3feb64d1727aff4863c10c10e1dad69efa93c5b8`.
+  `3aafab0c010fd49897a21b2f3804efe33624ef4ae6165ce2c97d59fa2a63dbeb`.
   It contains no ROM, `mk64*.o2r`, `.otr`, imported texture pack,
   `_CodeSignature`, provisioning profile, certificate, or signing identity.
 - Exact-artifact device check: a temporary extracted copy of the unsigned IPA
