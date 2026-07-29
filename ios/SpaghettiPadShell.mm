@@ -673,7 +673,7 @@ static CGRect SpaghettiPad_CenteredFrame(CGPoint center, CGFloat width, CGFloat 
 static CGRect SpaghettiPad_CompactMenuFrame(
     CGRect bounds, UIEdgeInsets safe, CGFloat size) {
     return CGRectMake(
-        CGRectGetWidth(bounds) - size - 6.0,
+        CGRectGetWidth(bounds) - safe.right - size - 8.0,
         safe.top + 4.0, size, size);
 }
 
@@ -1193,6 +1193,32 @@ static SpaghettiPadTouchButton* sMenuButton;
             CGPointMake(leftCenter - 29.0, topCenter), 50.0, 50.0);
         self.buttonZStick.frame = SpaghettiPad_CenteredFrame(
             CGPointMake(leftCenter + 29.0, topCenter), 50.0, 50.0);
+
+        // Physically accepted iPhone 14 racing layout. Normalized centers
+        // preserve the same thumb relationships on other compact widths.
+        self.controlStick.center =
+            CGPointMake(width * 0.185624, height * 0.726622);
+        self.buttonL.center =
+            CGPointMake(width * 0.151264, height * 0.488034);
+        self.buttonZStick.center =
+            CGPointMake(width * 0.244076, height * 0.496581);
+        self.buttonR.center =
+            CGPointMake(width * 0.817930, height * 0.586325);
+        self.buttonZRight.center =
+            CGPointMake(width * 0.890995, height * 0.602564);
+        self.buttonB.center =
+            CGPointMake(width * 0.813586, height * 0.753846);
+        self.buttonA.center =
+            CGPointMake(width * 0.888626, height * 0.789744);
+        self.cRight.center =
+            CGPointMake(width * 0.915877, height * 0.364103);
+
+        CGRect menuFrame =
+            SpaghettiPad_CompactMenuFrame(self.bounds, safe, 38.0);
+        self.buttonStart.center = CGPointMake(
+            CGRectGetMidX(menuFrame),
+            CGRectGetMaxY(menuFrame) + 9.0 +
+                CGRectGetHeight(self.buttonStart.bounds) * 0.5);
         return;
     }
 
@@ -1277,7 +1303,15 @@ static SpaghettiPadTouchButton* sMenuButton;
         CGSize defaultSize = control.bounds.size;
         self.defaultSizes[key] = [NSValue valueWithCGSize:defaultSize];
         CGFloat defaultScale = 1.0;
-        if (!compact && [key isEqualToString:@"a"]) {
+        if (compact && [key isEqualToString:@"stick"]) {
+            defaultScale = 1.068117;
+        } else if (compact && [key isEqualToString:@"l"]) {
+            defaultScale = 1.094607;
+        } else if (compact && [key isEqualToString:@"z-left"]) {
+            defaultScale = 1.254809;
+        } else if (compact && [key isEqualToString:@"z-right"]) {
+            defaultScale = 1.143803;
+        } else if (!compact && [key isEqualToString:@"a"]) {
             defaultScale = 1.105960;
         } else if (!compact && [key isEqualToString:@"z-left"]) {
             defaultScale = 1.244087;

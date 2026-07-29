@@ -30,6 +30,12 @@ Pro: A is 111%, the steering-side Z is 124%, the left cluster follows the
 steering grip, and the right face/shoulder controls are grouped for racing.
 Normalized positions adapt that arrangement to other iPad sizes.
 
+The phone defaults use the layout physically tuned during a Grand Prix on an
+iPhone 14: the steering-side L/Z pair and stick are enlarged, the racing
+buttons form a lower-right thumb cluster, and the C controls remain above that
+cluster. The fixed menu respects the landscape safe area, with Start directly
+underneath it.
+
 ## A hold assist
 
 During a race, hold **A** for 0.65 seconds and then lift your finger to keep
@@ -61,4 +67,8 @@ toggle returns to the saved customizable layout.
 - On a physical 12.9-inch iPad Pro, layout movement, A and Z resizing, hiding
   controls, returning to a live race, engaging A hold assist, and tapping A to
   release it were exercised successfully on 2026-07-29.
-- A full touch-only Grand Prix and physical-iPhone acceptance remain open.
+- On a physical iPhone 14, the customizable controls, A hold assist, texture
+  pack, and Grand Prix play were exercised successfully on 2026-07-29. The
+  safe-area menu correction and promoted phone default still require a final
+  device recheck.
+- A full touch-only Grand Prix remains open.
