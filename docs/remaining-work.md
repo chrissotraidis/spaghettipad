@@ -53,7 +53,7 @@ audited ROM-free unsigned IPA.
 | 9 | iPad UX and imported texture pack | In progress (Simulator UX/import slice passed; hardware pack GP pending) | Touch-complete UX plus Reloaded import/enable/full-GP hardware gate |
 | 10 | Controllers and split-screen | In progress (Simulator routing/render slice passed; hardware sessions pending) | Two-controller 2P session and measured 3P/4P decision |
 | 11 | Tilt steering | In progress (Simulator slice passed; hardware GP pending) | Persisted, drift-free tilt GP on hardware |
-| 12 | Package, CI, docs, release | In progress (Preview 2 published; clean hosted CI and package workflow passed) | Final physical update/save-preservation acceptance |
+| 12 | Package, CI, docs, release | In progress (Preview 3 published; exact IPA passed audit and physical-iPhone launch) | Final physical update/save-preservation acceptance |
 
 ## Active gate
 
@@ -170,6 +170,39 @@ Boundary:
   [30406005730](https://github.com/chrissotraidis/spaghettipad/actions/runs/30406005730)
   remains an external pre-start failure with zero steps and the unchanged
   GitHub billing/spending-limit annotation.
+
+### 2026-07-29 — Preview 3 customizable-controls release published
+
+- Release: annotated tag
+  [`v0.1.0-preview.3`](https://github.com/chrissotraidis/spaghettipad/releases/tag/v0.1.0-preview.3)
+  resolves to merged `main` commit
+  `5786e6faa74487a8be7bdfe30d8b2bb2a7a54541`.
+- Controls: Preview 3 is the first downloadable IPA with customizable touch
+  controls as the default, separate phone/tablet profiles, move, resize, hide,
+  show, and reset tools, A-button hold assist, and an optional legacy mode.
+- Clean build: hosted repository safety and unsigned arm64 iPhoneOS
+  build/package jobs passed in
+  [run 30481595201](https://github.com/chrissotraidis/spaghettipad/actions/runs/30481595201).
+  The artifact is version `0.1.0`, build `3`, minimum iOS/iPadOS 15.0, built
+  with Xcode 16.4 and the iPhoneOS 18.5 SDK.
+- IPA audit: `SpaghettiPad-0.1.0-preview.3-unsigned.ipa` is 11,228,922 bytes
+  with 293 ZIP entries and SHA-256
+  `4b74433290c1dba54f5b4a31820c835fd826359ebd172fe0351c4115182c388b`.
+  It is unsigned and contains no ROM, extracted game archive, imported texture
+  pack, provisioning profile, certificate, or signing identity. The only
+  `.o2r` is the pinned, ROM-free `spaghetti.o2r`.
+- Exact-artifact device check: a temporary extracted copy of the exact IPA was
+  signed with the established development profile, passed strict signature
+  verification and the signed-app audit, update-installed without uninstalling,
+  launched, and observed as a live process on a physical iPhone 14 running iOS
+  26.5.2. The public IPA remained unchanged and unsigned.
+- Live publication check: both release assets were downloaded back from
+  GitHub; `SHA256SUMS` passed and the downloaded IPA's compressed-data audit
+  reported no errors.
+- Boundary: this evidence proves build, package integrity, install, launch,
+  and live process state. The extended gameplay, controller, tilt,
+  performance, long-session, and final cross-release update/save-preservation
+  gates remain open.
 
 ### 2026-07-29 — Preview 2 release hardening completed
 
