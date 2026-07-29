@@ -97,7 +97,7 @@ downloaded, mirrored, or redistributed by this project.
 |---|---|---|
 | Local iPhone/iPad build | **Available now** | Build and sign with your own Apple development team by following [Build from source](docs/BUILDING.md). |
 | Simulator | **Available now** | Use it for development and UI testing. It cannot replace physical-device acceptance. |
-| Developer-preview `.ipa` | **Available now** | Download the [unsigned ROM-free preview](https://github.com/chrissotraidis/spaghettipad/releases/tag/v0.1.0-preview.2), verify its checksum, and re-sign it with your own Apple development identity. |
+| Developer-preview `.ipa` | **Available now** | Download the [unsigned ROM-free preview](https://github.com/chrissotraidis/spaghettipad/releases/tag/v0.1.0-preview.3), verify its checksum, and re-sign it with your own Apple development identity. |
 | App Store / TestFlight | **Not announced** | No App Store listing or public TestFlight exists. |
 
 The current development build has been signed, update-installed, and played
@@ -298,7 +298,7 @@ M-series-iPad performance experiment until it has its own hardware evidence.
 | Saves and updates | Development update installs have retained the current app container; the final audited update/save-preservation gate remains |
 | Controllers | Four-port routing and split-screen rendering pass deterministic Simulator tests; physical model, reconnect, and multiplayer sessions remain |
 | Tilt | The persisted motion-to-stick path, recentering, touch priority, and foreground recalibration pass Simulator tests; physical feel and a tilt GP remain |
-| Packaging | Preview 2 is an audited, ROM-free unsigned IPA; its exact payload has been re-signed and launched on a physical iPad |
+| Packaging | Preview 3 packages the promoted customizable touch controls in an audited, ROM-free unsigned IPA |
 | CI | Repository safety and the ROM-free unsigned iPhoneOS build/package workflow pass on hosted GitHub Actions |
 
 The project deliberately keeps build, Simulator, process, and physical-device
@@ -355,7 +355,7 @@ distribute a maintainer development profile.
 <details>
 <summary><strong>Where is the IPA?</strong></summary>
 
-The [current developer preview](https://github.com/chrissotraidis/spaghettipad/releases/tag/v0.1.0-preview.2)
+The [current developer preview](https://github.com/chrissotraidis/spaghettipad/releases/tag/v0.1.0-preview.3)
 provides an audited, ROM-free unsigned IPA plus its SHA-256 checksum. Follow
 [the installation guide](docs/INSTALL_IPA.md) to verify and re-sign it with
 your own Apple development identity.
