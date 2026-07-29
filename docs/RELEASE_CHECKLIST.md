@@ -73,8 +73,10 @@ This is the final gate for a public source snapshot or downloadable IPA.
   remaining physical-hardware gates are still open.
 - Preview 3 promotes the customizable touch controls to the default, retains
   legacy controls as an option, and carries separate physically tuned phone
-  and tablet layouts. Its exact artifact evidence is recorded in the GitHub
-  release notes.
+  and tablet layouts. Its exact artifact was temporarily re-signed,
+  update-installed, launched, and verified live on a physical iPhone, then
+  published with its checksum as
+  [`v0.1.0-preview.3`](https://github.com/chrissotraidis/spaghettipad/releases/tag/v0.1.0-preview.3).
 
 These blockers may be stated as developer-preview limitations, but they must
 not be described as passed.

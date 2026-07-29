@@ -72,7 +72,8 @@ physical-device update gate passes.
   phone and tablet layouts, control move/resize/hide/reset tools, and A-button
   hold assist.
 - Customizable controls and gameplay have been exercised on physical iPhone
-  and iPad development builds. Exact-payload installation is recorded
-  separately in the release notes.
+  and iPad development builds. The exact published Preview 3 payload was
+  temporarily re-signed, update-installed, launched, and verified live on a
+  physical iPhone without changing the public IPA.
 - Long-session stability, controller behavior, performance, and final in-place
   update/save preservation remain explicit acceptance gates.

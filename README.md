@@ -107,10 +107,11 @@ have been exercised on iPad. The customizable phone layout, A hold assist,
 safe-area menu placement, texture-pack rendering, and Grand Prix play have
 also been exercised on iPhone.
 
-Those results do not certify every configuration. The published preview
-artifact has been audited and its exact payload has been installed and
-launched on a physical iPad; the latest development build has also been
-installed, launched, and touch-tested on a physical iPhone.
+Those results do not certify every configuration. The published Preview 3
+artifact has been audited; its exact payload has been temporarily re-signed,
+update-installed, launched, and verified live on a physical iPhone. Signed
+development builds have also been installed, launched, and touch-tested on a
+physical iPad.
 Bluetooth-controller mapping and reconnect behavior, sustained multiplayer
 performance, a complete touch-only Grand Prix, and a complete tilt-driven
 Grand Prix remain explicit validation gates.
@@ -298,7 +299,7 @@ M-series-iPad performance experiment until it has its own hardware evidence.
 | Saves and updates | Development update installs have retained the current app container; the final audited update/save-preservation gate remains |
 | Controllers | Four-port routing and split-screen rendering pass deterministic Simulator tests; physical model, reconnect, and multiplayer sessions remain |
 | Tilt | The persisted motion-to-stick path, recentering, touch priority, and foreground recalibration pass Simulator tests; physical feel and a tilt GP remain |
-| Packaging | Preview 3 packages the promoted customizable touch controls in an audited, ROM-free unsigned IPA |
+| Packaging | Preview 3 packages the promoted customizable controls in an audited, ROM-free unsigned IPA; its exact payload has been re-signed and launched on a physical iPhone |
 | CI | Repository safety and the ROM-free unsigned iPhoneOS build/package workflow pass on hosted GitHub Actions |
 
 The project deliberately keeps build, Simulator, process, and physical-device
