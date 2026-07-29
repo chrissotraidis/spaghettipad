@@ -96,7 +96,7 @@ downloaded, mirrored, or redistributed by this project.
 |---|---|---|
 | Local iPhone/iPad build | **Available now** | Build and sign with your own Apple development team by following [Build from source](docs/BUILDING.md). |
 | Simulator | **Available now** | Use it for development and UI testing. It cannot replace physical-device acceptance. |
-| Developer-preview `.ipa` | **Not published yet** | The repository can create an audited ROM-free unsigned IPA for personal re-signing; no public download is linked until a release artifact is actually published. |
+| Developer-preview `.ipa` | **Available now** | Download the [unsigned ROM-free preview](https://github.com/chrissotraidis/spaghettipad/releases/tag/v0.1.0-preview.1), verify its checksum, and re-sign it with your own Apple development identity. |
 | App Store / TestFlight | **Not announced** | No App Store listing or public TestFlight exists. |
 
 The current development build has been signed, update-installed, and played
@@ -337,10 +337,10 @@ distribute a maintainer development profile.
 <details>
 <summary><strong>Where is the IPA?</strong></summary>
 
-No public IPA is linked yet. You can build the project locally or create an
-audited unsigned package with `scripts/package-ios.sh`. When an actual release
-asset exists, this README and [the installation guide](docs/INSTALL_IPA.md)
-will link to that exact release and checksum.
+The [initial developer preview](https://github.com/chrissotraidis/spaghettipad/releases/tag/v0.1.0-preview.1)
+provides an audited, ROM-free unsigned IPA plus its SHA-256 checksum. Follow
+[the installation guide](docs/INSTALL_IPA.md) to verify and re-sign it with
+your own Apple development identity.
 </details>
 
 <details>

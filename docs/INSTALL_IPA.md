@@ -1,14 +1,17 @@
 # Install a SpaghettiPad developer preview
 
-SpaghettiPad currently produces a ROM-free unsigned developer-preview IPA. It
-is not an App Store or TestFlight build, and no public download has been
-published yet.
+SpaghettiPad publishes a ROM-free unsigned developer-preview IPA. It is not
+an App Store or TestFlight build.
 
 An unsigned IPA must be re-signed for your own iPhone or iPad with an Apple
 development identity or a compatible personal-signing tool. The IPA contains
 no Mario Kart 64 ROM, extracted game archive, or texture pack.
 
 ## Build or obtain the IPA
+
+Download
+[SpaghettiPad 0.1.0 preview 1](https://github.com/chrissotraidis/spaghettipad/releases/tag/v0.1.0-preview.1)
+and verify the IPA against the attached `SHA256SUMS` file before signing it.
 
 To create the artifact from source:
 
@@ -48,7 +51,7 @@ device, signing, launch, stability, and hash evidence without confusing a
 successful install with a completed hardware gate.
 
 For an optional texture pack, follow the README's
-[visual-upgrade instructions](../README.md#bring-your-own-assets) only after
+[texture-pack instructions](../README.md#texture-packs) only after
 the base game launches.
 
 ## Updates and saves
