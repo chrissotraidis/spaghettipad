@@ -25,6 +25,11 @@ remain faintly visible in the editor so they can always be selected and
 restored. Steering cannot be hidden, and the menu button remains fixed so the
 layout cannot strand the user outside Settings.
 
+The tablet defaults use the layout physically accepted on a 12.9-inch iPad
+Pro: A is 111%, the steering-side Z is 124%, the left cluster follows the
+steering grip, and the right face/shoulder controls are grouped for racing.
+Normalized positions adapt that arrangement to other iPad sizes.
+
 ## A hold assist
 
 During a race, hold **A** for 0.65 seconds and then lift your finger to keep

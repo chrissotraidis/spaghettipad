@@ -1216,6 +1216,28 @@ static SpaghettiPadTouchButton* sMenuButton;
     self.buttonZStick.frame = SpaghettiPad_CenteredFrame(
         CGPointMake(leftCenter + leftUnit * 0.55, topCenter),
         leftUnit, leftUnit);
+
+    // Physically accepted 12.9-inch iPad layout. Normalized centers keep the
+    // same grip relationships on other tablet sizes; safe-area clamping below
+    // keeps every control reachable.
+    CGFloat width = CGRectGetWidth(self.bounds);
+    CGFloat height = CGRectGetHeight(self.bounds);
+    self.controlStick.center =
+        CGPointMake(width * 0.158712, height * 0.782949);
+    self.buttonL.center =
+        CGPointMake(width * 0.114791, height * 0.657168);
+    self.buttonZStick.center =
+        CGPointMake(width * 0.174814, height * 0.652773);
+    self.buttonStart.center =
+        CGPointMake(width * 0.938053, height * 0.540000);
+    self.buttonZRight.center =
+        CGPointMake(width * 0.904805, height * 0.609355);
+    self.buttonR.center =
+        CGPointMake(width * 0.962882, height * 0.611797);
+    self.buttonB.center =
+        CGPointMake(width * 0.841698, height * 0.653809);
+    self.buttonA.center =
+        CGPointMake(width * 0.899985, height * 0.692285);
 }
 
 - (void)clampControlToSafeBounds:(UIView*)control {
@@ -1254,11 +1276,15 @@ static SpaghettiPadTouchButton* sMenuButton;
         }
         CGSize defaultSize = control.bounds.size;
         self.defaultSizes[key] = [NSValue valueWithCGSize:defaultSize];
-        CGFloat controlScale =
-            std::clamp(self.layoutScales[key].doubleValue, 0.70, 1.50);
-        if (self.layoutScales[key] == nil) {
-            controlScale = 1.0;
+        CGFloat defaultScale = 1.0;
+        if (!compact && [key isEqualToString:@"a"]) {
+            defaultScale = 1.105960;
+        } else if (!compact && [key isEqualToString:@"z-left"]) {
+            defaultScale = 1.244087;
         }
+        CGFloat controlScale = self.layoutScales[key] == nil
+            ? defaultScale
+            : std::clamp(self.layoutScales[key].doubleValue, 0.70, 1.50);
         control.bounds = CGRectMake(
             0.0, 0.0,
             defaultSize.width * controlScale,
