@@ -58,6 +58,22 @@ if [ -n "$credential_hits" ]; then
     fail "a likely credential or private key exists in the current tree"
 fi
 
+credential_history="$(git log --all --format='%H' \
+    -G "$credential_pattern" -- . \
+    ':(exclude)scripts/check-repo-safety.sh')"
+if [ -n "$credential_history" ]; then
+    printf '%s\n' "$credential_history" >&2
+    fail "a likely credential or private key exists in Git history"
+fi
+
+public_identifier_pattern='[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}|/Users/[^/]+/'
+public_identifier_hits="$(rg -n -I -e "$public_identifier_pattern" \
+    --glob '*.md' README.md RIGHTS_AND_LICENSES.md docs || true)"
+if [ -n "$public_identifier_hits" ]; then
+    printf '%s\n' "$public_identifier_hits" >&2
+    fail "public documentation contains a local user path or UUID-shaped identifier"
+fi
+
 bash -n scripts/*.sh
 for script in scripts/*.sh; do
     [ -x "$script" ] || fail "$script is not executable"
@@ -89,6 +105,8 @@ patterns = [
 
 for relative in markdown:
     document = root / relative
+    if not document.is_file():
+        continue
     text = document.read_text(encoding="utf-8")
     for pattern in patterns:
         for raw_target in pattern.findall(text):

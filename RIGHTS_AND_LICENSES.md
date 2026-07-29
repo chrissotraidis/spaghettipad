@@ -13,6 +13,11 @@ third-party code remain with their authors and are governed by the terms
 supplied by those projects. Public IPA packages include discovered third-party
 license files under `ThirdPartyLicenses/`.
 
+The pinned SpaghettiKart source revision does not contain a top-level license.
+SpaghettiPad therefore does not represent SpaghettiKart redistribution rights
+as settled. Confirm the applicable terms with the SpaghettiKart maintainers
+before redistributing a compiled build.
+
 SpaghettiPad does not grant rights to Nintendo trademarks, Mario Kart 64,
 ROMs, extracted assets, texture packs, or other copyrighted game material. No
 game ROM or ROM-derived playable archive is included in this repository or its
@@ -20,4 +25,4 @@ published IPA. Users must provide their own legally acquired supported copy.
 
 This repository and its developer-preview builds are independent community
 work and are not affiliated with or endorsed by Nintendo, Harbour Masters, or
-the HarkinianPad project.
+the MK64 Reloaded project.

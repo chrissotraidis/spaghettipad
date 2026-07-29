@@ -7,7 +7,8 @@ This is the final gate for a public source snapshot or downloadable IPA.
 - [ ] `scripts/check-repo-safety.sh` passes.
 - [ ] Every maintained patch replays on the pinned source revisions.
 - [ ] `scripts/build-ios.sh --device` produces the arm64 iPhoneOS app.
-- [ ] `scripts/package-ios.sh` accepts that app.
+- [ ] `scripts/package-ios.sh` accepts the unsigned app and refuses signed
+      input by default.
 - [ ] `REQUIRE_SIGNED=1 scripts/package-ios.sh` rejects the unsigned app.
 - [ ] README screenshots and control descriptions match the current app.
 - [ ] No ROM, `mk64*.o2r`, `.otr`, imported texture, signing material, app,
@@ -23,15 +24,24 @@ This is the final gate for a public source snapshot or downloadable IPA.
       `embedded.mobileprovision`.
 - [ ] Confirm the only `.o2r` in the app is the content-hash-pinned,
       ROM-free `spaghetti.o2r`.
-- [ ] Confirm `RIGHTS_AND_LICENSES.md` and `ThirdPartyLicenses/` are present.
-- [ ] Re-sign and update-install the exact IPA on a physical iPhone and iPad.
-- [ ] Follow [HARDWARE_ACCEPTANCE.md](HARDWARE_ACCEPTANCE.md), then replay
-      touch, ROM import, texture-pack import, controllers, split-screen, tilt,
-      lifecycle, audio, and save preservation.
+- [ ] Confirm `RIGHTS_AND_LICENSES.md`,
+      `ThirdPartyLicenses/SDL_GameControllerDB.LICENSE`, and discovered
+      dependency notices are present.
+- [ ] Re-sign and install the exact IPA on at least one supported physical
+      device.
+- [ ] State every uncompleted physical-device gate in the release notes.
 - [ ] Record tag, commit, Xcode/SDK versions, app version, build number,
       device/OS matrix, and exact unsigned IPA SHA-256 in release notes.
 - [ ] Publish as a prerelease with [INSTALL_IPA.md](INSTALL_IPA.md), known
       limitations, and an explicit statement that no game data is included.
+
+## Before claiming final acceptance
+
+- [ ] Re-sign and update-install the exact IPA on a physical iPhone and iPad.
+- [ ] Follow [HARDWARE_ACCEPTANCE.md](HARDWARE_ACCEPTANCE.md), then replay
+      touch, ROM import, texture-pack import, controllers, split-screen, tilt,
+      lifecycle, audio, and save preservation.
+- [ ] Confirm the hosted safety and unsigned-build jobs are green.
 
 ## Before publishing a signed build
 
@@ -58,6 +68,9 @@ This is the final gate for a public source snapshot or downloadable IPA.
   [`v0.1.0-preview.1`](https://github.com/chrissotraidis/spaghettipad/releases/tag/v0.1.0-preview.1).
   The physical iPhone install and the complete hardware replay matrix remain
   open.
+- Preview 2 corrects third-party notices and makes unsigned packaging the safe
+  default. It does not convert any remaining hardware or hosted-CI gate into a
+  pass.
 
 These blockers may be stated as developer-preview limitations, but they must
 not be described as passed.

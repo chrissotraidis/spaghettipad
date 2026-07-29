@@ -1,17 +1,16 @@
 # SpaghettiPad
 
 <p align="center">
-  <strong>Mario Kart 64 on iPhone and iPad—with touch and Bluetooth controller support.</strong><br>
+  <strong>Mario Kart 64 on iPhone and iPad—with touch controls and Bluetooth controller routing.</strong><br>
   Native Metal rendering, full-analog touch steering, four-player controller
   routing, local multiplayer, and optional enhanced texture packs.
 </p>
 
 <p align="center">
-  <a href="https://github.com/chrissotraidis/spaghettipad/actions/workflows/ios-build.yml"><img alt="SpaghettiPad iOS build" src="https://github.com/chrissotraidis/spaghettipad/actions/workflows/ios-build.yml/badge.svg"></a>
   <img alt="iOS and iPadOS 15 or later" src="https://img.shields.io/badge/iOS%20%2F%20iPadOS-15%2B-0A84FF?logo=apple">
   <img alt="Metal renderer" src="https://img.shields.io/badge/renderer-Metal-5E5CE6">
   <img alt="Full analog touch controls" src="https://img.shields.io/badge/touch-full%20analog-32ADE6">
-  <img alt="Bluetooth controller support" src="https://img.shields.io/badge/controllers-Bluetooth-34C759">
+  <img alt="Bluetooth controller routing" src="https://img.shields.io/badge/controllers-Bluetooth%20routing-34C759">
   <img alt="Enhanced texture pack support" src="https://img.shields.io/badge/textures-HD%20pack%20support-B65FCF">
   <img alt="Physical iPad tested" src="https://img.shields.io/badge/physical%20iPad-tested-30D158">
   <img alt="ROM not included" src="https://img.shields.io/badge/game%20data-not%20included-FF453A">
@@ -28,9 +27,11 @@ enhanced visuals.
 
 This repository contains the mobile integration, maintained patches, and
 reproducible build scripts. It does **not** contain Mario Kart 64, a ROM,
-Nintendo assets, a playable ROM-derived archive, or MK64 Reloaded. Read the
-scoped [rights and licensing boundary](RIGHTS_AND_LICENSES.md); it does not
-relicense SpaghettiKart, its dependencies, texture packs, or game material.
+extractable or playable Nintendo game assets, a playable ROM-derived archive,
+or MK64 Reloaded. Gameplay screenshots are retained as documentation. Read
+the scoped [rights and licensing boundary](RIGHTS_AND_LICENSES.md); it does
+not relicense SpaghettiKart, its dependencies, texture packs, or game
+material.
 
 ## Built for racing on glass
 
@@ -96,7 +97,7 @@ downloaded, mirrored, or redistributed by this project.
 |---|---|---|
 | Local iPhone/iPad build | **Available now** | Build and sign with your own Apple development team by following [Build from source](docs/BUILDING.md). |
 | Simulator | **Available now** | Use it for development and UI testing. It cannot replace physical-device acceptance. |
-| Developer-preview `.ipa` | **Available now** | Download the [unsigned ROM-free preview](https://github.com/chrissotraidis/spaghettipad/releases/tag/v0.1.0-preview.1), verify its checksum, and re-sign it with your own Apple development identity. |
+| Developer-preview `.ipa` | **Available now** | Download the [unsigned ROM-free preview](https://github.com/chrissotraidis/spaghettipad/releases/tag/v0.1.0-preview.2), verify its checksum, and re-sign it with your own Apple development identity. |
 | App Store / TestFlight | **Not announced** | No App Store listing or public TestFlight exists. |
 
 The current development build has been signed, update-installed, and played
@@ -104,10 +105,11 @@ on a physical iPad. Files import, local `mk64.o2r` loading, touch gameplay,
 menus, audio, saves, local multiplayer paths, and MK64 Reloaded HD have all
 been exercised on that hardware.
 
-Those results do not certify every configuration. Physical iPhone play,
-Bluetooth-controller mapping and reconnect behavior, sustained multiplayer
-performance, a complete tilt-driven Grand Prix, and the final audited release
-artifact remain explicit validation gates.
+Those results do not certify every configuration. The published preview
+artifact has been audited and its exact payload has been installed and
+launched on a physical iPad. Physical iPhone play, Bluetooth-controller
+mapping and reconnect behavior, sustained multiplayer performance, a complete
+tilt-driven Grand Prix, and final acceptance remain explicit validation gates.
 
 ## Get started
 
@@ -282,8 +284,8 @@ M-series-iPad performance experiment until it has its own hardware evidence.
 | Saves and updates | Development update installs have retained the current app container; the final audited update/save-preservation gate remains |
 | Controllers | Four-port routing and split-screen rendering pass deterministic Simulator tests; physical model, reconnect, and multiplayer sessions remain |
 | Tilt | The persisted motion-to-stick path, recentering, touch priority, and foreground recalibration pass Simulator tests; physical feel and a tilt GP remain |
-| Packaging | ROM/game-data exclusions, signed/unsigned checks, and reproducible local unsigned IPA creation are implemented |
-| CI | Consult the live workflow badge and Actions run; local success is not reported as green hosted CI |
+| Packaging | Preview 2 is an audited, ROM-free unsigned IPA; its exact payload has been re-signed and launched on a physical iPad |
+| CI | Hosted jobs are blocked before runner start by an account billing/spending-limit restriction; local success is not reported as green hosted CI |
 
 The project deliberately keeps build, Simulator, process, and physical-device
 evidence separate. The [remaining-work ledger](docs/remaining-work.md) records
@@ -319,13 +321,15 @@ upstream revisions, disables their push URLs, applies the maintained patches,
 generates the ROM-free `spaghetti.o2r`, and builds the app. Your game data is
 introduced only after installation.
 
-To create an unsigned, re-signable preview package from the current device
+To create an unsigned, re-signable preview package from an unsigned device
 build:
 
 ```sh
 scripts/package-ios.sh
 ```
 
+The default command refuses a signed app. Locally signed packaging is an
+explicit maintainer-only mode: `REQUIRE_SIGNED=1 scripts/package-ios.sh`.
 The packager audits the bundle and rejects Simulator products, original ROMs,
 ROM-derived `mk64*.o2r`/`.otr` files, imported texture packs, unexpected port
 archive contents, and stale signing material. The public package contract is
@@ -337,7 +341,7 @@ distribute a maintainer development profile.
 <details>
 <summary><strong>Where is the IPA?</strong></summary>
 
-The [initial developer preview](https://github.com/chrissotraidis/spaghettipad/releases/tag/v0.1.0-preview.1)
+The [current developer preview](https://github.com/chrissotraidis/spaghettipad/releases/tag/v0.1.0-preview.2)
 provides an audited, ROM-free unsigned IPA plus its SHA-256 checksum. Follow
 [the installation guide](docs/INSTALL_IPA.md) to verify and re-sign it with
 your own Apple development identity.
@@ -385,8 +389,9 @@ tested.
 <details>
 <summary><strong>What is the licensing status?</strong></summary>
 
-Each upstream component retains its own license and copyright. This repository
-has the narrower terms described in
+Each upstream component retains its own license and copyright. The pinned
+SpaghettiKart revision has no top-level license, so this project does not
+represent its binary-redistribution terms as settled. See
 [RIGHTS_AND_LICENSES.md](RIGHTS_AND_LICENSES.md); public source access does not
 grant rights to Nintendo material or third-party texture packs.
 </details>
@@ -400,7 +405,7 @@ grant rights to Nintendo material or third-party texture packs.
 | [`scripts/package-ios.sh`](scripts/package-ios.sh) | Audited unsigned/signed IPA packaging |
 | [`scripts/check-repo-safety.sh`](scripts/check-repo-safety.sh) | Tracked-asset, history, patch, script, and documentation gate |
 | [`patches/`](patches/) | Reviewable SpaghettiPad changes replayed onto pinned upstream source |
-| [`docs/screenshots/README.md`](docs/screenshots/README.md) | Current physical-iPad screenshot gallery and capture notes |
+| [`docs/screenshots/README.md`](docs/screenshots/README.md) | Physical-device and Simulator screenshot catalog |
 | [`docs/BUILDING.md`](docs/BUILDING.md) | Full build, signing, and package-audit guide |
 | [`docs/INSTALL_IPA.md`](docs/INSTALL_IPA.md) | Unsigned developer-preview installation boundary |
 | [`docs/HARDWARE_ACCEPTANCE.md`](docs/HARDWARE_ACCEPTANCE.md) | Physical-device validation workflow |
@@ -417,7 +422,9 @@ committed.
 SpaghettiPad exists because of
 [SpaghettiKart](https://github.com/HarbourMasters/SpaghettiKart),
 [libultraship](https://github.com/Kenix3/libultraship),
-[Torch](https://github.com/HarbourMasters/Torch), SDL, and their contributors.
+[Torch](https://github.com/HarbourMasters/Torch), SDL,
+[SDL_GameControllerDB](https://github.com/mdqinc/SDL_GameControllerDB), and
+their contributors.
 Its mobile control work also draws on lessons from
 [HarkinianPad](https://github.com/chrissotraidis/harkinianpad), while
 [MK64 Reloaded](https://evilgames.eu/texture-packs/mk64-reloaded.htm) is an

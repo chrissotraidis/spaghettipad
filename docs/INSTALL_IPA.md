@@ -10,7 +10,7 @@ no Mario Kart 64 ROM, extracted game archive, or texture pack.
 ## Build or obtain the IPA
 
 Download
-[SpaghettiPad 0.1.0 preview 1](https://github.com/chrissotraidis/spaghettipad/releases/tag/v0.1.0-preview.1)
+[SpaghettiPad 0.1.0 preview 2](https://github.com/chrissotraidis/spaghettipad/releases/tag/v0.1.0-preview.2)
 and verify the IPA against the attached `SHA256SUMS` file before signing it.
 
 To create the artifact from source:
@@ -20,8 +20,10 @@ scripts/build-ios.sh --device
 scripts/package-ios.sh
 ```
 
-The packager prints the exact output path and SHA-256. Verify any separately
-provided artifact against its published SHA-256 before signing it.
+The default packager requires an unsigned device app and prints the exact
+output path and SHA-256. It refuses signed input unless a maintainer explicitly
+uses `REQUIRE_SIGNED=1`. Verify any separately provided artifact against its
+published SHA-256 before signing it.
 
 ## Install
 
@@ -66,6 +68,8 @@ physical-device update gate passes.
 
 - No jailbreak or JIT is required by SpaghettiPad.
 - The user supplies all game data.
-- Physical iPhone/iPad installation, long-session stability, controller
-  behavior, performance, and in-place update preservation are still explicit
+- The exact published Preview 2 payload has been temporarily re-signed,
+  update-installed, and launched on a physical iPad.
+- Physical iPhone installation, long-session stability, controller behavior,
+  performance, and final in-place update/save preservation remain explicit
   acceptance gates.
