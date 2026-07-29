@@ -54,7 +54,7 @@ The defaults are:
 | Field | Value |
 |---|---|
 | App version | `0.1.0` |
-| Build number | `1` |
+| Build number | `2` |
 | Bundle identifier | `com.chrissotraidis.spaghettipad` |
 | Minimum OS | iOS/iPadOS 15.0 |
 
@@ -95,8 +95,9 @@ Package a clean unsigned developer artifact:
 scripts/package-ios.sh
 ```
 
-Require a valid signature and embedded profile when packaging a locally signed
-app:
+This default command requires an unsigned app and refuses signed input.
+Maintainers may explicitly require a valid signature and embedded profile
+when packaging a locally signed app:
 
 ```sh
 REQUIRE_SIGNED=1 scripts/package-ios.sh
@@ -106,7 +107,13 @@ Both modes reject Simulator products, ROMs, `mk64*.o2r`, `.otr`, a changed
 `spaghetti.o2r`, and stale signing material. Signed mode also requires an
 unexpired, decodable provisioning profile whose team and application
 identifier authorize the signed bundle. The IPA carries the project rights
-notice and discovered third-party licenses.
+notice, discovered third-party licenses, and the pinned controller database's
+Zlib notice.
+
+The pinned SpaghettiKart revision has no top-level license. An unsigned
+artifact solves code-signing portability, not that upstream licensing gap.
+Review [RIGHTS_AND_LICENSES.md](../RIGHTS_AND_LICENSES.md) and confirm the
+applicable terms with the SpaghettiKart maintainers before redistribution.
 
 ## First launch
 

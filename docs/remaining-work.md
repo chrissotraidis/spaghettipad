@@ -1,11 +1,9 @@
 # SpaghettiPad remaining work
 
-This is the authoritative execution queue and append-only proof log for
-[`spaghettikart-implementation-plan.md`](spaghettikart-implementation-plan.md).
-The plan and
-[`spaghettikart-ios-feasibility.md`](spaghettikart-ios-feasibility.md) remain
-the technical baseline; this file records current state, tested evidence, and
-the next reproducible gate.
+This is the chronological execution queue and append-only proof log. Dated
+entries preserve what was known at that point and may be superseded by later
+evidence. The [README validation table](../README.md#current-validation) is
+the canonical public status; this file supplies the underlying detail.
 
 ## Goal
 
@@ -38,7 +36,6 @@ audited ROM-free unsigned IPA.
 | `HarbourMasters/SpaghettiKart` | Pinned upstream source input | `5b28472d477bab101dee2a0f469fe2aee2c58a01` |
 | `Kenix3/libultraship` | SpaghettiKart-pinned upstream source input | `f5c3843fe937320b64ff754fa6bf71b13ff5e7a1` |
 | `HarbourMasters/Torch` | SpaghettiKart-pinned upstream source input | `2d474ddb8da8b213fbdbb49d0273ce31fa955f35` |
-| `rebelancap/SpaghettiKart-ios` | MIT prior-art reference, local only | `397fd9c638b3772ef1526b5af9d56f8d169ee339` |
 
 ## Phase queue
 
@@ -151,6 +148,40 @@ Boundary:
   [30406005730](https://github.com/chrissotraidis/spaghettipad/actions/runs/30406005730)
   remains an external pre-start failure with zero steps and the unchanged
   GitHub billing/spending-limit annotation.
+
+### 2026-07-29 — Preview 2 release hardening completed
+
+- Packaging contract: `scripts/package-ios.sh` now requires an unsigned app by
+  default and refuses valid signed input unless the maintainer explicitly sets
+  `REQUIRE_SIGNED=1`. Both paths were exercised against valid build products.
+- Third-party notices: the tracked Zlib notice for SDL_GameControllerDB is
+  required by the packager and appears at
+  `ThirdPartyLicenses/SDL_GameControllerDB.LICENSE`. Preview 2 carries 33
+  third-party notice files.
+- Licensing boundary: the pinned SpaghettiKart revision has no top-level
+  license, and the repository now states that its redistribution terms are not
+  settled. Upstream clarification is tracked in
+  [SpaghettiKart issue #731](https://github.com/HarbourMasters/SpaghettiKart/issues/731).
+- Build: the unsigned arm64 iPhoneOS Release app is version `0.1.0`, build
+  number `2`, minimum iOS/iPadOS 15.0, with executable SHA-256
+  `9a5483067ab3c739bf745d0d075484fd53648085d804055534c430563b93645c`.
+- IPA audit: `SpaghettiPad-0.1.0-preview.2-unsigned.ipa` is 11,114,629 bytes
+  with 293 ZIP entries and SHA-256
+  `d47e6cd2072e8313850f4a6d3feb64d1727aff4863c10c10e1dad69efa93c5b8`.
+  It contains no ROM, `mk64*.o2r`, `.otr`, imported texture pack,
+  `_CodeSignature`, provisioning profile, certificate, or signing identity.
+- Exact-artifact device check: a temporary extracted copy of the unsigned IPA
+  was signed with the established development profile, re-audited as signed,
+  update-installed without uninstalling, launched, and observed as a live
+  process on the connected 12.9-inch sixth-generation iPad Pro. The release
+  IPA remained unchanged and unsigned.
+- Publication: Preview 2 supersedes Preview 1 for new downloads. Preview 1
+  remains available with its original checksum as an immutable historical
+  prerelease.
+- Boundary: the device check proves installation and process launch, not
+  visible title/demo responsiveness or the remaining physical gameplay gates.
+  Hosted CI remains blocked before runner start by the account-level
+  billing/spending-limit restriction.
 
 ### 2026-07-29 — Initial unsigned preview IPA published
 
@@ -344,8 +375,8 @@ Boundary:
   controller being parked, and the next refresh assigned the new controllers
   to ports 1 and 2. This exercises the actual add-event handoff rather than
   only the two possible startup states.
-- Two-controller proof: launching the iPad Pro 11-inch (M4), iOS 18.5
-  Simulator `7D6115C9-2ACC-4E72-A53A-3777D50E7037` with
+- Two-controller proof: launching the Phase 10 iPad Pro 11-inch (M4),
+  iOS 18.5 Simulator with
   `SPAGHETTIPAD_SIMULATED_CONTROLLERS=2` logged controller 1 on port 1 and
   controller 2 on port 2 on every refresh. The Files-visible config recorded
   `HasConfig: 1` for ports 1 through 4; port 2 contained 14 N64 button mapping
@@ -487,10 +518,9 @@ Boundary:
   Settings › Controls exposed the persisted Touch Controls checkbox while the
   always-available `•••` control prevented a disabled overlay from stranding
   the user.
-- Device layout proof: the iPad Pro 11-inch (M4), iOS 18.5 Simulator
-  `7D6115C9-2ACC-4E72-A53A-3777D50E7037` rendered the full, non-overlapping
-  grip layout. The disposable compact iPhone Simulator
-  `F07EF5C1-3E0E-45AE-99DE-AE022B0E92D8` rendered its separate layout without
+- Device layout proof: the Phase 8 iPad Pro 11-inch (M4), iOS 18.5
+  Simulator rendered the full, non-overlapping grip layout. The disposable
+  compact iPhone Simulator rendered its separate layout without
   control overlap or Dynamic Island intrusion, including all four C buttons.
 - Native iPhone widescreen: the live Graphics panel reported both viewport
   and internal dimensions as 874×402 (about 2.17:1), with advanced aspect
@@ -569,8 +599,7 @@ Boundary:
   executable SHA-256 is
   `1d9a87c162dabaa489aa7511a6c60b69a000107e67bec3f1294a777620b08b75`.
 - Isolation: all runtime testing used the disposable iPad Pro 11-inch (M4),
-  iOS 18.5 Simulator `SpaghettiPad Phase 7`
-  (`7D6115C9-2ACC-4E72-A53A-3777D50E7037`). The supplied ROM was copied only
+  iOS 18.5 Simulator `SpaghettiPad Phase 7`. The supplied ROM was copied only
   into that app sandbox. It remains ignored and untracked.
 - Recovery proof: an empty container showed the single Rescan prompt and
   remained in-app after rescanning. A deliberately wrong 1 KiB
@@ -892,14 +921,10 @@ Boundary:
   `/tmp/spaghettipad-phase0.Mm1Yzq`. It was clean before bootstrap, fetched all
   three inputs afresh, reproduced the exact revisions and disabled push URLs,
   passed the safety audit after bootstrap, and remained clean (`## master`).
-- Prior-art boundary: `ref/rebelancap-spaghettikart-ios` remains ignored,
-  push-disabled, and read-only reference material. Its MIT license was
-  verified before any equivalent implementation work.
 - Concurrent plan update: remote `main` advanced to `230d536` during the
   Phase 0 push. That commit adds Decision D14 and the hardware-gated Phase 9
-  MK64 Reloaded workflow named by the goal, and confirms the prior-art
-  reference is MIT. It was inspected and integrated before publication; the
-  earlier goal/plan discrepancy is resolved.
+  MK64 Reloaded workflow named by the goal. It was inspected and integrated
+  before publication; the earlier goal/plan discrepancy is resolved.
 - Boundary: no source patches, host/iOS build, runtime, ROM extraction, touch,
   audio, device, texture-pack, multiplayer, or packaging claim is made by
   this phase.
@@ -911,9 +936,5 @@ Boundary:
   work.
 - Starting repository: clean `main` at
   `59ad133d7f1df88b0783859bbcda03d0c6d292c92`, equal to `origin/main`.
-- Prior-art reference: cloned `rebelancap/SpaghettiKart-ios` locally at
-  `397fd9c638b3772ef1526b5af9d56f8d169ee339`; its `origin` push URL is
-  `disabled://spaghettipad-upstream-input`, its top-level license is MIT, and
-  47 maintained patches are present.
 - Input boundary: `ref/Mario Kart 64 (U) [!].v64` is ignored. No required
   `.z64` input is present, so no extraction or oracle gate is attempted.

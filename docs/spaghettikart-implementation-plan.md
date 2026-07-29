@@ -1,6 +1,10 @@
 # SpaghettiPad — Implementation Plan: Mario Kart 64 (SpaghettiKart) native on iPadOS/iOS
 
-Written 2026-07-28. Companion documents: [spaghettikart-ios-feasibility.md](spaghettikart-ios-feasibility.md) (Stage 1 + gate revision) and [rebelancap-ports-review.md](rebelancap-ports-review.md) (competitive positioning). Every file:line claim below was verified against source on 2026-07-27/28 at these revisions:
+Written 2026-07-28. This is a historical implementation plan, not current
+release documentation. The [README](../README.md#current-validation) and
+[evidence ledger](remaining-work.md) supersede its proposed layouts, estimates,
+and acceptance state. Every file:line claim below was verified against source
+on 2026-07-27/28 at these revisions:
 
 | Tree | Revision |
 |---|---|
@@ -15,7 +19,12 @@ Effort sizes are **estimates** throughout (S ≈ hours-to-a-day, M ≈ days, L �
 
 ## 1. Summary
 
-Build **SpaghettiPad**: a native iPadOS-first (iPhone-compatible) port of SpaghettiKart, positioned as *the first Mario Kart 64 built for iPad* — grip-designed touch controls with true analog steering, on-device ROM extraction through the Files app, physical-controller support, 2–4-player split-screen on a single iPad as the headline differentiator, and optional tilt steering. The approach is the proven HarkinianPad model: a single publication repo (`spaghettipad`) holding scripts, maintained patches, and an iOS app shell, applied over pinned, push-disabled, unmodified upstream checkouts (SpaghettiKart @ `5b28472d`, libultraship @ `f5c3843`, Torch @ `2d474ddb`). The engine layer reuses HarkinianPad's `libultraship-ios.patch` backported 12 commits, the extraction layer reuses SpaghettiKart's already-present in-process Torch extractor (statically linked, single-threaded, sandbox-compatible) with an iOS Files-import first-run flow, and the input layer improves on HarkinianPad by feeding a **virtual SDL game controller** (full analog) instead of synthesized keystrokes.
+Build **SpaghettiPad**: a native iPadOS-first (iPhone-compatible) integration
+of SpaghettiKart with grip-designed touch controls, on-device ROM extraction
+through Files, physical-controller routing, local split-screen, and optional
+tilt steering. SpaghettiPad makes no claim to be the first iOS port. The
+approach uses a single publication repo holding scripts, maintained patches,
+and an iOS app shell over pinned, push-disabled upstream checkouts.
 
 ## 2. Decisions
 
@@ -23,7 +32,7 @@ Each decision lists options considered, the choice, and why. Deferred decisions 
 
 **D1 — Repository strategy: overlay repo, upstreams pinned read-only.**
 Options: (a) hard fork of SpaghettiKart; (b) branch on a fork with intent to PR; (c) HarkinianPad-style overlay repo (scripts fetch pinned upstreams, disable push URLs, apply reviewable patches, app shell lives here).
-**Chosen: (c).** It is the model the developer already operates (HarkinianPad `scripts/build-ios.sh`, `patches/`, package audit), it keeps the ROM/asset safety audit in one place, it survived upstream churn for HarkinianPad, and it was independently converged on by rebelancap (47-patch overlay). Upstreaming later remains possible because every change is already a discrete patch. Upstream repos are never pushed to; push URLs are set to `disabled://spaghettipad-upstream-input`.
+**Chosen: (c).** It is the model the developer already operates (HarkinianPad `scripts/build-ios.sh`, `patches/`, package audit), and it keeps the ROM/asset safety audit in one place. Upstreaming later remains possible because every change is already a discrete patch. Upstream repos are never pushed to; push URLs are set to `disabled://spaghettipad-upstream-input`.
 
 **D2 — libultraship strategy: keep SpaghettiKart's pin `f5c3843`, backport HarkinianPad's engine patch.**
 Options: (a) bump SK's LUS submodule to `2bfbde3` (HarkinianPad's base) or `port-maintenance` tip; (b) keep `f5c3843` and backport `HP:patches/libultraship-ios.patch`; (c) vendor a custom LUS fork.
@@ -36,7 +45,7 @@ Verified breakage: LUS defines `__IOS__` **PRIVATE** (`LUS:src/CMakeLists.txt:17
 **D4 — Asset extraction: bundle extraction inputs in the .app; extract on device with in-process Torch; bring-your-own-ROM via Files.**
 Options: (a) desktop-generated `mk64.o2r` imported via Files only; (b) on-device extraction; (c) both.
 **Chosen: (c), with (b) as the headline UX.** Verified feasibility: Torch is already statically linked into `Spaghettify` (`SK:cmake/dependencies/common.cmake:52-65` builds it as a static lib because `USE_STANDALONE=OFF`; linked at `SK:cmake/dependencies/FindLib.cmake:40-41`), the in-process call is cwd-independent (`SK:src/port/GameExtractor.cpp:188-202` passes `GetAppBundlePath()` as source dir and `GetAppDirectoryPath()` as dest dir), Torch spawns no processes, uses no mmap, is single-threaded, and needs no additional dependencies in library mode (libgfxd and `include/defines.h` parsing are `#ifdef STANDALONE`-only — `TORCH:src/Companion.cpp:1205-1213`). The MK64 ROM is 12 MB (vs OoT's 32–64 MB), so Torch's buffer-everything design (ROM ×2 in RAM, non-evicting decompression cache, in-RAM zip at `MZ_BEST_COMPRESSION`) is far below jetsam limits; wall-clock is minutes-order (single-threaded deflate) — **estimate**, measure in Phase 7.
-The bundle ships `spaghetti.o2r` + `yamls/` + `config.yml` + `meta/` (the extraction inputs — 7.9 MB of yamls; exactly what Sunset-Dawn's IPA bundled), and the backported Context patch makes `GetAppBundlePath()` return the real `NSBundle` resource path on iOS instead of `Documents` (`HP:patches/libultraship-ios.patch` Context.cpp hunk) — that single change makes Torch's source dir the read-only bundle and its dest dir the writable `Documents/`, which is the correct sandbox split. ROM identification is SHA-1 `579c48e211ae952530ffc8738709f078d5dd215e` (US, big-endian `.z64` only — `SK:src/port/GameExtractor.cpp:29-31`, `TORCH:src/n64/Cartridge.cpp` has no byteswap); the import UI must say so explicitly. Two mandatory guards: delete `Documents/torch.hash.yml` before any (re-)extraction (`TORCH:src/Companion.cpp:509-568,1337-1339` silently skips "unchanged" yamls and would emit a near-empty archive), and pre-validate the hash before calling Torch (a hash miss makes `Companion::Process` return **without throwing** — `TORCH:src/Companion.cpp:1044-1047`).
+The bundle ships `spaghetti.o2r` + `yamls/` + `config.yml` + `meta/`, and the backported Context patch makes `GetAppBundlePath()` return the real `NSBundle` resource path on iOS instead of `Documents` (`HP:patches/libultraship-ios.patch` Context.cpp hunk) — that single change makes Torch's source dir the read-only bundle and its dest dir the writable `Documents/`, which is the correct sandbox split. ROM identification is SHA-1 `579c48e211ae952530ffc8738709f078d5dd215e` (US, big-endian `.z64` only — `SK:src/port/GameExtractor.cpp:29-31`, `TORCH:src/n64/Cartridge.cpp` has no byteswap); the import UI must say so explicitly. Two mandatory guards: delete `Documents/torch.hash.yml` before any (re-)extraction (`TORCH:src/Companion.cpp:509-568,1337-1339` silently skips "unchanged" yamls and would emit a near-empty archive), and pre-validate the hash before calling Torch (a hash miss makes `Companion::Process` return **without throwing** — `TORCH:src/Companion.cpp:1044-1047`).
 
 **D5 — Touch input architecture: UIKit overlay driving a virtual SDL game controller (full analog), not synthesized keystrokes.**
 Options: (a) HarkinianPad's pattern — UIKit buttons post SDL key events (8-way stick); (b) UIKit overlay feeding `SDL_JoystickAttachVirtualEx` (SDL ≥ 2.24 provides virtual game controllers; SK's SDL is 2.32.10) so the game sees a normal analog controller through the existing `ControlDeck` stack; (c) inject directly into `OSContPad` via a bridge.
@@ -63,14 +72,18 @@ Cost is small once D5 lands (one motion manager, low-pass filter, calibration of
 SK compiles no WAMR (submodule gitlink removed in PR #226; `SK:src/engine/wasm.cpp` fully commented). Backport the `ENABLE_SCRIPTING` → `FATAL_ERROR` iOS guard anyway (`HP` LUS patch hunk 1). No writable-executable memory exists in any shipped configuration.
 
 **D12 — Distribution: source + unsigned re-signable IPA (AltStore Classic/SideStore), ROM-audit-gated; no App Store/TestFlight initially.**
-SpaghettiKart, like Shipwright, has **no top-level LICENSE** (verified; Torch and LUS are MIT), so the HarkinianPad posture applies: publish the overlay repo + unsigned IPA; treat every hosted channel as a separate review. Reuse `HP:scripts/package-ios.sh` with guards changed to `mk64*.o2r`/`.z64/.n64/.v64` and the `spaghetti.o2r` content audit.
-*Deferred:* a SideStore source JSON (rebelancap-style) and App Store exploration; settled after first public release.
+SpaghettiKart has **no top-level LICENSE** at the pinned revision (verified;
+Torch and LUS are MIT). An unsigned artifact solves signing portability, not
+the upstream licensing gap. Binary redistribution therefore requires
+clarification from the SpaghettiKart maintainers. Every hosted channel remains
+a separate review.
+*Deferred:* a SideStore source JSON and App Store exploration; settled after first public release.
 
 **D13 — Working name: "SpaghettiPad"** (bundle `com.chrissotraidis.spaghettipad`, display name "SpaghettiPad"). *Deferred final naming* — settled by the owner before first public artifact; nothing else in this plan depends on it.
 
 **D14 — Texture packs: first-class native support for MK64 Reloaded; never bundled.**
-The [MK64 Reloaded](https://github.com/GhostlyDark/MK64-Reloaded) UHD pack (GhostlyDark) is the marquee visual upgrade and must work as a first-class feature on iPad: guided import (Files → `Documents/mods/`), automatic detection of an installed pack, a one-tap prompt to enable **Use Alternate Assets** (SpaghettiKart's alt-assets CVar; today's toggle is the Tab hotkey — `SK:src/port/Engine.cpp:377-382` — which needs a touch-reachable menu control), and HD-vs-4K guidance per device class. **The pack is never bundled in the app or IPA**: verified 2026-07-28, the MK64-Reloaded repo has **no license** (all rights reserved by default) and the content is derivative of Nintendo art — bundling would violate both GhostlyDark's rights and this project's own audit invariant. Even rebelancap's port ships without it and directs users to the official downloads. In-app *fetching* of the pack is deferred (Open Question 11); v1 opens the official release page in Safari and guides the Files copy.
-Performance is part of "native": a 4K/HD pack on iPad means real texture-memory pressure. **rebelancap's `SpaghettiKart-ios` repo is MIT-licensed (verified: `LICENSE`, © 2026 rebelancap)** — his memory/perf patches are directly on point and may be adapted with attribution: `0021-lus-metal-texture-clamp`, `0022-lus-texcache-byte-budget`, `0030-lus-coupled-resource-eviction`, `0031-port-decode-downscale`, `0034-lus-metal-async-shaders`. Treat them as a reviewed starting point, not a blind import; every adaptation becomes one of our maintained patches with a provenance note.
+The [MK64 Reloaded](https://github.com/GhostlyDark/MK64-Reloaded) UHD pack (GhostlyDark) is the marquee visual upgrade and must work as a first-class feature on iPad: guided import (Files → `Documents/mods/`), automatic detection of an installed pack, a one-tap prompt to enable **Use Alternate Assets** (SpaghettiKart's alt-assets CVar; today's toggle is the Tab hotkey — `SK:src/port/Engine.cpp:377-382` — which needs a touch-reachable menu control), and HD-vs-4K guidance per device class. **The pack is never bundled in the app or IPA**: verified 2026-07-28, the MK64 Reloaded repo has **no license** and its content is derivative of Nintendo art. In-app *fetching* of the pack is deferred (Open Question 11); v1 opens the official release page in Safari and guides the Files copy.
+Performance is part of "native": a 4K/HD pack on iPad means real texture-memory pressure. Any future third-party optimization adapted into this repository must carry an explicit provenance note and compatible license.
 
 ## 3. Architecture
 
@@ -224,7 +237,7 @@ Also: the enhancements menu is unreachable by touch today (F1/Escape/GamepadBack
 ### Phase 9 — iPad UX pass + native texture-pack support (D14)
 **Goal:** menus and HUD are correct for iPad specifically, and MK64 Reloaded works as a first-class feature.
 **Changes:** confirm the 600-pt scale rule lands well on iPad (2×) and iPhone (1×/0.75 option); safe-area audit of the overlay; expose `gInterpolationFPS` presets (30/60/120) in Settings with ProMotion note (`CADisableMinimumFrameDurationOnPhone` already in plist; SK target-fps plumbing verified at `SK:src/port/Engine.cpp:298-301,467`); hide/neutralize desktop-isms verified by the dive: "Cursor Always Visible" (`SK:src/port/ui/PortMenu.cpp:148-154`), "Open App Files Folder" `SDL_OpenURL(file://…)` (`:176-182` — repoint to a Files-app tip), Ctrl/Cmd+R reset (add confirm popup, HP pattern).
-Texture-pack items: touch-reachable **Use Alternate Assets** toggle in the menu (replacing the Tab hotkey path, `SK:src/port/Engine.cpp:377-382`); mods-folder detection on launch/rescan with a one-tap enable prompt; a "Get texture packs" entry that opens the official MK64-Reloaded release page and shows the Files-copy instructions; adapt rebelancap's MIT texture-memory patches (D14 list) as needed to hold frame rate with the HD pack — measure before adopting each.
+Texture-pack items: touch-reachable **Use Alternate Assets** toggle in the menu (replacing the Tab hotkey path, `SK:src/port/Engine.cpp:377-382`); mods-folder detection on launch/rescan with a one-tap enable prompt; a "Get texture packs" entry that opens the official MK64 Reloaded release page and shows the Files-copy instructions; measure performance before adopting any optimization.
 **Accept:** side-by-side screenshots iPad/iPhone; every Settings/Enhancements panel operable by touch; no dead menu items on iOS; **MK64 Reloaded HD imported via Files on hardware, detected, enabled from the menu without a keyboard, and a full GP completes with the pack active at the Phase-6 baseline frame rate** (4K attempted on M-series iPad; result recorded either way); audit still shows no pack content in the app bundle or IPA.
 
 ### Phase 10 — Physical controllers + split-screen on one iPad
@@ -241,7 +254,7 @@ Texture-pack items: touch-reachable **Use Alternate Assets** toggle in the menu 
 ### Phase 12 — Packaging, CI, docs, release
 **Goal:** a tagged release someone else can build and sideload from the docs alone.
 **Changes:** `scripts/package-ios.sh` (audit: reject Simulator products, ROMs, `mk64*.o2r`, `.otr`, stale signing; verify bundled `spaghetti.o2r` content hash independent of build-time ZIP timestamps), `scripts/build-ios.sh` one-shot wrapper, GitHub Actions macOS job (bootstrap → patch → build unsigned → audit; mirrors `HP:.github/workflows/ios-build.yml` contract), `docs/BUILDING.md`, `docs/INSTALL_IPA.md`, release checklist.
-**Accept:** CI green on a clean runner; `REQUIRE_SIGNED=1` rejects the unsigned artifact; IPA SHA-256 published; README claim language matches §4 of the review doc ("built for iPad"; no false firsts).
+**Accept:** CI green on a clean runner; `REQUIRE_SIGNED=1` rejects the unsigned artifact; IPA SHA-256 published; README claim language matches measured evidence and makes no false first claim.
 
 ## 5. Touch control specification
 
@@ -324,7 +337,7 @@ Code path behind it (all verified): `GameEngine::Create` (`SK:src/port/Game.cpp:
 
 | # | Risk | Likelihood | Impact | Mitigation |
 |---|---|---|---|---|
-| R1 | **rebelancap adds iPad polish** (he ships fast; his stack is public) | Medium | Medium — erodes "built for iPad" exclusivity, not split-screen/tilt | Ship Phases 0–8 quickly; the moat is split-screen (Phase 10) + distribution/community, which he demonstrably doesn't do |
+| R1 | **Public claims drift ahead of evidence** | Medium | High — damages trust and creates avoidable disputes | Keep the README validation table canonical and qualify uncompleted physical-device gates |
 | R2 | **Upstream SK moves under the pins** (active repo; Torch bump PR #712 pending with loader-format changes) | High over months | Low-Medium — patches drift | Pins isolate us; rebase deliberately per release; the FMT_CONSTEVAL/vcpkg pin block in `SK:CMakeLists.txt:163-180` documents the Torch-bump coupling — do not bump Torch independently |
 | R3 | **Virtual-controller path fights ControlDeck port mapping** (auto-configure claims ports; physical+virtual ordering) | Medium | Medium — input UX | Phase 8 validates early; fallback to HP keystroke bridge is a bounded one-day pivot (D5) |
 | R4 | **Split-screen perf on target iPads** (2–4 viewports, interpolation, Metal) | Medium (3P/4P), Low (2P) | Medium — flagship claim | Perf gate in Phase 10 with numbers; ship 2P first; supersampling off in split modes; note ARM64 float-conversion comment at `SK:src/racing/skybox_and_splitscreen.c:311-313` when touching that code |
@@ -333,7 +346,7 @@ Code path behind it (all verified): `GameEngine::Create` (`SK:src/port/Game.cpp:
 | R7 | **Audio artifacts at 26800 Hz via SDL/AVAudioSession resample** | Low | Low-Medium | If audible: raise `SampleRate` param match or resample in HMAS mix; decision deferred until heard |
 | R8 | **Nintendo attention** (Mario, visible marketing) | Low-Medium | High | Same posture as HarkinianPad: no ROM/asset distribution ever, hash-gated user ROM, no piracy language, unsigned-IPA-only distribution, takedown-compliant |
 | R9 | **SK license gap** (no top-level LICENSE) | Static | Medium for redistribution | Source + unsigned IPA only; ask upstream; keep overlay-repo code clearly licensed (pick MIT for our shell/patches) |
-| R10 | **Upstream breaks the build** (LUS or SK force-push/vanish — precedent: Sunset-Dawn, sonicdcer) | Low | High | Pins + full local mirrors in `sources/` cache; consider a private mirror remote after Phase 3 |
+| R10 | **Upstream breaks the build** | Low | High | Pins + disposable local source inputs isolate builds; re-fetch only from verified revisions |
 
 ## 9. Rollback and recovery
 
@@ -377,5 +390,5 @@ Code path behind it (all verified): `GameEngine::Create` (`SK:src/port/Game.cpp:
 7. **`SDL_HINT_TOUCH_MOUSE_EVENTS` default in this stack** (agent could not find an explicit setting). Settled by: set it explicitly in Phase 8 and test ImGui touch.
 8. **Upstream appetite** — would HarbourMasters take these patches (coco875's PR #694 is stalled)? Settled by: asking after Phase 6 produces evidence; affects only where patches live long-term, not this plan.
 9. **Final name/branding** (D13) and the exact public claim language (must match review-doc §4 truth tiers). Settled by: owner before first release.
-10. **Sunset-Dawn IPA archaeology** — its `Spaghettify` binary could be strings-inspected for approach hints if Phase 3 hits walls. Settled by: only if needed; not a dependency.
+10. **Historical implementation archaeology** — inspecting unrelated binaries is not a release dependency and should be avoided unless a reproducible source-level failure requires it.
 11. **In-app texture-pack download** (fetching MK64 Reloaded from its official source on user request, instead of the Safari-plus-Files flow). Convenience vs. the fact that the pack is unlicensed content we'd be programmatically distributing-by-facilitation. Settled by: owner decision after v1 ships with the guided-import flow; if approved, download only from GhostlyDark's official release URLs with an explicit consent dialog.
