@@ -108,7 +108,7 @@ while :; do
         --json-output "$SAMPLE_PATH" \
         --log-output "$EVIDENCE_DIR/process-$ELAPSED.log" >/dev/null ||
         fail "process query failed after $ELAPSED seconds"
-    plutil -lint "$SAMPLE_PATH" >/dev/null ||
+    plutil -p "$SAMPLE_PATH" >/dev/null ||
         fail "CoreDevice returned invalid process JSON after $ELAPSED seconds"
     rg -Fq "$EXECUTABLE_NAME" "$SAMPLE_PATH" ||
         fail "$EXECUTABLE_NAME was no longer running after $ELAPSED seconds"

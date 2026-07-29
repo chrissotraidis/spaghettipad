@@ -97,6 +97,26 @@ Boundary:
 
 ## Evidence log
 
+### 2026-07-29 — Phase 6 runner control-flow replay passed; hardware still pending
+
+- A complete temporary CoreDevice-command replay exercised the signed-audit,
+  device-detail, install, cold-launch, process-sampling, evidence-summary, and
+  SHA-256-manifest paths without representing the mock as device evidence.
+- The first replay exposed that this macOS `plutil -lint` mode rejects
+  CoreDevice JSON even though `plutil -p` parses it. The runner now uses the
+  latter supported parser check before inspecting each process sample.
+- Positive diagnostic replay: a one-second mock session emitted distinct
+  process samples at zero and one seconds, generated the full evidence bundle,
+  labeled itself diagnostic because it was below 600 seconds, kept visible
+  title confirmation pending, and passed `shasum -a 256 -c SHA256SUMS` for
+  every captured file.
+- Negative replay: an empty running-process result stopped immediately with
+  `SpaghettiPad was no longer running after 0 seconds` and wrote the same
+  reason to `FAILURE.txt`.
+- Boundary: this verifies the local runner control flow only. No physical
+  device is attached to this Mac, so Phase 6 still requires the real signed
+  install, visible title/demo, and ten-minute run on the owner's other Mac.
+
 ### 2026-07-28 — Phase 6 hardware evidence harness ready; physical run pending
 
 - Remote boundary recheck: `xcrun devicectl list devices --timeout 5` on this
