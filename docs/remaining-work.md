@@ -56,7 +56,7 @@ audited ROM-free unsigned IPA.
 | 9 | iPad UX and imported texture pack | In progress (Simulator UX/import slice passed; hardware pack GP pending) | Touch-complete UX plus Reloaded import/enable/full-GP hardware gate |
 | 10 | Controllers and split-screen | In progress (Simulator routing/render slice passed; hardware sessions pending) | Two-controller 2P session and measured 3P/4P decision |
 | 11 | Tilt steering | In progress (Simulator slice passed; hardware GP pending) | Persisted, drift-free tilt GP on hardware |
-| 12 | Package, CI, docs, release | In progress (local and clean-machine gates passed; CI externally blocked before runner start) | Clean CI, clean-machine replay, audited IPA and SHA-256 |
+| 12 | Package, CI, docs, release | In progress (initial unsigned preview published; CI externally blocked before runner start) | Clean CI, clean-machine replay, audited IPA and SHA-256 |
 
 ## Active gate
 
@@ -151,6 +151,49 @@ Boundary:
   [30406005730](https://github.com/chrissotraidis/spaghettipad/actions/runs/30406005730)
   remains an external pre-start failure with zero steps and the unchanged
   GitHub billing/spending-limit annotation.
+
+### 2026-07-29 — Initial unsigned preview IPA published
+
+- Release boundary: annotated tag
+  [`v0.1.0-preview.1`](https://github.com/chrissotraidis/spaghettipad/releases/tag/v0.1.0-preview.1)
+  points to release commit
+  `e0b2da5883faa5852b54847bbc8adb6fb46dc9c4`. The build used Xcode 26.6
+  (17F113), the iPhoneOS 26.5 SDK, app version `0.1.0`, build number `1`,
+  and bundle identifier `com.chrissotraidis.spaghettipad`.
+- Clean build: a no-local clone checked out the exact tag, fetched the pinned
+  SpaghettiKart, libultraship, and Torch revisions with push URLs disabled,
+  generated the host oracle, applied all nine maintained patches, and
+  completed the unsigned arm64 iPhoneOS Release build with
+  `** BUILD SUCCEEDED **`.
+- App audit: the clean app passed `REQUIRE_UNSIGNED=1` with executable
+  SHA-256
+  `103580431ea1d2410f78279aed59c3a9d4b3f7df48db53258261863e09b8af53`,
+  port-archive content SHA-256
+  `5ab6f5d8898cfdc3e8806b985bf84ec34b2d2968f158ac2e84359e45ff8564a0`,
+  and controller-database SHA-256
+  `eb002773dc8a16aa96f9ee2609798e231a9deb60c45e21fbdd4e221c9e8b7d77`.
+  The signed-package requirement correctly rejected the unsigned app.
+- IPA audit: `SpaghettiPad-0.1.0-preview.1-unsigned.ipa` is 11,219,634 bytes
+  with 292 ZIP entries and SHA-256
+  `095ac4942d5b6fb103152c45ef88265930532e5e961cb6659772480d2098a1c0`.
+  Decompression and extracted-app audits passed. It contains the project
+  rights notice, 32 third-party notices, and the ROM-free `spaghetti.o2r`;
+  it contains no ROM, `mk64*.o2r`, `.otr`, imported texture pack,
+  `_CodeSignature`, provisioning profile, certificate, or signing identity.
+- Exact-artifact device check: a temporary extracted copy of that unsigned
+  IPA was re-signed locally with the established development profile,
+  re-audited as signed, update-installed without uninstalling, and launched
+  successfully on a 12.9-inch sixth-generation iPad Pro running iPadOS
+  26.5.2. The published IPA remained unchanged and unsigned.
+- Publication: GitHub exposes the unsigned IPA and `SHA256SUMS` as prerelease
+  assets, and its independently displayed IPA digest matches the recorded
+  SHA-256 above.
+- Boundary: this proves the initial ROM-free preview build, packaging,
+  publication, and exact-artifact iPad install/launch path. It does not close
+  the physical iPhone matrix, ten-minute and gameplay acceptance gates,
+  sustained controller/reconnect sessions, tilt Grand Prix, 4K texture-pack
+  performance, final save-preservation replay, or externally blocked hosted
+  CI.
 
 ### 2026-07-28 — Phase 12 clean-machine replay passed; clean CI still externally blocked
 

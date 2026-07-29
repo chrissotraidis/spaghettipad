@@ -5,6 +5,7 @@
 *.o2r
 *.otr
 *.ipa
+artifacts/
 
 # Local reference material (contains ROMs, prior-art builds, HarkinianPad snapshot)
 ref/

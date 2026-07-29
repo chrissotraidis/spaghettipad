@@ -52,9 +52,12 @@ This is the final gate for a public source snapshot or downloadable IPA.
 - MK64 Reloaded HD has been imported and rendered on the physical iPad. Its
   off/on restart-confirmation replay, full hardware Grand Prix, and 4K
   performance attempt remain open; the pack is never bundled or mirrored.
-- The final unsigned IPA must still be built from the release commit, audited,
-  re-signed, update-installed, and replayed through the physical device
-  matrix before publication.
+- The initial unsigned preview IPA was built from tagged commit `e0b2da5`,
+  audited, temporarily re-signed, update-installed, launched on the physical
+  iPad, and published as
+  [`v0.1.0-preview.1`](https://github.com/chrissotraidis/spaghettipad/releases/tag/v0.1.0-preview.1).
+  The physical iPhone install and the complete hardware replay matrix remain
+  open.
 
 These blockers may be stated as developer-preview limitations, but they must
 not be described as passed.
