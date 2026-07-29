@@ -581,6 +581,13 @@ static CGRect SpaghettiPad_CenteredFrame(CGPoint center, CGFloat width, CGFloat 
     return CGRectMake(center.x - width * 0.5, center.y - height * 0.5, width, height);
 }
 
+static CGRect SpaghettiPad_CompactMenuFrame(
+    CGRect bounds, UIEdgeInsets safe, CGFloat size) {
+    return CGRectMake(
+        CGRectGetWidth(bounds) - size - 6.0,
+        safe.top + 4.0, size, size);
+}
+
 @interface SpaghettiPadTouchOverlay : UIView
 
 @property(nonatomic, strong) SpaghettiPadTouchStick* controlStick;
@@ -713,20 +720,29 @@ static CGRect SpaghettiPad_CenteredFrame(CGPoint center, CGFloat width, CGFloat 
         CGFloat rightCenterX = width - right - 58.0;
         CGFloat faceCenterY = height - safe.bottom - 82.0;
         CGFloat faceSize = 52.0;
+        CGFloat aSize = 58.0;
+        CGFloat bSize = 54.0;
         self.buttonA.frame = SpaghettiPad_CenteredFrame(
-            CGPointMake(rightCenterX + 22.0, faceCenterY + 18.0), faceSize, faceSize);
+            CGPointMake(rightCenterX + 22.0, faceCenterY + 18.0), aSize, aSize);
         self.buttonB.frame = SpaghettiPad_CenteredFrame(
-            CGPointMake(rightCenterX - 34.0, faceCenterY + 2.0), faceSize, faceSize);
+            CGPointMake(rightCenterX - 34.0, faceCenterY + 2.0), bSize, bSize);
         self.buttonZRight.frame = SpaghettiPad_CenteredFrame(
             CGPointMake(rightCenterX + 12.0, faceCenterY - 44.0), faceSize, faceSize);
+        CGFloat compactMenuSize = 38.0;
+        CGRect menuFrame =
+            SpaghettiPad_CompactMenuFrame(self.bounds, safe, compactMenuSize);
+        CGFloat startGap = 6.0;
         self.buttonStart.frame = SpaghettiPad_CenteredFrame(
-            CGPointMake(CGRectGetMidX(self.buttonZRight.frame),
-                        top + shoulderHeight * 0.5),
+            CGPointMake(CGRectGetMidX(menuFrame),
+                        CGRectGetMaxY(menuFrame) +
+                            startGap + shoulderHeight * 0.5),
             shoulderHeight, shoulderHeight);
 
         CGFloat cSize = 40.0;
         CGFloat cRadius = 34.0;
-        CGPoint cCenter = CGPointMake(rightCenterX, top + shoulderHeight + 80.0);
+        CGPoint cCenter = CGPointMake(
+            width - safe.right - cRadius - cSize * 0.5 - 4.0,
+            top + shoulderHeight + 75.0);
         self.cUp.frame = SpaghettiPad_CenteredFrame(
             CGPointMake(cCenter.x, cCenter.y - cRadius), cSize, cSize);
         self.cDown.frame = SpaghettiPad_CenteredFrame(
@@ -740,6 +756,10 @@ static CGRect SpaghettiPad_CenteredFrame(CGPoint center, CGFloat width, CGFloat 
             button.titleLabel.font =
                 [UIFont systemFontOfSize:15.0 weight:UIFontWeightSemibold];
         }
+        self.buttonA.titleLabel.font =
+            [UIFont systemFontOfSize:18.0 weight:UIFontWeightBold];
+        self.buttonB.titleLabel.font =
+            [UIFont systemFontOfSize:17.0 weight:UIFontWeightBold];
         self.buttonStart.titleLabel.font =
             [UIFont systemFontOfSize:15.0 weight:UIFontWeightBold];
         return;
@@ -995,13 +1015,16 @@ static void SpaghettiPad_InstallMenuButton(UIWindow* window) {
     UIEdgeInsets safe = window.safeAreaInsets;
     CGFloat height = CGRectGetHeight(window.bounds);
     BOOL compact = height < 560.0;
-    CGFloat size = compact ? 44.0 : 38.0;
+    CGFloat size = 38.0;
     BOOL menuVisible = sTouchControlsMenuVisible.load();
     BOOL compactMenuVisible = compact && menuVisible;
     if (compactMenuVisible) {
         sMenuButton.frame = CGRectMake(
             CGRectGetMidX(window.bounds) - size * 0.5,
             height - safe.bottom - size - 8.0, size, size);
+    } else if (compact) {
+        sMenuButton.frame =
+            SpaghettiPad_CompactMenuFrame(window.bounds, safe, size);
     } else {
         sMenuButton.frame = CGRectMake(
             CGRectGetWidth(window.bounds) - safe.right - size - 8.0,
