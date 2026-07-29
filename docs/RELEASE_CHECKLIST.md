@@ -53,10 +53,11 @@ This is the final gate for a public source snapshot or downloadable IPA.
 
 ## Current blockers
 
-- A signed development build has been update-installed and played on a
-  physical iPad with its app data preserved. The complete ten-minute Phase 6
-  evidence gate, final update/save-preservation replay, and all physical
-  iPhone checks remain open.
+- Signed development builds have been update-installed and played on physical
+  iPad and iPhone hardware. The promoted customizable controls, A-button hold
+  assist, safe-area menu placement, texture-pack rendering, and Grand Prix
+  play have been exercised on iPhone. The complete ten-minute Phase 6 evidence
+  gate and final update/save-preservation replay remain open.
 - Two-controller Bluetooth Grand Prix and physical tilt-steering feel remain
   open.
 - MK64 Reloaded HD has been imported and rendered on the physical iPad. Its
@@ -66,11 +67,14 @@ This is the final gate for a public source snapshot or downloadable IPA.
   audited, temporarily re-signed, update-installed, launched on the physical
   iPad, and published as
   [`v0.1.0-preview.1`](https://github.com/chrissotraidis/spaghettipad/releases/tag/v0.1.0-preview.1).
-  The physical iPhone install and the complete hardware replay matrix remain
-  open.
+  The complete hardware replay matrix remains open.
 - Preview 2 corrects third-party notices and makes unsigned packaging the safe
   default. Hosted repository safety and unsigned build/package jobs pass; the
   remaining physical-hardware gates are still open.
+- Preview 3 promotes the customizable touch controls to the default, retains
+  legacy controls as an option, and carries separate physically tuned phone
+  and tablet layouts. Its exact artifact evidence is recorded in the GitHub
+  release notes.
 
 These blockers may be stated as developer-preview limitations, but they must
 not be described as passed.

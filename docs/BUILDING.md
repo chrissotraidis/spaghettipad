@@ -54,7 +54,7 @@ The defaults are:
 | Field | Value |
 |---|---|
 | App version | `0.1.0` |
-| Build number | `2` |
+| Build number | `3` |
 | Bundle identifier | `com.chrissotraidis.spaghettipad` |
 | Minimum OS | iOS/iPadOS 15.0 |
 
@@ -62,7 +62,7 @@ Override them only for a deliberate build:
 
 ```sh
 SPAGHETTIPAD_VERSION=0.1.0 \
-SPAGHETTIPAD_BUILD_NUMBER=2 \
+SPAGHETTIPAD_BUILD_NUMBER=3 \
 BUNDLE_ID=com.yourname.spaghettipad \
 scripts/build-ios.sh --device
 ```

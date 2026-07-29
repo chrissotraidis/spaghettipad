@@ -10,7 +10,7 @@ no Mario Kart 64 ROM, extracted game archive, or texture pack.
 ## Build or obtain the IPA
 
 Download
-[SpaghettiPad 0.1.0 preview 2](https://github.com/chrissotraidis/spaghettipad/releases/tag/v0.1.0-preview.2)
+[SpaghettiPad 0.1.0 preview 3](https://github.com/chrissotraidis/spaghettipad/releases/tag/v0.1.0-preview.3)
 and verify the IPA against the attached `SHA256SUMS` file before signing it.
 
 To create the artifact from source:
@@ -68,8 +68,11 @@ physical-device update gate passes.
 
 - No jailbreak or JIT is required by SpaghettiPad.
 - The user supplies all game data.
-- The exact published Preview 2 payload has been temporarily re-signed,
-  update-installed, and launched on a physical iPad.
-- Physical iPhone installation, long-session stability, controller behavior,
-  performance, and final in-place update/save preservation remain explicit
-  acceptance gates.
+- Preview 3 includes the promoted customizable touch-control system, separate
+  phone and tablet layouts, control move/resize/hide/reset tools, and A-button
+  hold assist.
+- Customizable controls and gameplay have been exercised on physical iPhone
+  and iPad development builds. Exact-payload installation is recorded
+  separately in the release notes.
+- Long-session stability, controller behavior, performance, and final in-place
+  update/save preservation remain explicit acceptance gates.
