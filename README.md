@@ -31,7 +31,8 @@ extractable or playable Nintendo game assets, a playable ROM-derived archive,
 or MK64 Reloaded. Gameplay screenshots are retained as documentation. Read
 the scoped [rights and licensing boundary](RIGHTS_AND_LICENSES.md); it does
 not relicense SpaghettiKart, its dependencies, texture packs, or game
-material.
+material. This is a source-available integration repository, not a single,
+uniformly licensed open-source distribution.
 
 ## Built for racing on glass
 
@@ -405,10 +406,15 @@ tested.
 <summary><strong>What is the licensing status?</strong></summary>
 
 Each upstream component retains its own license and copyright. The pinned
-SpaghettiKart revision has no top-level license, so this project does not
-represent its binary-redistribution terms as settled. See
-[RIGHTS_AND_LICENSES.md](RIGHTS_AND_LICENSES.md); public source access does not
-grant rights to Nintendo material or third-party texture packs.
+SpaghettiKart revision has no top-level license. In
+[issue #731](https://github.com/HarbourMasters/SpaghettiKart/issues/731), its
+maintainer pointed to the mk64 decomp's documented CC0-consent effort and to
+the established distribution practice of other Harbour Masters ports.
+SpaghettiPad's free, ROM-free unsigned preview follows that community practice,
+but the open consent issue is not a formal license for all SpaghettiKart code.
+Commercial, paid-access, and official-store rights remain unresolved. See
+[RIGHTS_AND_LICENSES.md](RIGHTS_AND_LICENSES.md); no project grants rights to
+Nintendo material or third-party texture packs.
 </details>
 
 ## Project map

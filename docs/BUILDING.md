@@ -110,10 +110,14 @@ identifier authorize the signed bundle. The IPA carries the project rights
 notice, discovered third-party licenses, and the pinned controller database's
 Zlib notice.
 
-The pinned SpaghettiKart revision has no top-level license. An unsigned
-artifact solves code-signing portability, not that upstream licensing gap.
-Review [RIGHTS_AND_LICENSES.md](../RIGHTS_AND_LICENSES.md) and confirm the
-applicable terms with the SpaghettiKart maintainers before redistribution.
+The pinned SpaghettiKart revision has no top-level license. Upstream
+[issue #731](https://github.com/HarbourMasters/SpaghettiKart/issues/731)
+points to the mk64 decomp's open CC0-consent effort and the established
+ROM-free binary practice of other Harbour Masters ports. That evidence supports
+this free community preview, but an unsigned artifact does not create a formal
+license or clear paid, commercial, App Store/TestFlight, or other official-store
+distribution. Review [RIGHTS_AND_LICENSES.md](../RIGHTS_AND_LICENSES.md) before
+redistributing a build.
 
 ## First launch
 

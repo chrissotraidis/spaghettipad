@@ -95,6 +95,23 @@ Boundary:
 
 ## Evidence log
 
+### 2026-08-05 — upstream licensing practice clarified; formal license still open
+
+- In
+  [SpaghettiKart issue #731](https://github.com/HarbourMasters/SpaghettiKart/issues/731),
+  maintainer MegaMech described SpaghettiKart's license as the same as the
+  decomp and pointed to
+  [n64decomp/mk64 issue #474](https://github.com/n64decomp/mk64/issues/474)
+  and other Harbour Masters ports.
+- The linked issue records an unofficial unrestricted-use stance and public
+  CC0 consents from many named mk64-decomp contributors. It remains open, and
+  neither the pinned SpaghettiKart revision nor the current mk64 decomp has a
+  top-level license applying CC0 to the complete tree.
+- Harbour Masters publishes ROM-free SpaghettiKart binaries and comparable
+  community ports. This supports the practical posture for SpaghettiPad's free,
+  ROM-free unsigned preview, while formal open-source, paid, commercial, and
+  official-store rights remain unresolved.
+
 ### 2026-07-29 — customizable iPad and iPhone controls physically accepted
 
 - The customizable controller is now the default, with the prior fixed

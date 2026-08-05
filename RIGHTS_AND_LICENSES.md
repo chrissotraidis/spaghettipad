@@ -14,9 +14,23 @@ supplied by those projects. Public IPA packages include discovered third-party
 license files under `ThirdPartyLicenses/`.
 
 The pinned SpaghettiKart source revision does not contain a top-level license.
-SpaghettiPad therefore does not represent SpaghettiKart redistribution rights
-as settled. Confirm the applicable terms with the SpaghettiKart maintainers
-before redistributing a compiled build.
+In [SpaghettiKart issue #731](https://github.com/HarbourMasters/SpaghettiKart/issues/731),
+maintainer MegaMech described its license as the same as the decomp and pointed
+to [n64decomp/mk64 issue #474](https://github.com/n64decomp/mk64/issues/474)
+and other Harbour Masters ports. That open issue documents an unofficial
+unrestricted-use stance and records CC0 consents from many named mk64-decomp
+contributors. Those consents apply to their individual decomp contributions;
+they do not by themselves place all later SpaghettiKart port code under CC0,
+and neither repository currently carries a top-level CC0 license.
+
+Harbour Masters publishes its own ROM-free SpaghettiKart binaries, and
+SpaghettiPad's free, ROM-free unsigned developer preview follows that
+documented community distribution practice. This is practical upstream
+evidence, not a formal license grant. SpaghettiPad does not represent the whole
+combined project as conventionally open source, or treat this practice as
+clearance for paid access, commercial licensing, App Store/TestFlight, or other
+official-store distribution. Obtain additional upstream clarification and
+appropriate legal review before those uses.
 
 SpaghettiPad does not grant rights to Nintendo trademarks, Mario Kart 64,
 ROMs, extracted assets, texture packs, or other copyrighted game material. No

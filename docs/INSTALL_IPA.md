@@ -68,6 +68,11 @@ physical-device update gate passes.
 
 - No jailbreak or JIT is required by SpaghettiPad.
 - The user supplies all game data.
+- This free, ROM-free community preview follows the documented distribution
+  practice of SpaghettiKart and other Harbour Masters ports. It is not a claim
+  that the combined project has a single formal open-source license, and it is
+  not clearance for paid, commercial, or official-store distribution. See
+  [RIGHTS_AND_LICENSES.md](../RIGHTS_AND_LICENSES.md).
 - Preview 3 includes the promoted customizable touch-control system, separate
   phone and tablet layouts, control move/resize/hide/reset tools, and A-button
   hold assist.

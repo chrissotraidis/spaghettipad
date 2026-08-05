@@ -27,6 +27,10 @@ This is the final gate for a public source snapshot or downloadable IPA.
 - [ ] Confirm `RIGHTS_AND_LICENSES.md`,
       `ThirdPartyLicenses/SDL_GameControllerDB.LICENSE`, and discovered
       dependency notices are present.
+- [ ] Recheck
+      [SpaghettiKart issue #731](https://github.com/HarbourMasters/SpaghettiKart/issues/731)
+      and [mk64 issue #474](https://github.com/n64decomp/mk64/issues/474), and
+      update the rights notice if upstream has adopted or changed a license.
 - [ ] Re-sign and install the exact IPA on at least one supported physical
       device.
 - [ ] State every uncompleted physical-device gate in the release notes.
@@ -34,6 +38,9 @@ This is the final gate for a public source snapshot or downloadable IPA.
       device/OS matrix, and exact unsigned IPA SHA-256 in release notes.
 - [ ] Publish as a prerelease with [INSTALL_IPA.md](INSTALL_IPA.md), known
       limitations, and an explicit statement that no game data is included.
+- [ ] Keep the preview free. Do not treat this checklist as clearance for paid
+      access, commercial licensing, App Store/TestFlight, or other
+      official-store distribution.
 
 ## Before claiming final acceptance
 
