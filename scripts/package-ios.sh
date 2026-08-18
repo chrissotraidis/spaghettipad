@@ -85,11 +85,15 @@ done < <(
     exit 1
 }
 
-ditto -c -k --norsrc --keepParent "$PACKAGE_ROOT/Payload" "$OUTPUT"
+PACKAGE_ARCHIVE="$PACKAGE_ROOT/SpaghettiPad.ipa"
+find "$PACKAGE_ROOT/Payload" "$PACKAGE_ROOT/RIGHTS_AND_LICENSES.md" \
+    "$PACKAGE_ROOT/ThirdPartyLicenses" -exec touch -h -t 198001010000 {} +
 (
     cd "$PACKAGE_ROOT"
-    zip -q -r "$OUTPUT" RIGHTS_AND_LICENSES.md ThirdPartyLicenses
+    find Payload RIGHTS_AND_LICENSES.md ThirdPartyLicenses -print | \
+        LC_ALL=C sort | zip -X -q -y "$PACKAGE_ARCHIVE" -@
 )
+mv "$PACKAGE_ARCHIVE" "$OUTPUT"
 
 IPA_ENTRIES="$(unzip -Z1 "$OUTPUT")"
 rg -q '^Payload/SpaghettiPad\.app/SpaghettiPad$' <<<"$IPA_ENTRIES" ||

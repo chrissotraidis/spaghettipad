@@ -73,13 +73,17 @@ After Phase 6 is reviewed and recorded, continue in plan order:
    direction and capture Reloaded plus `Status: Loaded - currently on`.
    Complete a Grand Prix at the Phase 6 baseline; attempt 4K only on an
    M-series iPad.
-4. Phase 10: pair two supported Bluetooth controllers before launch and
-   verify automatic connection-order assignment. On player 1, check the left
+4. Phase 10: test Bluetooth and wired controllers separately. For each, verify
+   disconnect/reconnect while active, then background/foreground reconnect,
+   natural sleep/wake, and held-button/stick/trigger release. Pair two supported
+   controllers and verify stable player ownership. On player 1, check the left
    stick, A, B, Start, L, R, C inputs, and especially left-trigger Z while A
    remains held. Confirm touch parks while hardware is connected. Complete
    controller-only GP, VS, and battle sessions; disconnect and reconnect each
    controller, verify the same player order and restored touch after the last
-   disconnect, record a frame-time capture, then attempt 3P/4P.
+   disconnect, record a frame-time capture, then attempt 3P/4P. Record each
+   transport and sleep scenario independently; an install, PID, log line, or
+   deterministic controller test does not pass a hands-on hardware scenario.
 5. Phase 11: complete a Grand Prix with tilt plus on-screen buttons and verify
    persistence, recentering, and no foreground drift.
 

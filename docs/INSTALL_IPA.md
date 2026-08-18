@@ -10,7 +10,7 @@ no Mario Kart 64 ROM, extracted game archive, or texture pack.
 ## Build or obtain the IPA
 
 Download
-[SpaghettiPad 0.1.0 preview 3](https://github.com/chrissotraidis/spaghettipad/releases/tag/v0.1.0-preview.3)
+[SpaghettiPad 0.1.0 preview 4](https://github.com/chrissotraidis/spaghettipad/releases/tag/v0.1.0-preview.4)
 and verify the IPA against the attached `SHA256SUMS` file before signing it.
 
 To create the artifact from source:
@@ -61,8 +61,11 @@ the base game launches.
 Install updates with the same bundle identifier and signing identity, without
 deleting the existing app first. Back up the SpaghettiPad folder in Files
 before updating. Preview signing and sideload tools can expire, fail, or
-replace an app container; save preservation is not claimed until the exact
-physical-device update gate passes.
+replace an app container. Preview 4's source-signed build was installed in
+place on a physical iPad with the same bundle ID, and post-launch readback
+hashes matched the existing game archive, texture pack, saves, config, and
+controller/touch preferences. That proof does not guarantee how every
+third-party sideloading tool handles updates.
 
 ## Preview boundaries
 
@@ -73,12 +76,14 @@ physical-device update gate passes.
   that the combined project has a single formal open-source license, and it is
   not clearance for paid, commercial, or official-store distribution. See
   [RIGHTS_AND_LICENSES.md](../RIGHTS_AND_LICENSES.md).
-- Preview 3 includes the promoted customizable touch-control system, separate
-  phone and tablet layouts, control move/resize/hide/reset tools, and A-button
-  hold assist.
+- Preview 4 includes the promoted customizable touch-control system plus
+  targeted engine-managed SDL2 sleep/disconnect/reconnect reconciliation. It
+  preserves valid player slots, releases stale ownership to neutral input,
+  returns a sole controller to player 1, and reconciles after foreground resume.
 - Customizable controls and gameplay have been exercised on physical iPhone
   and iPad development builds. The exact published Preview 3 payload was
   temporarily re-signed, update-installed, launched, and verified live on a
   physical iPhone without changing the public IPA.
-- Long-session stability, controller behavior, performance, and final in-place
-  update/save preservation remain explicit acceptance gates.
+- The controller ownership regression is automated. Physical Bluetooth,
+  wired, natural-sleep, full-mapping, touch-overlay handoff, and two-controller
+  acceptance remain explicit hardware gates.

@@ -2,7 +2,7 @@ diff --git a/CMakeLists.txt b/CMakeLists.txt
 index 883763dfe..ee3ac3464 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -31,10 +31,6 @@ endif()
+@@ -31,10 +31,8 @@ endif()
  set(SPAGHETTIKART_IOS OFF)
  if(IOS OR CMAKE_SYSTEM_NAME STREQUAL "iOS")
    set(SPAGHETTIKART_IOS ON)
@@ -10,6 +10,8 @@ index 883763dfe..ee3ac3464 100644
 -  include(cmake/ios.toolchain.cmake)
 -  set(CMAKE_XCODE_ATTRIBUTE_DEVELOPMENT_TEAM "YOUR_TEAM_ID")
 -  set(PROJECT_ID "dev.net64.game")
++  add_compile_options("-ffile-prefix-map=${CMAKE_SOURCE_DIR}=.")
++  add_compile_options("-ffile-prefix-map=${CMAKE_BINARY_DIR}=build-ios")
  endif()
  
  # Toggle for GLES (Required for many ARM/Mobile platforms)

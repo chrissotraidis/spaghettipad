@@ -24,7 +24,7 @@ for command in cmake git; do
 done
 
 SPAGHETTIPAD_VERSION="${SPAGHETTIPAD_VERSION:-0.1.0}"
-SPAGHETTIPAD_BUILD_NUMBER="${SPAGHETTIPAD_BUILD_NUMBER:-3}"
+SPAGHETTIPAD_BUILD_NUMBER="${SPAGHETTIPAD_BUILD_NUMBER:-4}"
 [[ "$SPAGHETTIPAD_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] ||
     fail "SPAGHETTIPAD_VERSION must use numeric major.minor.patch form"
 [[ "$SPAGHETTIPAD_BUILD_NUMBER" =~ ^[1-9][0-9]*$ ]] ||
@@ -49,6 +49,9 @@ fi
 
 cmake -S "$SOURCE_DIR" -B "$BUILD_DIR" -GXcode \
     -DCMAKE_SYSTEM_NAME=iOS \
+    -DCMAKE_C_FLAGS="-ffile-prefix-map=$ROOT=." \
+    -DCMAKE_CXX_FLAGS="-ffile-prefix-map=$ROOT=." \
+    -DCMAKE_OBJCXX_FLAGS="-ffile-prefix-map=$ROOT=." \
     -DCMAKE_OSX_ARCHITECTURES=arm64 \
     -DCMAKE_OSX_DEPLOYMENT_TARGET=15.0 \
     -DCMAKE_OSX_SYSROOT="$SDK" \
