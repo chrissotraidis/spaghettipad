@@ -51,14 +51,15 @@ audited ROM-free unsigned IPA.
 | 7 | On-device Files extraction | In progress (hardware replay) | Clean-device extraction, failure recovery, measured time/RSS |
 | 8 | Grip-first full-analog touch controls | In progress (iPad/iPhone layout and A-hold slices passed; full GP pending) | Full touch-only GP and analog/menu/lifecycle checks on hardware |
 | 9 | iPad UX and imported texture pack | In progress (Simulator UX/import slice passed; hardware pack GP pending) | Touch-complete UX plus Reloaded import/enable/full-GP hardware gate |
-| 10 | Controllers and split-screen | In progress (Simulator routing/render slice passed; hardware sessions pending) | Two-controller 2P session and measured 3P/4P decision |
+| 10 | Controllers and split-screen | In progress (stale-handle and slot regression passed; hardware sessions pending) | Bluetooth/wired/sleep reconnect, two-controller 2P session, and measured 3P/4P decision |
 | 11 | Tilt steering | In progress (Simulator slice passed; hardware GP pending) | Persisted, drift-free tilt GP on hardware |
-| 12 | Package, CI, docs, release | In progress (Preview 3 published; exact IPA passed audit and physical-iPhone launch) | Final physical update/save-preservation acceptance |
+| 12 | Package, CI, docs, release | In progress (Preview 4 package and physical-iPad preservation passed) | Hosted Preview 4 checks and release publication |
 
 ## Active gate
 
-**Phase 6/7/8/9/10/11 owner hardware replay and final Phase 12
-update/save-preservation acceptance remain open.**
+**Phase 6/7/8/9/10/11 owner hardware replay remains open. Preview 4 closes the
+targeted source-build iPad update/preservation slice, not the hands-on physical
+controller or ten-minute gameplay gates.**
 
 Expected:
 
@@ -76,10 +77,10 @@ Boundary:
 - Phase 5 proves Simulator lifecycle continuity, durable config flush,
   simulation/audio pause and resume, live rendering continuation, container
   integrity, and human-confirmed audible music/audio.
-- The physical iPad is connected to the maintainer's local Mac, not this remote
-  build Mac. This machine has no visible iPad, valid code-signing identity, or
-  provisioning profile, so it cannot perform or claim the Phase 6 install.
-- Remote work therefore continues with the explicitly Simulator-valid part of
+- The physical iPad is available to the maintainer's local Mac. Preview 4's
+  signed source build was installed in place and reached meaningful runtime
+  initialization, but no visual ten-minute title/demo acceptance was recorded.
+- Remaining work continues with the explicitly Simulator-valid part of
   Phase 7: empty-container guidance, ROM validation, recovery, extraction, and
   relaunch behavior, plus the Simulator-valid touch and imported-pack UI
   slices of Phases 8 and 9, plus deterministic controller routing and
@@ -94,6 +95,48 @@ Boundary:
   proves artifact contents, not device installation or runtime behavior.
 
 ## Evidence log
+
+### 2026-08-18 — Preview 4 controller ownership repair and preserved iPad update
+
+- Backend and defect: SpaghettiPad uses libultraship's engine-managed SDL2
+  controller layer. Its iOS refresh closed every `SDL_GameController` and
+  rebuilt connection-order ownership, trusted removal events, and had no
+  foreground/current-device reconciliation. A missed removal could therefore
+  leave a detached handle occupying player 1, while reconnect opened another
+  controller and held input could survive through stale ownership.
+- Repair: stable SDL joystick instance-ID slots now retain attached handles,
+  close missing/detached/identity-mismatched handles, release stale ownership,
+  assign the first free player, and expose only currently valid controllers to
+  gameplay. Reconciliation runs at startup, add/remove/remap events, foreground
+  resume, and a quiet one-second active check. Existing mappings/preferences
+  remain untouched and SDL is never blindly restarted.
+- Automated proof: `scripts/test-controller-reconnect.sh` deterministically
+  passed missed removal with held buttons/axes/triggers, neutral release,
+  player-1 reclaim, additional player-2 assignment, two-controller ownership
+  preservation, and foreground reconciliation. Diff/shell checks, maintained
+  patch reverse-check, ROM-free arm64 Simulator Release, and unsigned/signed
+  arm64 iPhoneOS Release builds passed.
+- Device proof: version `0.1.0` build `4` was strictly signed and update-installed
+  with bundle ID `com.chrissotraidis.spaghettipad` on a 12.9-inch iPad Pro.
+  The live process loaded the user game archive, optional texture pack, bundled
+  archive, audio banks/sequences, scene data, SDL mappings, and foreground
+  controller reconciliation. Separate preinstall backup and post-launch
+  readback hashes matched exactly for the game archive, texture pack, both save
+  files, configuration, UI state, and controller/touch preference plist.
+- Package proof: two independent packaging runs were byte-identical. The
+  11,136,437-byte ROM-free unsigned IPA is
+  `SpaghettiPad-0.1.0-preview.4-unsigned.ipa`, SHA-256
+  `61cd25268e98d2e638d1d94c5a3486ffb64b81ed4cb572fe60a12c5b97eadf69`.
+  ZIP integrity, arm64/iPhoneOS 15.0 metadata, unsigned state, rights/notices,
+  33 third-party license files, system-only dynamic libraries, and exclusions
+  for ROM-derived data, saves, logs, personal paths, credentials, and signing
+  material passed. No `PrivacyInfo.xcprivacy` is staged; this is an unsigned
+  self-signable preview, not an App Store or TestFlight submission, and the
+  project makes no store privacy-manifest compliance claim.
+- Boundary: no Bluetooth disconnect/reconnect, wired reconnect, natural sleep,
+  full mapping, touch-overlay handoff with real hardware, or multi-controller
+  scenario was exercised in this run. Those hands-on gates remain open; an
+  install, PID, log line, or fake-controller regression does not pass them.
 
 ### 2026-08-05 — upstream licensing practice clarified; formal license still open
 

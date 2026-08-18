@@ -98,7 +98,7 @@ downloaded, mirrored, or redistributed by this project.
 |---|---|---|
 | Local iPhone/iPad build | **Available now** | Build and sign with your own Apple development team by following [Build from source](docs/BUILDING.md). |
 | Simulator | **Available now** | Use it for development and UI testing. It cannot replace physical-device acceptance. |
-| Developer-preview `.ipa` | **Available now** | Download the [unsigned ROM-free preview](https://github.com/chrissotraidis/spaghettipad/releases/tag/v0.1.0-preview.3), verify its checksum, and re-sign it with your own Apple development identity. |
+| Developer-preview `.ipa` | **Available now** | Download the [unsigned ROM-free preview](https://github.com/chrissotraidis/spaghettipad/releases/tag/v0.1.0-preview.4), verify its checksum, and re-sign it with your own Apple development identity. |
 | App Store / TestFlight | **Not announced** | No App Store listing or public TestFlight exists. |
 
 The current development build has been signed, update-installed, and played
@@ -108,14 +108,14 @@ have been exercised on iPad. The customizable phone layout, A hold assist,
 safe-area menu placement, texture-pack rendering, and Grand Prix play have
 also been exercised on iPhone.
 
-Those results do not certify every configuration. The published Preview 3
-artifact has been audited; its exact payload has been temporarily re-signed,
-update-installed, launched, and verified live on a physical iPhone. Signed
-development builds have also been installed, launched, and touch-tested on a
-physical iPad.
-Bluetooth-controller mapping and reconnect behavior, sustained multiplayer
-performance, a complete touch-only Grand Prix, and a complete tilt-driven
-Grand Prix remain explicit validation gates.
+Those results do not certify every configuration. Preview 4's signed source
+build was update-installed on a physical iPad with the existing bundle ID;
+runtime logs reached archive, audio, scene, SDL mapping, and foreground
+controller initialization. Readback hashes proved that game data, saves,
+configuration, and controller/touch preferences were unchanged. Physical
+Bluetooth, wired, natural-sleep, full-mapping, and multi-controller acceptance,
+sustained multiplayer performance, a complete touch-only Grand Prix, and a
+complete tilt-driven Grand Prix remain explicit validation gates.
 
 ## Get started
 
@@ -234,13 +234,22 @@ legacy mode, and current physical-device validation.
 
 ## Physical controllers
 
-SpaghettiPad includes SpaghettiKart/libultraship's SDL game-controller input
-path and a pinned controller mapping database. The iOS integration installs
-default SDL mappings for all four N64 ports. Controllers are assigned by
-connection order: first to player 1, second to player 2, through player 4.
-When a physical controller is detected, the touch gameplay overlay parks so it
-does not send duplicate player-1 input; it returns after the last controller
-disconnects.
+SpaghettiPad uses libultraship's engine-managed SDL2 game-controller layer and
+a pinned controller mapping database. The engine owns `SDL_GameController`
+handles by SDL joystick instance ID; the iOS integration installs default SDL
+mappings for all four N64 ports. Reconciliation keeps valid ownership stable,
+closes detached or identity-mismatched handles, and assigns newly available
+controllers to the first free player slot. A sole returning controller therefore
+reclaims player 1, while a genuinely additional controller takes player 2 or
+the next free slot without moving player 1.
+
+Reconciliation runs at startup, controller add/remove/remap events, foreground
+resume, and a bounded active check. Gameplay receives only attached,
+identity-matching handles; releasing stale ownership leaves neutral input. When
+a physical controller is detected, the touch gameplay overlay parks so it does
+not send duplicate player-1 input; it returns after the last controller
+disconnects. Existing mappings and preferences are not reset, and SDL is not
+blindly restarted.
 
 The default extended-gamepad layout is:
 
@@ -258,9 +267,12 @@ The default extended-gamepad layout is:
 | D-pad | N64 D-pad |
 
 That describes the implemented path, not a blanket hardware certification.
-Automatic button mapping, reconnect behavior, rumble, and sustained
-one-to-four-player sessions still require physical testing across Xbox,
-PlayStation, Nintendo, and MFi controller models. See
+Deterministic tests cover missed removal with held input, neutral release,
+player-1 reclaim, additional-player assignment, two-controller preservation,
+and foreground reconciliation. Automatic button mapping, Bluetooth/wired
+sleep and reconnect, rumble, and sustained one-to-four-player sessions still
+require physical testing across Xbox, PlayStation, Nintendo, and MFi controller
+models. See
 [Physical-device acceptance](docs/HARDWARE_ACCEPTANCE.md) for the exact gate.
 
 ## Texture packs
@@ -297,10 +309,10 @@ M-series-iPad performance experiment until it has its own hardware evidence.
 | Game setup | Files-visible supported-ROM import and local `mk64.o2r` loading work |
 | Touch | Analog steering and race controls have been exercised on a physical iPad; full acceptance still requires the documented touch-only GP |
 | Texture packs | MK64 Reloaded HD has been imported, loaded, and rendered on a physical iPad; full-GP performance evidence remains |
-| Saves and updates | Development update installs have retained the current app container; the final audited update/save-preservation gate remains |
-| Controllers | Four-port routing and split-screen rendering pass deterministic Simulator tests; physical model, reconnect, and multiplayer sessions remain |
+| Saves and updates | Preview 4's signed source build was installed in place on a physical iPad; readback hashes matched for the game archive, texture pack, saves, config, and controller/touch preferences |
+| Controllers | Engine-managed SDL2 stale-handle reconciliation and stable four-port ownership pass deterministic regression tests; physical Bluetooth, wired, natural-sleep, mapping, and multiplayer sessions remain |
 | Tilt | The persisted motion-to-stick path, recentering, touch priority, and foreground recalibration pass Simulator tests; physical feel and a tilt GP remain |
-| Packaging | Preview 3 packages the promoted customizable controls in an audited, ROM-free unsigned IPA; its exact payload has been re-signed and launched on a physical iPhone |
+| Packaging | Preview 4 is version 0.1.0 build 4 and packages as a deterministic, audited, ROM-free unsigned IPA with SHA-256 `61cd25268e98d2e638d1d94c5a3486ffb64b81ed4cb572fe60a12c5b97eadf69` |
 | CI | Repository safety and the ROM-free unsigned iPhoneOS build/package workflow pass on hosted GitHub Actions |
 
 The project deliberately keeps build, Simulator, process, and physical-device
@@ -357,7 +369,7 @@ distribute a maintainer development profile.
 <details>
 <summary><strong>Where is the IPA?</strong></summary>
 
-The [current developer preview](https://github.com/chrissotraidis/spaghettipad/releases/tag/v0.1.0-preview.3)
+The [current developer preview](https://github.com/chrissotraidis/spaghettipad/releases/tag/v0.1.0-preview.4)
 provides an audited, ROM-free unsigned IPA plus its SHA-256 checksum. Follow
 [the installation guide](docs/INSTALL_IPA.md) to verify and re-sign it with
 your own Apple development identity.
@@ -373,9 +385,11 @@ issues requesting game data, extracted assets, or download links.
 <details>
 <summary><strong>Does it support Bluetooth controllers?</strong></summary>
 
-The native SDL controller path, mapping database, and four-player port routing
-are included. Physical controller models and reconnect behavior are still
-being verified, so support is not yet advertised as universal.
+The engine-managed SDL2 controller path, mapping database, stable four-player
+ownership, stale-handle cleanup, and foreground reconciliation are included.
+Physical Bluetooth, wired, natural-sleep, full-mapping, and multi-controller
+behavior are still being verified, so support is not yet advertised as
+universal.
 </details>
 
 <details>

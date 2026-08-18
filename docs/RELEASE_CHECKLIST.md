@@ -64,7 +64,9 @@ This is the final gate for a public source snapshot or downloadable IPA.
   iPad and iPhone hardware. The promoted customizable controls, A-button hold
   assist, safe-area menu placement, texture-pack rendering, and Grand Prix
   play have been exercised on iPhone. The complete ten-minute Phase 6 evidence
-  gate and final update/save-preservation replay remain open.
+  gate remains open. Preview 4's signed source build passed an in-place iPad
+  update and exact readback preservation for game data, saves, config, and
+  controller/touch preferences.
 - Two-controller Bluetooth Grand Prix and physical tilt-steering feel remain
   open.
 - MK64 Reloaded HD has been imported and rendered on the physical iPad. Its
@@ -84,6 +86,14 @@ This is the final gate for a public source snapshot or downloadable IPA.
   update-installed, launched, and verified live on a physical iPhone, then
   published with its checksum as
   [`v0.1.0-preview.3`](https://github.com/chrissotraidis/spaghettipad/releases/tag/v0.1.0-preview.3).
+- Preview 4 repairs engine-managed SDL2 stale controller ownership without
+  restarting SDL or discarding valid player slots. The deterministic regression,
+  arm64 Simulator/device builds, signed iPad install/boot, preservation readback,
+  and repeatable ROM-free package passed. The unsigned IPA is
+  `SpaghettiPad-0.1.0-preview.4-unsigned.ipa` with SHA-256
+  `61cd25268e98d2e638d1d94c5a3486ffb64b81ed4cb572fe60a12c5b97eadf69`.
+  Physical Bluetooth, wired, natural-sleep, full-mapping, touch-overlay, and
+  multi-controller acceptance remain open.
 
 These blockers may be stated as developer-preview limitations, but they must
 not be described as passed.

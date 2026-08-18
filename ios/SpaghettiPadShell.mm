@@ -1732,7 +1732,8 @@ static void SpaghettiPad_ApplyTouchControlsState(void) {
 static int SpaghettiPad_ControllerEventWatch(void* userdata, SDL_Event* event) {
     (void)userdata;
     if (event->type == SDL_CONTROLLERDEVICEADDED ||
-        event->type == SDL_CONTROLLERDEVICEREMOVED) {
+        event->type == SDL_CONTROLLERDEVICEREMOVED ||
+        event->type == SDL_CONTROLLERDEVICEREMAPPED) {
         dispatch_async(dispatch_get_main_queue(), ^{
             SpaghettiPad_ApplyTouchControlsState();
         });
@@ -1850,6 +1851,7 @@ void SpaghettiPad_InitializeTouchControls(void) {
                     usingBlock:^(NSNotification* notification) {
                         (void)notification;
                         SpaghettiPad_StartTiltUpdates();
+                        SpaghettiPad_ApplyTouchControlsState();
                     }];
     }
     if (!SpaghettiPad_HasPhysicalController()) {
