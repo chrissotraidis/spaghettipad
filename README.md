@@ -25,7 +25,7 @@ hands with Metal rendering, true analog touch steering, a grip-first control
 layout, Files-based setup, built-in Bluetooth controller routing, and optional
 enhanced visuals.
 
-This repository contains the mobile integration, maintained patches, and
+This repository contains the mobile integration, pinned maintained sources, and
 reproducible build scripts. It does **not** contain Mario Kart 64, a ROM,
 extractable or playable Nintendo game assets, a playable ROM-derived archive,
 or MK64 Reloaded. Gameplay screenshots are retained as documentation. Read
@@ -35,8 +35,8 @@ material. This is a source-available integration repository, not a single,
 uniformly licensed open-source distribution.
 
 The [source-maintenance handoff](docs/SOURCE_MAINTENANCE.md) records the current
-patch workflow, exact component pins, release-source gaps, and the rights
-boundary that must be resolved before migration.
+maintained source workflow, exact component pins, remaining release-source
+qualification, and scoped rights notices.
 
 ## Built for racing on glass
 
@@ -337,9 +337,8 @@ Nintendo 64 emulator. A different game or ROM revision cannot be substituted.
 
 ```mermaid
 flowchart LR
-    A["SpaghettiPad scripts"] --> B["Pinned upstream source"]
-    B --> C["Maintained iOS patches"]
-    C --> D["ROM-free iOS app or unsigned IPA"]
+    A["SpaghettiPad scripts"] --> B["Pinned maintained source graph"]
+    B --> D["ROM-free iOS app or unsigned IPA"]
     E["Your supported ROM"] --> F["Files-visible app folder"]
     D --> G["On-device validation and extraction"]
     F --> G
@@ -349,8 +348,8 @@ flowchart LR
 ```
 
 The normal compile never reads your ROM. `scripts/build-ios.sh` fetches exact
-upstream revisions, disables their push URLs, applies the maintained patches,
-generates the ROM-free `spaghetti.o2r`, and builds the app. Your game data is
+maintained source revisions, verifies clean inputs, generates the ROM-free
+`spaghetti.o2r` through the separate oracle, and builds the app. Your game data is
 introduced only after installation.
 
 To create an unsigned, re-signable preview package from an unsigned device
@@ -443,7 +442,7 @@ Nintendo material or third-party texture packs.
 | [`scripts/generate-port-archive.sh`](scripts/generate-port-archive.sh) | Local-only ROM validation and `mk64.o2r` generation |
 | [`scripts/package-ios.sh`](scripts/package-ios.sh) | Audited unsigned/signed IPA packaging |
 | [`scripts/check-repo-safety.sh`](scripts/check-repo-safety.sh) | Tracked-asset, history, patch, script, and documentation gate |
-| [`patches/`](patches/) | Reviewable SpaghettiPad changes replayed onto pinned upstream source |
+| [`patches/`](patches/) | Historical patch mapping; ordinary builds use maintained source commits |
 | [`docs/screenshots/README.md`](docs/screenshots/README.md) | Physical-device and Simulator screenshot catalog |
 | [`docs/BUILDING.md`](docs/BUILDING.md) | Full build, signing, and package-audit guide |
 | [`docs/INSTALL_IPA.md`](docs/INSTALL_IPA.md) | Unsigned developer-preview installation boundary |

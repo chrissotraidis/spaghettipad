@@ -1,0 +1,25 @@
+{
+  "components": [
+    {
+      "path": "sources/spaghettikart",
+      "repository": "https://github.com/chrissotraidis/SpaghettiKart.git",
+      "commit": "1c17a3a191331145a0c8e0e4d12eea58cee8e688",
+      "upstream": "https://github.com/HarbourMasters/SpaghettiKart",
+      "base": "5b28472d477bab101dee2a0f469fe2aee2c58a01"
+    },
+    {
+      "path": "sources/spaghettikart/libultraship",
+      "repository": "https://github.com/chrissotraidis/libultraship.git",
+      "commit": "bd9c2dde3f92bb260f49350048c261a02050023f",
+      "upstream": "https://github.com/Kenix3/libultraship",
+      "base": "f5c3843fe937320b64ff754fa6bf71b13ff5e7a1"
+    },
+    {
+      "path": "sources/spaghettikart/torch",
+      "repository": "https://github.com/HarbourMasters/Torch",
+      "commit": "2d474ddb8da8b213fbdbb49d0273ce31fa955f35",
+      "upstream": "https://github.com/HarbourMasters/Torch",
+      "base": "2d474ddb8da8b213fbdbb49d0273ce31fa955f35"
+    }
+  ]
+}

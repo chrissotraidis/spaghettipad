@@ -1,0 +1,3 @@
+[submodule "sources/spaghettikart"]
+	path = sources/spaghettikart
+	url = https://github.com/chrissotraidis/SpaghettiKart.git

@@ -3,7 +3,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-SOURCE_DIR="$ROOT/sources/spaghettikart"
+SOURCE_DIR="$ROOT/sources/oracle"
 BUILD_DIR="$ROOT/build-oracle"
 EXPECTED_SPAGHETTIKART="5b28472d477bab101dee2a0f469fe2aee2c58a01"
 BUILD_JOBS="${ORACLE_BUILD_JOBS:-4}"
@@ -29,8 +29,7 @@ verify_download() {
         fail "$label does not match its expected SHA-256"
 }
 
-[ -d "$SOURCE_DIR/.git" ] ||
-    fail "pinned sources are missing; run scripts/clone-sources.sh first"
+[ -e "$SOURCE_DIR/.git" ] || "$ROOT/scripts/clone-oracle-sources.sh"
 [ "$(git -C "$SOURCE_DIR" rev-parse HEAD)" = "$EXPECTED_SPAGHETTIKART" ] ||
     fail "SpaghettiKart is not at the planned revision"
 git -C "$SOURCE_DIR" diff --quiet ||

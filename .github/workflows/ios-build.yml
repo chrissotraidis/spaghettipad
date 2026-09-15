@@ -50,7 +50,7 @@ jobs:
           path: |
             build-oracle/_deps
             build-ios/_deps
-          key: spaghettipad-ios-${{ runner.os }}-${{ hashFiles('patches/**', 'scripts/*.sh') }}
+          key: spaghettipad-ios-${{ runner.os }}-${{ hashFiles('sources.lock.json', '.gitmodules', 'scripts/**') }}
 
       - name: Reproduce unsigned arm64 iPhoneOS app
         run: scripts/build-ios.sh --device

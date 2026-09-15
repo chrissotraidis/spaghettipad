@@ -17,7 +17,7 @@ for command in cmake lipo nm otool rg shasum; do
         fail "required command is unavailable: $command"
 done
 
-"$ROOT/scripts/apply-patches.sh"
+python3 "$ROOT/scripts/check-source-pins.py"
 
 cmake -S "$SOURCE_DIR" -B "$BUILD_DIR" -GXcode \
     -DCMAKE_SYSTEM_NAME=iOS \

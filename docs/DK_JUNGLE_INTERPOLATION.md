@@ -10,12 +10,13 @@ trees. Hidden or culled spawn entries did not increment that count. When an
 earlier tree became invisible, later trees inherited different IDs, allowing
 interpolation to associate transforms from different trees across frames.
 
-The patch derives the ID from the entry's position in the spawn array while
+Engine commit `1c17a3a191331145a0c8e0e4d12eea58cee8e688` derives the ID from the entry's position in the spawn array while
 retaining the camera bits. Geometry, visibility, textures, drawing order and
 matrix-stack handling stay the same. This is a focused fix at the existing
 engine revision, without an upstream upgrade.
 
-Run after source preparation:
+The app selects that ordinary source commit through its gitlink and lock;
+no extra wrapper patch is applied. Run after source preparation:
 
 ```sh
 python3 scripts/test-palm-tree-interpolation.py
