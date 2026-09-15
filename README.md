@@ -86,11 +86,11 @@ the README does not turn a working menu into an unearned compatibility claim.
 
 ## Enhanced textures, built into the experience
 
-Optional texture packs are first-class app content, not a manual desktop
-patch. Copy a compatible SpaghettiKart `.o2r` into the Files-visible `mods`
-folder, relaunch, then use **Enhancements → Texture Packs** to choose original
-or enhanced graphics. SpaghettiPad reports whether the pack is missing,
-detected, loaded, enabled, or waiting for a relaunch.
+Copy compatible SpaghettiKart packs into the Files-visible `mods` folder,
+then open **••• → Enhancements → Mods**. Each installed pack has its own saved
+switch, current status and conflict explanation. Character replacements can
+layer over HD textures; replacements for the same racer are mutually exclusive.
+This selector is a development-build feature, pending physical-device acceptance.
 
 [MK64 Reloaded](https://evilgames.eu/texture-packs/mk64-reloaded.htm) HD has
 been imported and rendered on a physical iPad. No texture pack is bundled,
@@ -279,30 +279,39 @@ require physical testing across Xbox, PlayStation, Nintendo, and MFi controller
 models. See
 [Physical-device acceptance](docs/HARDWARE_ACCEPTANCE.md) for the exact gate.
 
-## Texture packs
+## Optional mods and texture packs
 
-SpaghettiPad supports compatible SpaghettiKart `.o2r` texture packs but does
-not provide, download, mirror, or relicense them. To use
-[MK64 Reloaded](https://evilgames.eu/texture-packs/mk64-reloaded.htm):
+SpaghettiPad supports compatible SpaghettiKart `.o2r`, ZIP and unpacked mods.
+No third-party mod assets are bundled, downloaded or relicensed by the app.
 
-1. Download the **SpaghettiKart HD `.o2r`** from the author's official page.
-2. In Files, create or open
-   **On My iPad/iPhone → SpaghettiPad → mods**.
-3. Move the `.o2r` into `mods`.
-4. Relaunch SpaghettiPad once so the engine can load the new archive.
-5. Open **••• → Enhancements → Texture Packs**.
-6. Confirm the status says the pack is loaded, then use
-   **Use Enhanced / HD Texture Pack**.
+1. Obtain a compatible pack from its author (for example,
+   [MK64 Reloaded](https://evilgames.eu/texture-packs/mk64-reloaded.htm) or
+   [Ocarina NPC Racers](https://gamebanana.com/mods/701263)). Extract an outer
+   download ZIP if the actual `.o2r` is inside it.
+2. Copy the pack into **Files → On My iPad/iPhone → SpaghettiPad → mods**.
+3. Open **••• → Enhancements → Mods** and tap **Check for New Packs**.
+4. Enable the packs you want. A blocked switch explains which overlapping
+   pack to turn off first. New packs start off; the existing HD choice carries over.
+5. Tap **Apply Changes and Close**, confirm, then reopen from the Home Screen.
+   Current race progress is lost when closing; saved game data is preserved.
 
-Adding or replacing an archive requires one relaunch. Turning the imported
-pack on or off also requires a restart because the engine mounts the archive
-when it starts; the app explains that current race progress will be lost,
-saves the selection, and closes only after you confirm. Reopen SpaghettiPad
-manually from the Home Screen; iOS does not allow an app to relaunch itself.
-Cancel leaves the running state unchanged. The Texture Packs page reports
-whether a pack is absent, detected but awaiting a relaunch, loaded and off,
-loaded and on, or waiting to apply a change. Start with HD. Treat 4K as an
-M-series-iPad performance experiment until it has its own hardware evidence.
+Switches save immediately; cancelling the close dialog leaves the current
+race running but retains selections for the next launch. The page distinguishes
+what is active now from what will change after relaunch. Keep filenames stable
+because selections are stored per filename. Replacing an archive requires a
+relaunch even if its switch did not change.
+
+HD textures load before character replacements. Two character packs replacing
+the same racer cannot coexist, even when they replace different animation frames.
+Other overlapping resources are exclusive. Packs requiring another optional mod,
+invalid manifests, and older character paths are rejected with an explanation.
+This checks resource conflicts, not every possible visual or gameplay incompatibility.
+
+Ocarina NPC Racers replaces all eight racers. Child Link (Luigi), Kris (Yoshi)
+and Ralsei (Toad) are additional private test candidates; their older downloads
+need compatibility conversion for this engine. Original author links and current
+validation are in [mod notes](docs/MODS.md). Start with HD; 4K remains a performance
+experiment pending its own hardware evidence.
 
 ## Current validation
 
