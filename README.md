@@ -13,6 +13,7 @@
   <img alt="Bluetooth controller routing" src="https://img.shields.io/badge/controllers-Bluetooth%20routing-34C759">
   <img alt="Enhanced texture pack support" src="https://img.shields.io/badge/textures-HD%20pack%20support-B65FCF">
   <img alt="Physical iPhone and iPad tested" src="https://img.shields.io/badge/physical%20iPhone%20%2F%20iPad-tested-30D158">
+  <a href="https://discord.gg/xwHfUD2bxW"><img alt="Join the SpaghettiPad Discord" src="https://img.shields.io/badge/Discord-Join%20the%20server-5865F2?logo=discord&amp;logoColor=white"></a>
   <img alt="ROM not included" src="https://img.shields.io/badge/game%20data-not%20included-FF453A">
 </p>
 
