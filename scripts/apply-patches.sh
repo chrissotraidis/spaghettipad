@@ -191,3 +191,14 @@ git -C "$SPAGHETTIKART_DIR" apply --reverse --check \
     fail "SpaghettiKart custom-touch patch does not pass its reverse check"
 echo "Applied SpaghettiKart iOS custom-touch patch at $EXPECTED_SPAGHETTIKART."
 fi
+
+# Keep each Jungle Parkway tree tied to its spawn identity across culling.
+PALM_TREE_PATCH="$ROOT/patches/spaghettikart-ios-palm-tree-identity.patch"
+if git -C "$SPAGHETTIKART_DIR" apply --reverse --check "$PALM_TREE_PATCH" 2>/dev/null; then
+    echo "SpaghettiKart palm-tree interpolation identity patch is already applied."
+else
+    git -C "$SPAGHETTIKART_DIR" apply --check "$PALM_TREE_PATCH"
+    git -C "$SPAGHETTIKART_DIR" apply "$PALM_TREE_PATCH"
+    git -C "$SPAGHETTIKART_DIR" apply --reverse --check "$PALM_TREE_PATCH"
+    echo "Applied SpaghettiKart palm-tree interpolation identity patch."
+fi
