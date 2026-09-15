@@ -10,7 +10,7 @@ no Mario Kart 64 ROM, extracted game archive, or texture pack.
 ## Build or obtain the IPA
 
 Download
-[SpaghettiPad 0.1.0 preview 4](https://github.com/chrissotraidis/spaghettipad/releases/tag/v0.1.0-preview.4)
+[SpaghettiPad 0.1.0 Preview 6](https://github.com/chrissotraidis/spaghettipad/releases/tag/v0.1.0-preview.6)
 and verify the IPA against the attached `SHA256SUMS` file before signing it.
 
 To create the artifact from source:
@@ -53,7 +53,7 @@ device, signing, launch, stability, and hash evidence without confusing a
 successful install with a completed hardware gate.
 
 For an optional texture pack, follow the README's
-[texture-pack instructions](../README.md#texture-packs) only after
+[texture-pack instructions](../README.md#optional-mods-and-texture-packs) only after
 the base game launches.
 
 ## Updates and saves

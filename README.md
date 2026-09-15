@@ -86,11 +86,11 @@ the README does not turn a working menu into an unearned compatibility claim.
 
 ## Enhanced textures, built into the experience
 
-Optional texture packs are first-class app content, not a manual desktop
-patch. Copy a compatible SpaghettiKart `.o2r` into the Files-visible `mods`
-folder, relaunch, then use **Enhancements → Texture Packs** to choose original
-or enhanced graphics. SpaghettiPad reports whether the pack is missing,
-detected, loaded, enabled, or waiting for a relaunch.
+Copy compatible SpaghettiKart packs into the Files-visible `mods` folder,
+then open **••• → Enhancements → Mods**. Each installed pack has its own saved
+switch, current status and conflict explanation. Character replacements can
+layer over HD textures; replacements for the same racer are mutually exclusive.
+The owner accepted the build 6 selector on an iPhone 14.
 
 [MK64 Reloaded](https://evilgames.eu/texture-packs/mk64-reloaded.htm) HD has
 been imported and rendered on a physical iPad. No texture pack is bundled,
@@ -102,7 +102,7 @@ downloaded, mirrored, or redistributed by this project.
 |---|---|---|
 | Local iPhone/iPad build | **Available now** | Build and sign with your own Apple development team by following [Build from source](docs/BUILDING.md). |
 | Simulator | **Available now** | Use it for development and UI testing. It cannot replace physical-device acceptance. |
-| Developer-preview `.ipa` | **Available now** | Download the [unsigned ROM-free preview](https://github.com/chrissotraidis/spaghettipad/releases/tag/v0.1.0-preview.4), verify its checksum, and re-sign it with your own Apple development identity. |
+| Developer-preview `.ipa` | **Available now** | Download the [unsigned ROM-free preview](https://github.com/chrissotraidis/spaghettipad/releases/tag/v0.1.0-preview.6), verify its checksum, and re-sign it with your own Apple development identity. |
 | App Store / TestFlight | **Not announced** | No App Store listing or public TestFlight exists. |
 
 The current development build has been signed, update-installed, and played
@@ -279,30 +279,39 @@ require physical testing across Xbox, PlayStation, Nintendo, and MFi controller
 models. See
 [Physical-device acceptance](docs/HARDWARE_ACCEPTANCE.md) for the exact gate.
 
-## Texture packs
+## Optional mods and texture packs
 
-SpaghettiPad supports compatible SpaghettiKart `.o2r` texture packs but does
-not provide, download, mirror, or relicense them. To use
-[MK64 Reloaded](https://evilgames.eu/texture-packs/mk64-reloaded.htm):
+SpaghettiPad supports compatible SpaghettiKart `.o2r`, ZIP and unpacked mods.
+No third-party mod assets are bundled, downloaded or relicensed by the app.
 
-1. Download the **SpaghettiKart HD `.o2r`** from the author's official page.
-2. In Files, create or open
-   **On My iPad/iPhone → SpaghettiPad → mods**.
-3. Move the `.o2r` into `mods`.
-4. Relaunch SpaghettiPad once so the engine can load the new archive.
-5. Open **••• → Enhancements → Texture Packs**.
-6. Confirm the status says the pack is loaded, then use
-   **Use Enhanced / HD Texture Pack**.
+1. Obtain a compatible pack from its author (for example,
+   [MK64 Reloaded](https://evilgames.eu/texture-packs/mk64-reloaded.htm) or
+   [Ocarina NPC Racers](https://gamebanana.com/mods/701263)). Extract an outer
+   download ZIP if the actual `.o2r` is inside it.
+2. Copy the pack into **Files → On My iPad/iPhone → SpaghettiPad → mods**.
+3. Open **••• → Enhancements → Mods** and tap **Check for New Packs**.
+4. Enable the packs you want. A blocked switch explains which overlapping
+   pack to turn off first. New packs start off; the existing HD choice carries over.
+5. Tap **Apply Changes and Close**, confirm, then reopen from the Home Screen.
+   Current race progress is lost when closing; saved game data is preserved.
 
-Adding or replacing an archive requires one relaunch. Turning the imported
-pack on or off also requires a restart because the engine mounts the archive
-when it starts; the app explains that current race progress will be lost,
-saves the selection, and closes only after you confirm. Reopen SpaghettiPad
-manually from the Home Screen; iOS does not allow an app to relaunch itself.
-Cancel leaves the running state unchanged. The Texture Packs page reports
-whether a pack is absent, detected but awaiting a relaunch, loaded and off,
-loaded and on, or waiting to apply a change. Start with HD. Treat 4K as an
-M-series-iPad performance experiment until it has its own hardware evidence.
+Switches save immediately; cancelling the close dialog leaves the current
+race running but retains selections for the next launch. The page distinguishes
+what is active now from what will change after relaunch. Keep filenames stable
+because selections are stored per filename. Replacing an archive requires a
+relaunch even if its switch did not change.
+
+HD textures load before character replacements. Two character packs replacing
+the same racer cannot coexist, even when they replace different animation frames.
+Other overlapping resources are exclusive. Packs requiring another optional mod,
+invalid manifests, and older character paths are rejected with an explanation.
+This checks resource conflicts, not every possible visual or gameplay incompatibility.
+
+Ocarina NPC Racers replaces all eight racers. Child Link (Luigi), Kris (Yoshi)
+and Ralsei (Toad) are additional private test candidates; their older downloads
+need compatibility conversion for this engine. Original author links and current
+validation are in [mod notes](docs/MODS.md). Start with HD; 4K remains a performance
+experiment pending its own hardware evidence.
 
 ## Current validation
 
@@ -316,7 +325,7 @@ M-series-iPad performance experiment until it has its own hardware evidence.
 | Saves and updates | Preview 4's signed source build was installed in place on a physical iPad; readback hashes matched for the game archive, texture pack, saves, config, and controller/touch preferences |
 | Controllers | Engine-managed SDL2 stale-handle reconciliation and stable four-port ownership pass deterministic regression tests; physical Bluetooth, wired, natural-sleep, mapping, and multiplayer sessions remain |
 | Tilt | The persisted motion-to-stick path, recentering, touch priority, and foreground recalibration pass Simulator tests; physical feel and a tilt GP remain |
-| Packaging | Preview 4 is version 0.1.0 build 4 and packages as a deterministic, audited, ROM-free unsigned IPA with SHA-256 `61cd25268e98d2e638d1d94c5a3486ffb64b81ed4cb572fe60a12c5b97eadf69` |
+| Packaging | Preview 6 is version 0.1.0 build 6 and packages as a deterministic, audited, ROM-free unsigned IPA with SHA-256 `a746fafe4dac460c5427acb81a361eb5f560df45a0550cd39f4a545977c4c0bb` |
 | CI | Repository safety and the ROM-free unsigned iPhoneOS build/package workflow pass on hosted GitHub Actions |
 
 The project deliberately keeps build, Simulator, process, and physical-device
@@ -372,7 +381,7 @@ distribute a maintainer development profile.
 <details>
 <summary><strong>Where is the IPA?</strong></summary>
 
-The [current developer preview](https://github.com/chrissotraidis/spaghettipad/releases/tag/v0.1.0-preview.4)
+The [current developer preview](https://github.com/chrissotraidis/spaghettipad/releases/tag/v0.1.0-preview.6)
 provides an audited, ROM-free unsigned IPA plus its SHA-256 checksum. Follow
 [the installation guide](docs/INSTALL_IPA.md) to verify and re-sign it with
 your own Apple development identity.
