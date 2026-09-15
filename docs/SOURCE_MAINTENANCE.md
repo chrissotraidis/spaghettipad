@@ -106,10 +106,11 @@ physical disk and is not protection against disk loss. Private archives must
 never be uploaded as public corresponding source: they can contain game inputs,
 local profiles and other restricted material.
 
-This change edits documentation only. To rehearse its reversal, clone the app
+The build-script correction restores the oracle header already named by its
+existing checksum; engine/app sources remain unchanged. The documentation-only
+checkpoint was rehearsed separately. To rehearse its reversal, clone the app
 into a disposable directory, check out the documentation commit, and run
-`git revert --no-edit <documentation-commit>`. Verify `git diff --exit-code
-2f7a54ee16a55c5c394c5907e83ab0ad7d3c66e3 --` there. Never reset the owner's working
+`git revert --no-edit <documentation-commit>`. Verify `git diff --exit-code 2f7a54ee16a55c5c394c5907e83ab0ad7d3c66e3 --` there. Never reset the owner's working
 dependencies to reproduce that test. Follow [installation instructions](INSTALL_IPA.md)
 for an in-place update; retain the existing bundle/signing identity and durable
 app data, and stop if those identities do not match.
@@ -118,3 +119,16 @@ File app-specific build, controller, graphics and crash reports in this app's
 issue tracker with the app version, dependency pins and useful sanitized logs.
 Route upstream only when evidence identifies an upstream issue; this audit does
 not authorize contacting upstream maintainers.
+
+## Oracle download correction
+
+The first hosted check of this handoff failed before compilation because
+upstream CMake unconditionally downloads sse2neon from `master`. The existing
+oracle checksum rejected those changed bytes. `build-oracle.sh` now restores
+the already-reviewed revision `8f03de354e8a87426b94dadd57dbd55b544810c3` into the
+build directory after configure and before compilation, checking the unchanged
+SHA-256 `44fa833125ba4671b6c2bc0c520f11dbc22f02e9ca223f9d3e04af0db09fcfc6`.
+The immutable download was independently verified against that checksum.
+This is a build-input restoration exception, owned by the app build scripts;
+it does not modify upstream source or upgrade the oracle. The checksum gate
+must remain, and a complete future source bundle must carry these exact bytes.
