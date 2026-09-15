@@ -1,6 +1,6 @@
 # Optional mod candidates
 
-The development Mods page is under **••• → Enhancements → Mods**. Packs stay
+The Mods page is under **••• → Enhancements → Mods**. Packs stay
 in the app's Documents/mods folder; they are not included in the IPA or source.
 Selections take effect on the next launch. The existing HD selection is preserved.
 
@@ -34,4 +34,5 @@ After fetching build dependencies, `scripts/test-mod-catalog.sh` tests the
 actual catalog with synthetic archives, including invalid ZIPs, invalid or
 unsupported dependencies, HD preference migration, persistence and load order.
 The latter uses a host C++ compiler and libzip via pkg-config. Real private
-candidate archives pass the same catalog checks; hardware acceptance is pending.
+candidate archives pass the same catalog checks; the owner accepted build 6 on the attached iPhone 14. This does not establish
+that every third-party pack works on every supported device.

@@ -90,3 +90,15 @@ After Phase 6 is reviewed and recorded, continue in plan order:
 Record each result in [`remaining-work.md`](remaining-work.md) with the device
 model, OS, exact executable hash, measured values, visible evidence, and a
 clear boundary around anything not tested.
+
+## Preview 6 owner acceptance — 2026-09-15
+
+The owner accepted version 0.1.0 build 6 on the attached iPhone 14 (iOS 26.6.2)
+and authorized source merge and publication. The build adds per-pack switches,
+conflict exclusions, and the red fork/spaghetti/flag icon. Simulator UI verified
+selection, conflict disabling and active state after relaunch; catalog tests
+cover persistence, invalid packs and load priority. In-place installation
+preserved durable save, game, HD pack and settings hashes. Four optional private
+character imports matched device readback. Third-party character assets remain
+separate from the IPA. This acceptance does not claim the earlier 60 FPS
+stutter is fixed, or that every pack/device combination has been tested.

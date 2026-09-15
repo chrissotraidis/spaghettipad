@@ -58,6 +58,11 @@ jobs:
       - name: Verify palm-tree interpolation identity
         run: python3 scripts/test-palm-tree-interpolation.py
 
+      - name: Verify mod selection and catalog
+        run: |
+          scripts/test-mod-selection.sh
+          scripts/test-mod-catalog.sh
+
       - name: Package and exercise the signing rejection gate
         run: |
           scripts/package-ios.sh

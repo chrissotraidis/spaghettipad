@@ -90,7 +90,7 @@ Copy compatible SpaghettiKart packs into the Files-visible `mods` folder,
 then open **••• → Enhancements → Mods**. Each installed pack has its own saved
 switch, current status and conflict explanation. Character replacements can
 layer over HD textures; replacements for the same racer are mutually exclusive.
-This selector is a development-build feature, pending physical-device acceptance.
+The owner accepted the build 6 selector on an iPhone 14.
 
 [MK64 Reloaded](https://evilgames.eu/texture-packs/mk64-reloaded.htm) HD has
 been imported and rendered on a physical iPad. No texture pack is bundled,
@@ -102,7 +102,7 @@ downloaded, mirrored, or redistributed by this project.
 |---|---|---|
 | Local iPhone/iPad build | **Available now** | Build and sign with your own Apple development team by following [Build from source](docs/BUILDING.md). |
 | Simulator | **Available now** | Use it for development and UI testing. It cannot replace physical-device acceptance. |
-| Developer-preview `.ipa` | **Available now** | Download the [unsigned ROM-free preview](https://github.com/chrissotraidis/spaghettipad/releases/tag/v0.1.0-preview.4), verify its checksum, and re-sign it with your own Apple development identity. |
+| Developer-preview `.ipa` | **Available now** | Download the [unsigned ROM-free preview](https://github.com/chrissotraidis/spaghettipad/releases/tag/v0.1.0-preview.6), verify its checksum, and re-sign it with your own Apple development identity. |
 | App Store / TestFlight | **Not announced** | No App Store listing or public TestFlight exists. |
 
 The current development build has been signed, update-installed, and played
@@ -325,7 +325,7 @@ experiment pending its own hardware evidence.
 | Saves and updates | Preview 4's signed source build was installed in place on a physical iPad; readback hashes matched for the game archive, texture pack, saves, config, and controller/touch preferences |
 | Controllers | Engine-managed SDL2 stale-handle reconciliation and stable four-port ownership pass deterministic regression tests; physical Bluetooth, wired, natural-sleep, mapping, and multiplayer sessions remain |
 | Tilt | The persisted motion-to-stick path, recentering, touch priority, and foreground recalibration pass Simulator tests; physical feel and a tilt GP remain |
-| Packaging | Preview 4 is version 0.1.0 build 4 and packages as a deterministic, audited, ROM-free unsigned IPA with SHA-256 `61cd25268e98d2e638d1d94c5a3486ffb64b81ed4cb572fe60a12c5b97eadf69` |
+| Packaging | Preview 6 is version 0.1.0 build 6 and packages as a deterministic, audited, ROM-free unsigned IPA with SHA-256 `a746fafe4dac460c5427acb81a361eb5f560df45a0550cd39f4a545977c4c0bb` |
 | CI | Repository safety and the ROM-free unsigned iPhoneOS build/package workflow pass on hosted GitHub Actions |
 
 The project deliberately keeps build, Simulator, process, and physical-device
@@ -381,7 +381,7 @@ distribute a maintainer development profile.
 <details>
 <summary><strong>Where is the IPA?</strong></summary>
 
-The [current developer preview](https://github.com/chrissotraidis/spaghettipad/releases/tag/v0.1.0-preview.4)
+The [current developer preview](https://github.com/chrissotraidis/spaghettipad/releases/tag/v0.1.0-preview.6)
 provides an audited, ROM-free unsigned IPA plus its SHA-256 checksum. Follow
 [the installation guide](docs/INSTALL_IPA.md) to verify and re-sign it with
 your own Apple development identity.
