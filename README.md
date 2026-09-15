@@ -348,8 +348,8 @@ flowchart LR
 ```
 
 The normal compile never reads your ROM. `scripts/build-ios.sh` fetches exact
-upstream revisions, disables their push URLs, applies the maintained patches,
-generates the ROM-free `spaghetti.o2r`, and builds the app. Your game data is
+maintained source revisions, verifies clean inputs, generates the ROM-free
+`spaghetti.o2r` through the separate oracle, and builds the app. Your game data is
 introduced only after installation.
 
 To create an unsigned, re-signable preview package from an unsigned device
