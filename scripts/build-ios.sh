@@ -18,7 +18,7 @@ case "$MODE" in
         ;;
 esac
 
-if [ ! -d "$ROOT/sources/spaghettikart/.git" ]; then
+if [ ! -e "$ROOT/sources/spaghettikart/.git" ]; then
     "$ROOT/scripts/clone-sources.sh"
 fi
 if [ ! -s "$ROOT/build-oracle/spaghetti.o2r" ]; then
