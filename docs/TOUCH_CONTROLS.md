@@ -4,6 +4,18 @@ The customizable touch controller is SpaghettiPad's default on iPhone and
 iPad. The original fixed overlay remains available through **Settings >
 Controls > Legacy Touch Controls**.
 
+## Floating steering stick
+
+During normal play, the steering stick is invisible until touched. Touch down
+in the generous zone around its saved left-side position to place the stick
+under your thumb, then drag to steer. Touch-down is neutral; lifting or
+cancelling releases steering and hides the stick. Nearby buttons keep priority
+and a second finger cannot take over an active steering touch.
+
+The layout editor still shows the resting stick. Moving it changes the pickup
+zone; resizing it changes steering travel. Legacy Touch Controls retains the
+original visible, fixed-center stick.
+
 ## Customize the layout
 
 1. Open **Settings > Controls**.
@@ -71,3 +83,9 @@ toggle returns to the saved customizable layout.
   pack, Grand Prix play, safe-area menu placement, Start alignment, and the
   promoted phone default were exercised and accepted on 2026-07-29.
 - A full touch-only Grand Prix remains open.
+
+The floating-stick UIKit regression runs with `scripts/test-floating-stick.py`
+on a booted iOS Simulator (select one with `SIMULATOR_DEVICE`). It covers
+pickup, centering, clamping, touch ownership, release/cancellation, editing,
+resizing, button priority and legacy steering. Physical feel remains an
+owner acceptance check for the new candidate.
