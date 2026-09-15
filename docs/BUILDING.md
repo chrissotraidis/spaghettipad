@@ -1,8 +1,9 @@
 # Build SpaghettiPad for iOS and iPadOS
 
-SpaghettiPad is a patch overlay over pinned SpaghettiKart, libultraship, and
-Torch revisions. Upstream checkouts under `sources/` are disposable build
-inputs with push URLs disabled.
+SpaghettiPad consumes pinned maintained SpaghettiKart and libultraship source
+branches plus unmodified Torch. See [source maintenance](SOURCE_MAINTENANCE.md)
+for exact pins and update instructions. Local changes are rejected rather
+than reset. The unmodified oracle has its own ignored source checkout.
 
 ## Requirements
 
@@ -32,7 +33,7 @@ scripts/build-ios.sh --simulator
 ```
 
 The wrapper fetches the pinned sources, generates the ROM-free
-`spaghetti.o2r`, applies the maintained patches, configures Xcode, and builds
+`spaghetti.o2r`, verifies maintained source pins, configures Xcode, and builds
 the arm64 Simulator app. A ROM is not a build input.
 
 Build the unsigned arm64 device product with:

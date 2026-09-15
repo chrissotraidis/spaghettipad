@@ -18,10 +18,12 @@ audited ROM-free unsigned IPA.
 - User-supplied, legally acquired Mario Kart 64 (US) big-endian `.z64` only.
 - Never commit or distribute ROMs, `mk64*.o2r`, `.otr`, extracted Nintendo
   assets, or the MK64 Reloaded texture pack.
-- `chrissotraidis/spaghettipad` is the sole publication repository.
-- SpaghettiKart, libultraship, Torch, and prior-art references are pinned,
-  disposable, push-disabled inputs under ignored directories.
-- Keep every durable source change as a reviewable maintained patch.
+- `chrissotraidis/spaghettipad` remains the app and release repository.
+- App engine/libultraship sources use pinned maintained fork commits; Torch
+  remains pinned upstream. Oracle and private references stay separate.
+- Keep new durable changes in reviewable source commits. Historical patch-era
+  entries below remain evidence for their dates; use
+  [source maintenance](SOURCE_MAINTENANCE.md) for the current workflow.
 - Keep `ENABLE_SCRIPTING` disabled with an iOS `FATAL_ERROR` guard.
 - Treat local, CI, Simulator, physical-device, signing, audio, performance,
   controller, and texture-pack evidence as separate gates.

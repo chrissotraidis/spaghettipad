@@ -30,12 +30,12 @@ SPAGHETTIPAD_BUILD_NUMBER="${SPAGHETTIPAD_BUILD_NUMBER:-4}"
 [[ "$SPAGHETTIPAD_BUILD_NUMBER" =~ ^[1-9][0-9]*$ ]] ||
     fail "SPAGHETTIPAD_BUILD_NUMBER must be a positive integer"
 
-[ -d "$SOURCE_DIR/.git" ] ||
+[ -e "$SOURCE_DIR/.git" ] ||
     fail "pinned sources are missing; run scripts/clone-sources.sh first"
 [ -s "$PORT_ARCHIVE" ] ||
     fail "clean port archive is missing; run scripts/generate-port-archive.sh"
 
-"$ROOT/scripts/apply-patches.sh"
+python3 "$ROOT/scripts/check-source-pins.py"
 
 if [ "$MODE" = "simulator" ]; then
     BUILD_DIR="${SPAGHETTIPAD_SIM_BUILD_DIR:-$ROOT/build-ios-sim}"

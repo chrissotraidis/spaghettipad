@@ -3,7 +3,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-SOURCE_DIR="$ROOT/sources/spaghettikart"
+SOURCE_DIR="$ROOT/sources/oracle"
 BUILD_DIR="$ROOT/build-oracle"
 EXPECTED_ROM_SHA1="579c48e211ae952530ffc8738709f078d5dd215e"
 SOURCE_ROM="$SOURCE_DIR/baserom.us.z64"
@@ -26,10 +26,14 @@ cleanup() {
     fi
     return "$status"
 }
-trap cleanup EXIT
-
 [ -d "$SOURCE_DIR/.git" ] ||
-    fail "pinned sources are missing; run scripts/clone-sources.sh first"
+    fail "oracle sources are missing; run scripts/clone-oracle-sources.sh first"
+# Cleanup may revert extraction-generated changes only after proving a clean input.
+git -C "$SOURCE_DIR" diff --quiet && git -C "$SOURCE_DIR" diff --cached --quiet ||
+    fail "oracle source has local changes; preserve them before extraction"
+[ ! -e "$SOURCE_ROM" ] && [ ! -e "$SOURCE_GAME_ARCHIVE" ] ||
+    fail "oracle source already contains private game inputs; preserve them first"
+trap cleanup EXIT
 
 matching_rom=""
 while IFS= read -r -d '' candidate; do
