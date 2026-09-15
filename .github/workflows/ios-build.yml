@@ -55,6 +55,9 @@ jobs:
       - name: Reproduce unsigned arm64 iPhoneOS app
         run: scripts/build-ios.sh --device
 
+      - name: Verify palm-tree interpolation identity
+        run: python3 scripts/test-palm-tree-interpolation.py
+
       - name: Package and exercise the signing rejection gate
         run: |
           scripts/package-ios.sh
