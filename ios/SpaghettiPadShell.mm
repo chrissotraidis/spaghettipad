@@ -565,8 +565,12 @@ static void SpaghettiPad_ResetAllInputs(void) {
 
 @interface SpaghettiPadTouchStick : UIView
 
+@property(nonatomic, strong) UIView* disc;
 @property(nonatomic, strong) UIView* knob;
+@property(nonatomic, strong) UITouch* activeTouch;
+@property(nonatomic) CGPoint touchOrigin;
 @property(nonatomic) BOOL layoutEditing;
+@property(nonatomic) BOOL floatingEnabled;
 
 - (void)cancelInput;
 
@@ -577,12 +581,18 @@ static void SpaghettiPad_ResetAllInputs(void) {
 - (instancetype)initWithFrame:(CGRect)frame {
     self = [super initWithFrame:frame];
     if (self != nil) {
-        self.multipleTouchEnabled = NO;
-        self.backgroundColor = [UIColor colorWithWhite:0.04 alpha:0.30];
-        self.layer.borderColor = [UIColor colorWithWhite:1.0 alpha:0.42].CGColor;
-        self.layer.borderWidth = 2.0;
+        self.multipleTouchEnabled = YES;
+        _floatingEnabled = YES;
+        self.backgroundColor = UIColor.clearColor;
         self.accessibilityLabel = @"Steering";
 
+        self.disc = [[UIView alloc] initWithFrame:CGRectZero];
+        self.disc.userInteractionEnabled = NO;
+        self.disc.backgroundColor = [UIColor colorWithWhite:0.04 alpha:0.30];
+        self.disc.layer.borderColor = [UIColor colorWithWhite:1.0 alpha:0.42].CGColor;
+        self.disc.layer.borderWidth = 2.0;
+        self.disc.hidden = YES;
+        [self addSubview:self.disc];
         self.knob = [[UIView alloc] initWithFrame:CGRectZero];
         self.knob.userInteractionEnabled = NO;
         self.knob.backgroundColor =
@@ -590,37 +600,62 @@ static void SpaghettiPad_ResetAllInputs(void) {
         self.knob.layer.borderColor =
             [UIColor colorWithWhite:1.0 alpha:0.62].CGColor;
         self.knob.layer.borderWidth = 2.0;
-        [self addSubview:self.knob];
+        [self.disc addSubview:self.knob];
     }
     return self;
 }
 
+- (void)setLayoutEditing:(BOOL)layoutEditing {
+    _layoutEditing = layoutEditing;
+    [self cancelInput];
+    [self setNeedsLayout];
+}
+
+- (void)setFloatingEnabled:(BOOL)floatingEnabled {
+    _floatingEnabled = floatingEnabled;
+    [self cancelInput];
+    [self setNeedsLayout];
+}
+
+- (BOOL)pointInside:(CGPoint)point withEvent:(UIEvent*)event {
+    if (self.layoutEditing || !self.floatingEnabled) {
+        return [super pointInside:point withEvent:event];
+    }
+    // Match the generous pickup behavior in the other ports. The editable
+    // frame stays fixed; buttons above the stick keep normal hit-test priority.
+    return CGRectContainsPoint(CGRectInset(self.bounds,
+        -CGRectGetWidth(self.bounds) * 0.65,
+        -CGRectGetHeight(self.bounds) * 0.45), point);
+}
+
 - (void)layoutSubviews {
     [super layoutSubviews];
+    // Resizing/rotation must not retain a steering value from the old surface.
+    if (self.activeTouch != nil) {
+        [self cancelInput];
+    }
     CGFloat size = MIN(CGRectGetWidth(self.bounds), CGRectGetHeight(self.bounds));
-    self.layer.cornerRadius = size * 0.5;
+    self.disc.bounds = CGRectMake(0.0, 0.0, size, size);
+    self.disc.layer.cornerRadius = size * 0.5;
     CGFloat knobSize = size * 0.43;
     self.knob.bounds = CGRectMake(0.0, 0.0, knobSize, knobSize);
     self.knob.layer.cornerRadius = knobSize * 0.5;
-    if (!sTouchStickActive.load()) {
-        self.knob.center = CGPointMake(CGRectGetMidX(self.bounds), CGRectGetMidY(self.bounds));
-    }
+    self.disc.center = CGPointMake(CGRectGetMidX(self.bounds), CGRectGetMidY(self.bounds));
+    self.knob.center = CGPointMake(size * 0.5, size * 0.5);
+    self.disc.hidden = self.floatingEnabled && !self.layoutEditing;
 }
 
 - (void)updateForPoint:(CGPoint)point {
-    CGPoint center = CGPointMake(CGRectGetMidX(self.bounds), CGRectGetMidY(self.bounds));
     CGFloat size = MIN(CGRectGetWidth(self.bounds), CGRectGetHeight(self.bounds));
-    CGFloat radius = size * 0.34;
-    CGFloat dx = point.x - center.x;
-    CGFloat dy = point.y - center.y;
+    CGFloat radius = MAX(1.0, size * 0.34);
+    CGFloat dx = point.x - self.touchOrigin.x;
+    CGFloat dy = point.y - self.touchOrigin.y;
     CGFloat distance = hypot(dx, dy);
-    if (distance > radius && distance > 0.0) {
+    if (distance > radius) {
         dx = dx / distance * radius;
         dy = dy / distance * radius;
     }
-
-    self.knob.center = CGPointMake(center.x + dx, center.y + dy);
-
+    self.knob.center = CGPointMake(size * 0.5 + dx, size * 0.5 + dy);
     Sint16 x = (Sint16)std::lround(
         MAX(-1.0, MIN(1.0, (double)(dx / radius))) * SDL_JOYSTICK_AXIS_MAX);
     Sint16 y = (Sint16)std::lround(
@@ -629,39 +664,43 @@ static void SpaghettiPad_ResetAllInputs(void) {
 }
 
 - (void)touchesBegan:(NSSet<UITouch*>*)touches withEvent:(UIEvent*)event {
-    if (self.layoutEditing) {
+    if (self.layoutEditing || self.activeTouch != nil || touches.count == 0) {
         return;
     }
-    UITouch* touch = touches.anyObject;
-    if (touch == nil) {
-        return;
-    }
+    [self layoutIfNeeded];
+    self.activeTouch = touches.anyObject;
+    CGPoint point = [self.activeTouch locationInView:self];
+    self.touchOrigin = self.floatingEnabled ? point :
+        CGPointMake(CGRectGetMidX(self.bounds), CGRectGetMidY(self.bounds));
+    self.disc.center = self.touchOrigin;
+    self.disc.hidden = NO;
     sTouchStickActive.store(true);
-    [self updateForPoint:[touch locationInView:self]];
+    [self updateForPoint:point];
 }
 
 - (void)touchesMoved:(NSSet<UITouch*>*)touches withEvent:(UIEvent*)event {
-    if (self.layoutEditing) {
-        return;
-    }
-    UITouch* touch = touches.anyObject;
-    if (touch != nil) {
-        [self updateForPoint:[touch locationInView:self]];
+    if (self.activeTouch != nil && [touches containsObject:self.activeTouch]) {
+        [self updateForPoint:[self.activeTouch locationInView:self]];
     }
 }
 
 - (void)touchesEnded:(NSSet<UITouch*>*)touches withEvent:(UIEvent*)event {
-    [self cancelInput];
+    if (self.activeTouch != nil && [touches containsObject:self.activeTouch]) {
+        [self cancelInput];
+    }
 }
 
 - (void)touchesCancelled:(NSSet<UITouch*>*)touches withEvent:(UIEvent*)event {
-    [self cancelInput];
+    [self touchesEnded:touches withEvent:event];
 }
 
 - (void)cancelInput {
+    self.activeTouch = nil;
     SpaghettiPad_SetStickAxes(0, 0);
     sTouchStickActive.store(false);
-    self.knob.center = CGPointMake(CGRectGetMidX(self.bounds), CGRectGetMidY(self.bounds));
+    self.disc.hidden = self.floatingEnabled && !self.layoutEditing;
+    self.disc.center = CGPointMake(CGRectGetMidX(self.bounds), CGRectGetMidY(self.bounds));
+    self.knob.center = CGPointMake(CGRectGetMidX(self.disc.bounds), CGRectGetMidY(self.disc.bounds));
 }
 
 @end
@@ -982,6 +1021,9 @@ static SpaghettiPadTouchButton* sMenuButton;
 }
 
 - (void)setCustomizableControlsEnabled:(BOOL)enabled {
+    if (self.controlStick.floatingEnabled != enabled) {
+        self.controlStick.floatingEnabled = enabled;
+    }
     if (self.customizableControls == enabled) {
         return;
     }
