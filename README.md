@@ -34,6 +34,10 @@ not relicense SpaghettiKart, its dependencies, texture packs, or game
 material. This is a source-available integration repository, not a single,
 uniformly licensed open-source distribution.
 
+The [source-maintenance handoff](docs/SOURCE_MAINTENANCE.md) records the current
+patch workflow, exact component pins, release-source gaps, and the rights
+boundary that must be resolved before migration.
+
 ## Built for racing on glass
 
 The touch layout keeps the controls under your thumbs and the race visible.
