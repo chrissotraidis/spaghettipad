@@ -236,7 +236,7 @@ Boundary:
 ### 2026-07-29 — Preview 3 customizable-controls release published
 
 - Release: annotated tag
-  [`v0.1.0-preview.3`](https://github.com/chrissotraidis/spaghettipad/releases/tag/v0.1.0-preview.3)
+  `v0.1.0-preview.3` (retired)
   resolves to merged `main` commit
   `5786e6faa74487a8be7bdfe30d8b2bb2a7a54541`.
 - Controls: Preview 3 is the first downloadable IPA with customizable touch
@@ -307,7 +307,7 @@ Boundary:
 ### 2026-07-29 — Initial unsigned preview IPA published
 
 - Release boundary: annotated tag
-  [`v0.1.0-preview.1`](https://github.com/chrissotraidis/spaghettipad/releases/tag/v0.1.0-preview.1)
+  `v0.1.0-preview.1` (retired)
   points to release commit
   `e0b2da5883faa5852b54847bbc8adb6fb46dc9c4`. The build used Xcode 26.6
   (17F113), the iPhoneOS 26.5 SDK, app version `0.1.0`, build number `1`,

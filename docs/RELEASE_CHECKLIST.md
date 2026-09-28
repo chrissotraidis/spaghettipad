@@ -75,7 +75,7 @@ This is the final gate for a public source snapshot or downloadable IPA.
 - The initial unsigned preview IPA was built from tagged commit `e0b2da5`,
   audited, temporarily re-signed, update-installed, launched on the physical
   iPad, and published as
-  [`v0.1.0-preview.1`](https://github.com/chrissotraidis/spaghettipad/releases/tag/v0.1.0-preview.1).
+  `v0.1.0-preview.1` (retired).
   The complete hardware replay matrix remains open.
 - Preview 2 corrects third-party notices and makes unsigned packaging the safe
   default. Hosted repository safety and unsigned build/package jobs pass; the
@@ -85,7 +85,7 @@ This is the final gate for a public source snapshot or downloadable IPA.
   and tablet layouts. Its exact artifact was temporarily re-signed,
   update-installed, launched, and verified live on a physical iPhone, then
   published with its checksum as
-  [`v0.1.0-preview.3`](https://github.com/chrissotraidis/spaghettipad/releases/tag/v0.1.0-preview.3).
+  `v0.1.0-preview.3` (retired).
 - Preview 4 repairs engine-managed SDL2 stale controller ownership without
   restarting SDL or discarding valid player slots. The deterministic regression,
   arm64 Simulator/device builds, signed iPad install/boot, preservation readback,
