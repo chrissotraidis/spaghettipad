@@ -4,7 +4,7 @@
   "name": "SpaghettiPad",
   "game": "Mario Kart 64 (N64) via SpaghettiKart",
   "kind": "decomp-patches",
-  "status": "draft-untested",
+  "status": "experimental",
   "inputs": [
     {
       "type": "n64-rom",
