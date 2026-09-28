@@ -73,7 +73,7 @@ for broader binary/commercial/store distribution. Preserve
 [RIGHTS_AND_LICENSES.md](../RIGHTS_AND_LICENSES.md); no blanket license is added.
 The complete SpaghettiKart licensing question remains documented upstream.
 
-[Preview 4](https://github.com/chrissotraidis/spaghettipad/releases/tag/v0.1.0-preview.4)
+Preview 4 (retired)
 is unchanged: version `0.1.0` build `4`, bundle
 `com.chrissotraidis.spaghettipad`, IPA SHA-256
 `61cd25268e98d2e638d1d94c5a3486ffb64b81ed4cb572fe60a12c5b97eadf69`.
