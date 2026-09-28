@@ -18,3 +18,6 @@ work/
 
 # macOS noise
 .DS_Store
+
+# PadForge and other local build workspaces
+/build/
