@@ -1,0 +1,101 @@
+{
+  "schema_version": 1,
+  "id": "spaghettipad",
+  "name": "SpaghettiPad",
+  "game": "Mario Kart 64 (N64) via SpaghettiKart",
+  "kind": "decomp-patches",
+  "status": "draft-untested",
+  "inputs": [
+    {
+      "type": "n64-rom",
+      "formats": [
+        "z64",
+        "n64",
+        "v64"
+      ],
+      "when": "in-app",
+      "description": "Your own supported Mario Kart 64 ROM, chosen in the app. The build does not read it."
+    }
+  ],
+  "targets": {
+    "ios": {
+      "hosts": {
+        "macos-arm64": "experimental"
+      },
+      "output": "ipa",
+      "check": "ipa",
+      "steps": [
+        {
+          "stage": "preflight",
+          "command": [
+            "/bin/bash",
+            "{repo}/scripts/check-repo-safety.sh"
+          ]
+        },
+        {
+          "stage": "compile",
+          "command": [
+            "/bin/bash",
+            "{repo}/scripts/build-ios.sh",
+            "--device"
+          ]
+        },
+        {
+          "stage": "package",
+          "command": [
+            "/bin/bash",
+            "{repo}/scripts/package-ios.sh",
+            "{repo}/build-ios/Release-iphoneos/SpaghettiPad.app",
+            "{output}"
+          ]
+        }
+      ]
+    }
+  },
+  "requirements": {
+    "disk_gb": 15,
+    "tools": [
+      {
+        "name": "git",
+        "version_args": [
+          "--version"
+        ]
+      },
+      {
+        "name": "cmake",
+        "version_args": [
+          "--version"
+        ]
+      },
+      {
+        "name": "ninja",
+        "version_args": [
+          "--version"
+        ]
+      },
+      {
+        "name": "python3",
+        "version_args": [
+          "--version"
+        ]
+      },
+      {
+        "name": "pkgconf",
+        "version_args": [
+          "--version"
+        ]
+      },
+      {
+        "name": "xcodebuild",
+        "version_args": [
+          "-version"
+        ],
+        "note": "Install Xcode and its iOS platform"
+      }
+    ]
+  },
+  "publication": {
+    "public_binaries": false,
+    "reason": "The app is compiled from the SpaghettiKart decompilation; public releases are source only."
+  }
+}
