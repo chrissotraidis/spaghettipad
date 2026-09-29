@@ -23,8 +23,9 @@ for command in cmake git; do
         fail "required command is unavailable: $command"
 done
 
-SPAGHETTIPAD_VERSION="${SPAGHETTIPAD_VERSION:-0.1.0}"
-SPAGHETTIPAD_BUILD_NUMBER="${SPAGHETTIPAD_BUILD_NUMBER:-6}"
+# One version for the app, its release and PadForge: version.json.
+SPAGHETTIPAD_VERSION="${SPAGHETTIPAD_VERSION:-$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["version"])' "$ROOT/version.json")}"
+SPAGHETTIPAD_BUILD_NUMBER="${SPAGHETTIPAD_BUILD_NUMBER:-$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["build"])' "$ROOT/version.json")}"
 [[ "$SPAGHETTIPAD_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] ||
     fail "SPAGHETTIPAD_VERSION must use numeric major.minor.patch form"
 [[ "$SPAGHETTIPAD_BUILD_NUMBER" =~ ^[1-9][0-9]*$ ]] ||

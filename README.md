@@ -101,6 +101,7 @@ downloaded, mirrored, or redistributed by this project.
 
 | Option | Status | What to do |
 |---|---|---|
+| Make your own IPA with PadForge | **Available** | On a Mac, [PadForge](https://github.com/chrissotraidis/padforge/releases/latest) builds SpaghettiPad from this repository's latest release and saves an unsigned IPA; install it with AltStore Classic, SideStore or Sideloadly. See [Get started](#get-started). |
 | Local iPhone/iPad build | **Available now** | Build and sign with your own Apple development team by following [Build from source](docs/BUILDING.md). |
 | Simulator | **Available now** | Use it for development and UI testing. It cannot replace physical-device acceptance. |
 | App Store / TestFlight | **Not announced** | No App Store listing or public TestFlight exists. |
@@ -122,6 +123,21 @@ sustained multiplayer performance, a complete touch-only Grand Prix, and a
 complete tilt-driven Grand Prix remain explicit validation gates.
 
 ## Get started
+
+**The easy way:** on a Mac with Xcode, install the build libraries once:
+
+```sh
+brew install cmake ninja pkgconf sdl2 glew nlohmann-json libpng libzip \
+  tinyxml2 libogg libvorbis opus opusfile sdl2_net ripgrep
+```
+
+then download [PadForge](https://github.com/chrissotraidis/padforge/releases/latest), unzip it,
+double-click `PadForge.command` and choose SpaghettiPad. PadForge builds the app from this
+repository's latest release and saves an unsigned IPA in the folder you choose. Install it with your
+sideloading tool, then choose your ROM in the app (see [First launch](#first-launch)). Releases
+publish no app: the app is compiled from the SpaghettiKart decompilation, so you make your own.
+
+**By hand:**
 
 You need:
 
