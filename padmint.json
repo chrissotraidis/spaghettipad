@@ -91,6 +91,13 @@
           "-version"
         ],
         "note": "Install Xcode and its iOS platform"
+      },
+      {
+        "name": "rg",
+        "version_args": [
+          "--version"
+        ],
+        "note": "ripgrep, used by the packaging checks: brew install ripgrep"
       }
     ]
   },
