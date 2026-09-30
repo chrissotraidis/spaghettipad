@@ -101,7 +101,7 @@ downloaded, mirrored, or redistributed by this project.
 
 | Option | Status | What to do |
 |---|---|---|
-| Make your own IPA with PadForge | **Available** | On a Mac, [PadForge](https://github.com/chrissotraidis/padforge/releases/latest) builds SpaghettiPad from this repository's latest release and saves an unsigned IPA; install it with AltStore Classic, SideStore or Sideloadly. See [Get started](#get-started). |
+| Make your own IPA with PadMint | **Available** | On a Mac, [PadMint](https://github.com/chrissotraidis/padmint/releases/latest) builds SpaghettiPad from this repository's latest release and saves an unsigned IPA; install it with AltStore Classic, SideStore or Sideloadly. See [Get started](#get-started). |
 | Local iPhone/iPad build | **Available now** | Build and sign with your own Apple development team by following [Build from source](docs/BUILDING.md). |
 | Simulator | **Available now** | Use it for development and UI testing. It cannot replace physical-device acceptance. |
 | App Store / TestFlight | **Not announced** | No App Store listing or public TestFlight exists. |
@@ -131,8 +131,8 @@ brew install cmake ninja pkgconf sdl2 glew nlohmann-json libpng libzip \
   tinyxml2 libogg libvorbis opus opusfile sdl2_net ripgrep
 ```
 
-then download [PadForge](https://github.com/chrissotraidis/padforge/releases/latest), unzip it,
-double-click `PadForge.command` and choose SpaghettiPad. PadForge builds the app from this
+then download [PadMint](https://github.com/chrissotraidis/padmint/releases/latest), unzip it,
+double-click `PadMint.command` and choose SpaghettiPad. PadMint builds the app from this
 repository's latest release and saves an unsigned IPA in the folder you choose. Install it with your
 sideloading tool, then choose your ROM in the app (see [First launch](#first-launch)). Releases
 publish no app: the app is compiled from the SpaghettiKart decompilation, so you make your own.
@@ -397,7 +397,7 @@ distribute a maintainer development profile.
 <details>
 <summary><strong>Where is the IPA?</strong></summary>
 
-There is no public IPA: SpaghettiPad is compiled from the SpaghettiKart decompilation, so PadForge builds your own on an Apple Silicon Mac. See [Get started](#get-started).
+There is no public IPA: SpaghettiPad is compiled from the SpaghettiKart decompilation, so PadMint builds your own on an Apple Silicon Mac. See [Get started](#get-started).
 </details>
 
 <details>
