@@ -23,7 +23,7 @@ for command in cmake git; do
         fail "required command is unavailable: $command"
 done
 
-# One version for the app, its release and PadForge: version.json.
+# One version for the app, its release and PadMint: version.json.
 SPAGHETTIPAD_VERSION="${SPAGHETTIPAD_VERSION:-$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["version"])' "$ROOT/version.json")}"
 SPAGHETTIPAD_BUILD_NUMBER="${SPAGHETTIPAD_BUILD_NUMBER:-$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["build"])' "$ROOT/version.json")}"
 [[ "$SPAGHETTIPAD_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] ||
