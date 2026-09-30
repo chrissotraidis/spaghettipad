@@ -133,7 +133,7 @@ brew install cmake ninja pkgconf sdl2 glew nlohmann-json libpng libzip \
 
 then download [PadMint](https://github.com/chrissotraidis/padmint/releases/latest), unzip it,
 double-click `PadMint.command` and choose SpaghettiPad. PadMint builds the app from this
-repository's latest release and saves an unsigned IPA in the folder you choose. Install it with your
+repository's latest release and saves an unsigned IPA in your Downloads folder. Install it with your
 sideloading tool, then choose your ROM in the app (see [First launch](#first-launch)). Releases
 publish no app: the app is compiled from the SpaghettiKart decompilation, so you make your own.
 
