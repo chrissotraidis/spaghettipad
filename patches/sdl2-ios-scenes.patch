@@ -1,0 +1,153 @@
+--- a/src/video/uikit/SDL_uikitappdelegate.h
++++ b/src/video/uikit/SDL_uikitappdelegate.h
+@@ -35,6 +35,7 @@
+ + (NSString *)getAppDelegateClassName;
+ 
+ - (void)hideLaunchScreen;
++- (BOOL)startSDLForScene:(UIWindowScene *)scene API_AVAILABLE(ios(13.0), tvos(13.0));
+ 
+ /* This property is marked as optional, and is only intended to be used when
+  * the app's UI is storyboard-based. SDL is not storyboard-based, however
+@@ -44,4 +45,9 @@
+ 
+ @end
+ 
++/* SpaghettiPad backport: a single application scene owns SDL startup. */
++API_AVAILABLE(ios(13.0), tvos(13.0))
++@interface SDLUIKitSceneDelegate : NSObject<UIWindowSceneDelegate>
++@end
++
+ /* vi: set ts=4 sw=4 expandtab: */
+--- a/src/video/uikit/SDL_uikitappdelegate.m
++++ b/src/video/uikit/SDL_uikitappdelegate.m
+@@ -412,6 +412,30 @@
+ 
+ - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
+ {
++    /* Scene-enabled apps start only after UIKit connects their application scene. */
++    if ([[NSBundle mainBundle] objectForInfoDictionaryKey:@"UIApplicationSceneManifest"]) {
++        return YES;
++    }
++    return [self startSDLForScene:nil];
++}
++
++- (UISceneConfiguration *)application:(UIApplication *)application configurationForConnectingSceneSession:(UISceneSession *)session options:(UISceneConnectionOptions *)options
++{
++    UISceneConfiguration *config = [[UISceneConfiguration alloc] initWithName:@"SDLSceneConfiguration" sessionRole:session.role];
++    if ([session.role isEqualToString:UIWindowSceneSessionRoleApplication]) {
++        config.delegateClass = [SDLUIKitSceneDelegate class];
++    }
++    return config;
++}
++
++- (BOOL)startSDLForScene:(UIWindowScene *)scene
++{
++    /* External displays and reconnects must never call SDL_main a second time. */
++    static BOOL started = NO;
++    if (started) {
++        return YES;
++    }
++    started = YES;
+     NSBundle *bundle = [NSBundle mainBundle];
+ 
+ #ifdef SDL_IPHONE_LAUNCHSCREEN
+@@ -448,7 +472,11 @@
+     }
+ 
+     if (vc.view) {
+-        launchWindow = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
++        launchWindow = scene ? [[UIWindow alloc] initWithWindowScene:scene]
++                             : [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
++        if (scene) {
++            launchWindow.frame = scene.coordinateSpace.bounds;
++        }
+ 
+         /* We don't want the launch window immediately hidden when a real SDL
+          * window is shown - we fade it out ourselves when we're ready. */
+@@ -527,6 +555,32 @@
+ 
+ @end
+ 
++/* SpaghettiPad backport. SDL's existing notification observer continues to
++ * deliver application foreground/background, memory and termination events. */
++@implementation SDLUIKitSceneDelegate
++
++- (void)scene:(UIScene *)scene willConnectToSession:(UISceneSession *)session options:(UISceneConnectionOptions *)options
++{
++    if (![scene isKindOfClass:[UIWindowScene class]] ||
++        ![session.role isEqualToString:UIWindowSceneSessionRoleApplication]) {
++        return;
++    }
++    SDLUIKitDelegate *delegate = [SDLUIKitDelegate sharedAppDelegate];
++    [delegate startSDLForScene:(UIWindowScene *)scene];
++    for (UIOpenURLContext *context in options.URLContexts) {
++        [delegate sendDropFileForURL:context.URL];
++    }
++}
++
++- (void)scene:(UIScene *)scene openURLContexts:(NSSet<UIOpenURLContext *> *)contexts
++{
++    for (UIOpenURLContext *context in contexts) {
++        [[SDLUIKitDelegate sharedAppDelegate] sendDropFileForURL:context.URL];
++    }
++}
++
++@end
++
+ #endif /* SDL_VIDEO_DRIVER_UIKIT */
+ 
+ /* vi: set ts=4 sw=4 expandtab: */
+--- a/src/video/uikit/SDL_uikitwindow.m
++++ b/src/video/uikit/SDL_uikitwindow.m
+@@ -207,7 +207,24 @@
+ 
+         /* ignore the size user requested, and make a fullscreen window */
+         /* !!! FIXME: can we have a smaller view? */
+-        uiwindow = [[SDL_uikitwindow alloc] initWithFrame:data.uiscreen.bounds];
++        /* SpaghettiPad backport: attach SDL's real window to the connected scene. */
++        UIWindowScene *windowScene = nil;
++        if (@available(iOS 13.0, tvOS 13.0, *)) {
++            for (UIScene *scene in [UIApplication sharedApplication].connectedScenes) {
++                if ([scene isKindOfClass:[UIWindowScene class]] &&
++                    [(UIWindowScene *)scene screen] == data.uiscreen &&
++                    [scene.session.role isEqualToString:UIWindowSceneSessionRoleApplication]) {
++                    windowScene = (UIWindowScene *)scene;
++                    break;
++                }
++            }
++        }
++        if (windowScene) {
++            uiwindow = [[SDL_uikitwindow alloc] initWithWindowScene:windowScene];
++            uiwindow.frame = windowScene.coordinateSpace.bounds;
++        } else {
++            uiwindow = [[SDL_uikitwindow alloc] initWithFrame:data.uiscreen.bounds];
++        }
+ 
+         /* put the window on an external display if appropriate. */
+         if (data.uiscreen != [UIScreen mainScreen]) {
+--- a/src/video/uikit/SDL_uikitmessagebox.m
++++ b/src/video/uikit/SDL_uikitmessagebox.m
+@@ -99,7 +99,22 @@
+     }
+ 
+     if (window == nil || window.rootViewController == nil) {
+-        alertwindow = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
++        /* SpaghettiPad backport: first-run alerts also need an application scene. */
++        UIWindowScene *windowScene = nil;
++        if (@available(iOS 13.0, tvOS 13.0, *)) {
++            for (UIScene *scene in [UIApplication sharedApplication].connectedScenes) {
++                if ([scene isKindOfClass:[UIWindowScene class]] &&
++                    [scene.session.role isEqualToString:UIWindowSceneSessionRoleApplication]) {
++                    windowScene = (UIWindowScene *)scene;
++                    break;
++                }
++            }
++        }
++        alertwindow = windowScene ? [[UIWindow alloc] initWithWindowScene:windowScene]
++                                  : [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
++        if (windowScene) {
++            alertwindow.frame = windowScene.coordinateSpace.bounds;
++        }
+         alertwindow.rootViewController = [UIViewController new];
+         alertwindow.windowLevel = UIWindowLevelAlert;
+ 
