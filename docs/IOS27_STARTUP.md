@@ -50,9 +50,12 @@ the engine's SDL2 API. The app audit verifies the manifest and linked delegate.
 - The clean rebuilt app also displays the first-run prompt on the physical iPad.
   Every diagnostic app uses a separate bundle ID. Production app and saves were
   preserved. Private inputs, apps, signing material and device logs stay local.
-- The proposed shared PadMint check rejects the original IPA and accepts the
-  rebuilt IPA using the executable's actual linked SDK/platform. These static
-  checks do not establish gameplay or runtime compatibility.
+- The shared PadMint check records the executable's actual linked SDK/platform
+  and conservative scene evidence. The original IPA is unverified and receives
+  an SDK 27 warning; the rebuilt IPA declares scene startup. Missing evidence is
+  not a blanket rejection because callbacks may be inherited or stripped. These
+  static checks do not establish gameplay or runtime compatibility. PadMint
+  PR #73 is merged, with 205 local tests and Windows/Linux CI passing.
 
 ## Follow-up: black image isolated and corrected
 
@@ -78,12 +81,51 @@ same engine and private archive:
   `0038888111a363324fbbbf547e647a3879cdd56a95b1ae2751e433478d40d8e6`.
   Applying the combined patch twice to pristine SDL inputs passes.
 
-## Remaining gate
+## Final artifact and hardware regression
 
-Keep the release draft until the final rebuilt artifact passes physical-device
-regression and interactive acceptance. The black-image blocker is corrected in
-the relink experiment; animated attract rendering does not establish interactive
-gameplay, audio, controller acceptance or reporter acceptance. The iPhone test
-predates the orientation addition, so the final patch still needs that older-OS
-regression. Existing appearance-transition warnings remain. The public release
-tag still supplies the old startup code; a newer PadMint alone cannot repair it.
+The final version is 0.2.1 build 8, compiled with Xcode 27.0 (27A266a), SDK
+27.0, minimum iOS 15.0. The full unsigned arm64 build, app audit, package audit,
+controller ownership regression and repository safety checks pass. Final
+unsigned executable SHA-256:
+`5d7316a6402e554f26f7c3c383f17d0f8e822a30bb9c279c18be237ab0b2a91e`.
+Final local unsigned IPA SHA-256:
+`a6fdc0b22e671a4b11de72209665cdb47e421c41b030f198b69f08b76f995dea`.
+These hashes identify private validation artifacts, not public downloads.
+
+The exact unsigned IPA was unpacked and temporarily signed under a separate
+diagnostic bundle ID, with its executable and actual SDK stamp unchanged:
+
+- Physical M2 iPad Pro, iPadOS 27.0 (24A437): animated intro and attract rendering;
+  touch Start/A navigation through single-player Grand Prix, character and cup
+  selection; Luigi Raceway loads and continues rendering with HUD and AI racers
+  for more than 17 minutes. Backgrounding to the Home screen and reopening the
+  app resumes the same rendered race.
+- Physical iPhone 14, iOS 26.6.2 (23G90): the same final artifact launches and
+  renders the animated attract sequence, confirming the older-OS rendering
+  regression check.
+- A 71-second iPad capture contains non-silent 48 kHz AAC audio. This establishes
+  digital audio output, not physical-speaker listening or sound-quality acceptance.
+
+The diagnostic containers' Documents and Library were backed up before in-place
+updates. Production app containers were not replaced or cleared. Game inputs,
+recordings, device evidence, signing material and apps remain local.
+
+This fixes the reproduced SDK 27 launch assertion and black game image. Full
+race completion, physical controllers, speaker listening and the reporter's
+own device confirmation remain separate acceptance checks. The attempted XCTest
+UI driver required device-side automation approval and did not pass; physical
+menu/race navigation was verified through the native device mirror instead.
+
+## Delivery
+
+The fix belongs in SpaghettiPad's pinned SDL integration; no SDK downgrade or
+PadMint game-specific workaround is required. PadMint PR #73 adds a shared
+linked-SDK and scene-evidence check, but that static check cannot repair an
+already-built IPA or replace runtime testing. It is merged in PadMint source;
+its next normal PadMint release will distribute the check.
+
+PadMint builds this project's latest public release. A source-only 0.2.1 release
+is therefore required before the default PadMint selection receives this fix.
+The existing public 0.2.0 release still supplies the old startup code. Existing
+installed IPAs must be rebuilt and re-signed. No compiled app or game data should
+be published; the recipe retains `public_binaries: false`.

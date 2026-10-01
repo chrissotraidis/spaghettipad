@@ -99,6 +99,12 @@ downloaded, mirrored, or redistributed by this project.
 
 ## Install status
 
+Version 0.2.1 fixes the SDK 27 launch crash and black game image by updating
+SDL's scene startup and orientation handling. The final build was checked on
+physical iPadOS 27 and iOS 26.6.2 devices. Existing IPAs need a rebuild; see the
+[SDK 27 investigation and validation](docs/IOS27_STARTUP.md). PadMint selects the
+latest public release, so check that it selects 0.2.1 before rebuilding.
+
 | Option | Status | What to do |
 |---|---|---|
 | Make your own IPA with PadMint | **Available** | On a Mac, [PadMint](https://github.com/chrissotraidis/padmint/releases/latest) builds SpaghettiPad from this repository's latest release and saves an unsigned IPA; install it with AltStore Classic, SideStore or Sideloadly. See [Get started](#get-started). |
