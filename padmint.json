@@ -68,7 +68,7 @@
         ],
         "min_version": "3.24",
         "player": true,
-        "note": "Install CMake 3.24 or newer: brew install cmake"
+        "note": "Install CMake 3.24 or newer: brew install cmake. The native Mac oracle build also needs the host libraries listed in the pkgconf setup note."
       },
       {
         "name": "ninja",
@@ -90,7 +90,7 @@
           "--version"
         ],
         "player": true,
-        "note": "Install pkgconf: brew install pkgconf (see README for the full Homebrew list)"
+        "note": "Native Mac oracle setup: brew install pkgconf sdl2 glew libzip nlohmann-json tinyxml2 libogg libvorbis. This check verifies pkgconf only, not library readiness."
       },
       {
         "name": "xcodebuild",
