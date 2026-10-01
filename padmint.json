@@ -65,13 +65,18 @@
         "name": "cmake",
         "version_args": [
           "--version"
-        ]
+        ],
+        "min_version": "3.24",
+        "player": true,
+        "note": "Install CMake 3.24 or newer: brew install cmake"
       },
       {
         "name": "ninja",
         "version_args": [
           "--version"
-        ]
+        ],
+        "player": true,
+        "note": "Install Ninja: brew install ninja"
       },
       {
         "name": "python3",
@@ -83,14 +88,17 @@
         "name": "pkgconf",
         "version_args": [
           "--version"
-        ]
+        ],
+        "player": true,
+        "note": "Install pkgconf: brew install pkgconf (see README for the full Homebrew list)"
       },
       {
         "name": "xcodebuild",
         "version_args": [
           "-version"
         ],
-        "note": "Install Xcode and its iOS platform"
+        "player": true,
+        "note": "Install full Xcode and its iOS platform (Command Line Tools alone are not enough). Complete first-launch setup, then select Xcode in Xcode > Settings > Locations > Command Line Tools."
       },
       {
         "name": "rg",
