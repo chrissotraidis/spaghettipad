@@ -116,6 +116,7 @@
         "version_args": [
           "--version"
         ],
+        "player": true,
         "note": "ripgrep, used by the packaging checks: brew install ripgrep"
       }
     ]
