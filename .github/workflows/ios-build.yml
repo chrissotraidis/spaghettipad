@@ -27,6 +27,9 @@ jobs:
       - name: Run controller ownership regression
         run: scripts/test-controller-reconnect.sh
 
+      - name: Verify build job limits and early rejection
+        run: python3 scripts/test-build-jobs.py
+
       - name: Check assets, history, scripts, patches, and docs
         run: scripts/check-repo-safety.sh
 
