@@ -97,6 +97,9 @@ scripts/package-ios.sh
 ```
 
 This default command requires an unsigned app and refuses signed input.
+The result is a personal-use build, not a cleared public download. Removing
+the ROM and signing does not remove compiled game code. Hosted CI runs the
+build, packaging and signing-rejection checks but does not upload this IPA.
 Maintainers may explicitly require a valid signature and embedded profile
 when packaging a locally signed app:
 

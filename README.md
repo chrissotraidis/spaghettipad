@@ -342,7 +342,7 @@ experiment pending its own hardware evidence.
 | Controllers | Engine-managed SDL2 stale-handle reconciliation and stable four-port ownership pass deterministic regression tests; physical Bluetooth, wired, natural-sleep, mapping, and multiplayer sessions remain |
 | Tilt | The persisted motion-to-stick path, recentering, touch priority, and foreground recalibration pass Simulator tests; physical feel and a tilt GP remain |
 | Packaging | Preview 6 is version 0.1.0 build 6 and packages as a deterministic, audited, ROM-free unsigned IPA with SHA-256 `a746fafe4dac460c5427acb81a361eb5f560df45a0550cd39f4a545977c4c0bb` |
-| CI | Repository safety and the ROM-free unsigned iPhoneOS build/package workflow pass on hosted GitHub Actions |
+| CI | Hosted checks compile and package the unsigned iPhoneOS app without uploading the personal-use IPA; ROM-free does not mean cleared for publication |
 
 The project deliberately keeps build, Simulator, process, and physical-device
 evidence separate. The [remaining-work ledger](docs/remaining-work.md) records

@@ -30,6 +30,9 @@ jobs:
       - name: Verify build job limits and early rejection
         run: python3 scripts/test-build-jobs.py
 
+      - name: Keep personal app packages off public CI downloads
+        run: python3 scripts/test-workflow-containment.py
+
       - name: Check assets, history, scripts, patches, and docs
         run: scripts/check-repo-safety.sh
 
@@ -74,21 +77,5 @@ jobs:
             exit 1
           fi
 
-      - name: Publish artifact hash
-        run: |
-          shasum -a 256 artifacts/*.ipa | tee ipa-sha256.txt
-          {
-            echo '### Unsigned ROM-free IPA'
-            echo '```text'
-            cat ipa-sha256.txt
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Upload unsigned proof artifact
-        uses: actions/upload-artifact@v6
-        with:
-          name: SpaghettiPad-unsigned-ipa
-          path: |
-            artifacts/*.ipa
-            ipa-sha256.txt
-          if-no-files-found: error
+      # The full app contains compiled game code even without a ROM. Compile
+      # and package checks stay on the runner; do not upload the personal IPA.
