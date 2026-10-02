@@ -63,7 +63,7 @@ def main():
             parser.error("output must be outside source and toolchain directories")
     output.mkdir(parents=True, exist_ok=True)
     build = Path(tempfile.mkdtemp(prefix="attempt-", dir=output))
-    base = [x.format(**roots) for x in spec["arguments"]]
+    base = [x.format(**roots, engine_commit=head) for x in spec["arguments"]]
 
     def compile_one(name):
         command = base.copy()

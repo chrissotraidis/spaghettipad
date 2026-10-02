@@ -81,7 +81,7 @@
     "-D_USE_MATH_DEFINES",
     "-I",
     "{imgui}/backends",
-    "-DSPAGHETTI_VERSION=\"Unknown\"",
+    "-DSPAGHETTI_VERSION=\"module-{engine_commit}\"",
     "-DCVAR_VSYNC_ENABLED=\"gVsyncEnabled\"",
     "-DCVAR_Z_FIGHTING_MODE=\"gZFightingMode\"",
     "-DCVAR_INTERNAL_RESOLUTION=\"gInternalResolution\"",

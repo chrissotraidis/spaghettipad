@@ -91,6 +91,8 @@ phone storage requirements or complete player IPA generation.
 Compilation and linking use response files so paths with spaces and large object
 lists do not depend on shell quoting or host command-line length limits. Each
 attempt retains commands, dependency files and diagnostics in its own directory.
+The module's startup version identifies the exact verified engine commit as
+`module-<commit>`, so logs can be matched to the compiler's provenance report.
 Only a successful complete link atomically replaces `SpaghettiGame.dylib`;
 compilation/link failures preserve an existing module. Output is unsigned private
 experimental code. Link metadata naming iOS 15 does not prove iOS 15 runtime API
