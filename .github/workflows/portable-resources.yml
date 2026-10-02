@@ -11,6 +11,8 @@ jobs:
         os: [windows-latest, ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
+      - name: Preserve pinned source bytes on Windows
+        run: git config --global core.autocrlf false
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
