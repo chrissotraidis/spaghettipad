@@ -40,9 +40,12 @@ class AssemblyTests(unittest.TestCase):
         self.assertEqual((self.output / 'SpaghettiPad').read_bytes(), b'synthetic runtime')
 
     def test_wrong_platform_type_and_missing_exports_are_rejected(self):
-        report = 'MachHeader {\nFormat: Mach-O arm64\nArch: aarch64\nFileType: DynamicLibrary (0x6)\nPlatform: ios\nVersion: 15.0\n'
+        report = 'MachHeader {\nFormat: Mach-O arm64\nArch: aarch64\nFileType: DynamicLibrary (0x6)\n}\nMinVersion {\nPlatform: ios\nVersion: 15.0\n}\n'
+        with mock.patch.object(assembly.subprocess, 'check_output', return_value=report):
+            assembly.inspect_binary(self.module, 'DynamicLibrary', 'readobj')
         for bad in (report.replace('ios', 'iossimulator'), report.replace('DynamicLibrary', 'Executable'),
-                    report.replace('15.0', '15.1'), report + report):
+                    report.replace('15.0', '15.1'), report + report,
+                    report + 'MinVersion {\nPlatform: iossimulator\nVersion: 15.0\n}\n'):
             with self.subTest(report=bad), mock.patch.object(assembly.subprocess, 'check_output', return_value=bad):
                 with self.assertRaises(ValueError):
                     assembly.inspect_binary(self.module, 'DynamicLibrary', 'readobj')

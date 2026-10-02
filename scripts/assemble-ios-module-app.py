@@ -17,7 +17,7 @@ def inspect_binary(path, file_type, readobj):
     report = subprocess.check_output([str(readobj), '--file-headers', '--macho-version-min', str(path)], text=True)
     required = ('Format: Mach-O arm64', 'Arch: aarch64', 'FileType: ' + file_type,
                 'Platform: ios', 'Version: 15.0')
-    if report.count('MachHeader {') != 1 or any(
+    if report.count('MachHeader {') != 1 or report.count('MinVersion {') != 1 or any(
             not re.search(r'^\s*' + re.escape(line) + r'(?:\s|$)', report, re.M) for line in required):
         raise ValueError(f'{path.name} must be a thin arm64 iOS 15.0 {file_type}')
 
