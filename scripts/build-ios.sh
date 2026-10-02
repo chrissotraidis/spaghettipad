@@ -4,6 +4,12 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 MODE="${1:---device}"
+BUILD_VARIANT=""
+case "${SPAGHETTIPAD_RUNTIME_ONLY:-OFF}" in
+    OFF) ;;
+    ON) BUILD_VARIANT="-runtime" ;;
+    *) echo "SPAGHETTIPAD_RUNTIME_ONLY must be ON or OFF" >&2; exit 2 ;;
+esac
 
 case "$MODE" in
     --device)
@@ -25,10 +31,10 @@ python3 "$ROOT/scripts/build-port-archive.py" "$ROOT/sources/spaghettikart/asset
     "${SPAGHETTIPAD_PORT_ARCHIVE:-$ROOT/build-oracle/spaghetti.o2r}"
 
 if [ "$MODE" = "simulator" ]; then
-    BUILD_DIR="${SPAGHETTIPAD_SIM_BUILD_DIR:-$ROOT/build-ios-sim}"
+    BUILD_DIR="${SPAGHETTIPAD_SIM_BUILD_DIR:-$ROOT/build-ios${BUILD_VARIANT}-sim}"
     "$ROOT/scripts/configure-ios.sh" --simulator
 else
-    BUILD_DIR="${SPAGHETTIPAD_IOS_BUILD_DIR:-$ROOT/build-ios}"
+    BUILD_DIR="${SPAGHETTIPAD_IOS_BUILD_DIR:-$ROOT/build-ios${BUILD_VARIANT}}"
     "$ROOT/scripts/configure-ios.sh"
 fi
 

@@ -2,7 +2,7 @@
   "repositories": {
     "source": {
       "url": "https://github.com/chrissotraidis/SpaghettiKart.git",
-      "commit": "da490badb8f3a0040c825c3014979206b4df4b65"
+      "commit": "6ac5b59439444226b12aa9528440dee5ad09632b"
     },
     "runtime": {
       "url": "https://github.com/chrissotraidis/libultraship.git",

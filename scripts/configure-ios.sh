@@ -6,11 +6,19 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 SOURCE_DIR="$ROOT/sources/spaghettikart"
 PORT_ARCHIVE="${SPAGHETTIPAD_PORT_ARCHIVE:-$ROOT/build-oracle/spaghetti.o2r}"
 MODE="device"
+RUNTIME_ONLY="${SPAGHETTIPAD_RUNTIME_ONLY:-OFF}"
+BUILD_VARIANT=""
 
 fail() {
     echo "iOS configure failed: $*" >&2
     exit 1
 }
+
+case "$RUNTIME_ONLY" in
+    OFF) ;;
+    ON) BUILD_VARIANT="-runtime" ;;
+    *) fail "SPAGHETTIPAD_RUNTIME_ONLY must be ON or OFF" ;;
+esac
 
 if [ "${1:-}" = "--simulator" ]; then
     MODE="simulator"
@@ -39,11 +47,11 @@ SPAGHETTIPAD_BUILD_NUMBER="${SPAGHETTIPAD_BUILD_NUMBER:-$(python3 -c 'import jso
 python3 "$ROOT/scripts/check-source-pins.py"
 
 if [ "$MODE" = "simulator" ]; then
-    BUILD_DIR="${SPAGHETTIPAD_SIM_BUILD_DIR:-$ROOT/build-ios-sim}"
+    BUILD_DIR="${SPAGHETTIPAD_SIM_BUILD_DIR:-$ROOT/build-ios${BUILD_VARIANT}-sim}"
     PLATFORM="SIMULATORARM64"
     SDK="iphonesimulator"
 else
-    BUILD_DIR="${SPAGHETTIPAD_IOS_BUILD_DIR:-$ROOT/build-ios}"
+    BUILD_DIR="${SPAGHETTIPAD_IOS_BUILD_DIR:-$ROOT/build-ios${BUILD_VARIANT}}"
     PLATFORM="OS64"
     SDK="iphoneos"
 fi
@@ -60,6 +68,7 @@ cmake -S "$SOURCE_DIR" -B "$BUILD_DIR" -GXcode \
     -DDEPLOYMENT_TARGET=15.0 \
     -DPLATFORM="$PLATFORM" \
     -DENABLE_SCRIPTING=OFF \
+    -DSPAGHETTIPAD_RUNTIME_ONLY="$RUNTIME_ONLY" \
     -DSPAGHETTIPAD_SHELL_DIR="$ROOT/ios" \
     -DSPAGHETTIPAD_PORT_ARCHIVE="$PORT_ARCHIVE" \
     -DSPAGHETTIPAD_VERSION="$SPAGHETTIPAD_VERSION" \

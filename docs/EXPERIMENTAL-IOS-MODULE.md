@@ -89,3 +89,25 @@ Only a successful complete link atomically replaces `SpaghettiGame.dylib`;
 compilation/link failures preserve an existing module. Output is unsigned private
 experimental code. Link metadata naming iOS 15 does not prove iOS 15 runtime API
 availability or gameplay.
+
+## Experimental runtime host (Mac)
+
+The maintained engine has an opt-in runtime build using the same pinned
+libultraship/Torch dependencies and app resources:
+
+```sh
+SPAGHETTIPAD_RUNTIME_ONLY=ON scripts/build-ios.sh --device
+```
+
+Its default output is `build-ios-runtime/Release-iphoneos/SpaghettiPad.app`,
+separate from the normal monolithic build. The normal mode remains the default.
+The runtime links the iOS shell and `SpaghettiPadGameLoader.mm` instead of game
+translation units. It exposes the reviewed APIs in `ios/runtime-exports.txt`
+using explicit archive roots, and loads `Frameworks/SpaghettiGame.dylib` with
+immediate symbol resolution. Missing/incompatible modules produce a startup error.
+
+This runtime app alone cannot play a game. Module insertion, complete bundle
+signing and actual device loading are still required. The dedicated CI checks the
+runtime build, existing app audit and required exports without publishing an app.
+Passing those checks does not establish module loading or gameplay. Do not replace
+normal player instructions or distribute a runtime on this evidence alone.

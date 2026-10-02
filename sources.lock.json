@@ -3,7 +3,7 @@
     {
       "path": "sources/spaghettikart",
       "repository": "https://github.com/chrissotraidis/SpaghettiKart.git",
-      "commit": "da490badb8f3a0040c825c3014979206b4df4b65",
+      "commit": "6ac5b59439444226b12aa9528440dee5ad09632b",
       "upstream": "https://github.com/HarbourMasters/SpaghettiKart",
       "base": "5b28472d477bab101dee2a0f469fe2aee2c58a01"
     },
