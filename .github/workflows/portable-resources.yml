@@ -22,11 +22,17 @@ jobs:
           python-version: '3.11'
       - run: python -B -m unittest discover -s tests -p test_port_archive.py -v
       - run: python -B -m unittest discover -s tests -p test_package_ios.py -v
+      - name: Read maintained engine pin
+        id: engine
+        run: >-
+          python -c "import json, os;
+          pin = next(c['commit'] for c in json.load(open('sources.lock.json'))['components'] if c['path'] == 'sources/spaghettikart');
+          open(os.environ['GITHUB_OUTPUT'], 'a').write('commit=' + pin + '\n')"
       - name: Fetch exact maintained resource source
         uses: actions/checkout@v4
         with:
           repository: chrissotraidis/SpaghettiKart
-          ref: d545ba9ca6a22ca73a328893f6b9e274f99853a2
+          ref: ${{ steps.engine.outputs.commit }}
           path: resource-source
           sparse-checkout: assets
           persist-credentials: false
