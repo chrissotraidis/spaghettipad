@@ -1,0 +1,269 @@
+--- a/src/video/uikit/SDL_uikitappdelegate.h
++++ b/src/video/uikit/SDL_uikitappdelegate.h
+@@ -35,6 +35,7 @@
+ + (NSString *)getAppDelegateClassName;
+ 
+ - (void)hideLaunchScreen;
++- (BOOL)startSDLForScene:(UIWindowScene *)scene API_AVAILABLE(ios(13.0), tvos(13.0));
+ 
+ /* This property is marked as optional, and is only intended to be used when
+  * the app's UI is storyboard-based. SDL is not storyboard-based, however
+@@ -44,4 +45,9 @@
+ 
+ @end
+ 
++/* SpaghettiPad backport: a single application scene owns SDL startup. */
++API_AVAILABLE(ios(13.0), tvos(13.0))
++@interface SDLUIKitSceneDelegate : NSObject<UIWindowSceneDelegate>
++@end
++
+ /* vi: set ts=4 sw=4 expandtab: */
+--- a/src/video/uikit/SDL_uikitappdelegate.m
++++ b/src/video/uikit/SDL_uikitappdelegate.m
+@@ -28,6 +28,7 @@
+ #include "SDL_main.h"
+ 
+ #import "SDL_uikitappdelegate.h"
++#import "SDL_uikitvideo.h"
+ #import "SDL_uikitmodes.h"
+ #import "SDL_uikitwindow.h"
+ 
+@@ -89,7 +90,7 @@
+ /* Load a launch image using the old UILaunchImageFile-era naming rules. */
+ static UIImage *SDL_LoadLaunchImageNamed(NSString *name, int screenh)
+ {
+-    UIInterfaceOrientation curorient = [UIApplication sharedApplication].statusBarOrientation;
++    UIInterfaceOrientation curorient = UIKit_GetInterfaceOrientation();
+     UIUserInterfaceIdiom idiom = [UIDevice currentDevice].userInterfaceIdiom;
+     UIImage *image = nil;
+ 
+@@ -219,7 +220,7 @@
+         int screenh = (int)([UIScreen mainScreen].bounds.size.height + 0.5);
+ 
+ #if !TARGET_OS_TV
+-        UIInterfaceOrientation curorient = [UIApplication sharedApplication].statusBarOrientation;
++        UIInterfaceOrientation curorient = UIKit_GetInterfaceOrientation();
+ 
+         /* We always want portrait-oriented size, to match UILaunchImageSize. */
+         if (screenw > screenh) {
+@@ -412,6 +413,30 @@
+ 
+ - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
+ {
++    /* Scene-enabled apps start only after UIKit connects their application scene. */
++    if ([[NSBundle mainBundle] objectForInfoDictionaryKey:@"UIApplicationSceneManifest"]) {
++        return YES;
++    }
++    return [self startSDLForScene:nil];
++}
++
++- (UISceneConfiguration *)application:(UIApplication *)application configurationForConnectingSceneSession:(UISceneSession *)session options:(UISceneConnectionOptions *)options
++{
++    UISceneConfiguration *config = [[UISceneConfiguration alloc] initWithName:@"SDLSceneConfiguration" sessionRole:session.role];
++    if ([session.role isEqualToString:UIWindowSceneSessionRoleApplication]) {
++        config.delegateClass = [SDLUIKitSceneDelegate class];
++    }
++    return config;
++}
++
++- (BOOL)startSDLForScene:(UIWindowScene *)scene
++{
++    /* External displays and reconnects must never call SDL_main a second time. */
++    static BOOL started = NO;
++    if (started) {
++        return YES;
++    }
++    started = YES;
+     NSBundle *bundle = [NSBundle mainBundle];
+ 
+ #ifdef SDL_IPHONE_LAUNCHSCREEN
+@@ -448,7 +473,11 @@
+     }
+ 
+     if (vc.view) {
+-        launchWindow = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
++        launchWindow = scene ? [[UIWindow alloc] initWithWindowScene:scene]
++                             : [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
++        if (scene) {
++            launchWindow.frame = scene.coordinateSpace.bounds;
++        }
+ 
+         /* We don't want the launch window immediately hidden when a real SDL
+          * window is shown - we fade it out ourselves when we're ready. */
+@@ -527,6 +556,43 @@
+ 
+ @end
+ 
++/* SpaghettiPad backport. SDL's existing notification observer continues to
++ * deliver application foreground/background, memory and termination events. */
++@implementation SDLUIKitSceneDelegate
++
++- (void)scene:(UIScene *)scene willConnectToSession:(UISceneSession *)session options:(UISceneConnectionOptions *)options
++{
++    if (![scene isKindOfClass:[UIWindowScene class]] ||
++        ![session.role isEqualToString:UIWindowSceneSessionRoleApplication]) {
++        return;
++    }
++    SDLUIKitDelegate *delegate = [SDLUIKitDelegate sharedAppDelegate];
++    [delegate startSDLForScene:(UIWindowScene *)scene];
++    for (UIOpenURLContext *context in options.URLContexts) {
++        [delegate sendDropFileForURL:context.URL];
++    }
++}
++
++#if !TARGET_OS_TV && __IPHONE_OS_VERSION_MAX_ALLOWED >= 270000
++- (void)windowScene:(UIWindowScene *)windowScene didUpdateEffectiveGeometry:(UIWindowSceneGeometry *)previousGeometry API_AVAILABLE(ios(26.0))
++{
++    if (@available(iOS 27.0, *)) {
++        if (windowScene.effectiveGeometry.interfaceOrientation != previousGeometry.interfaceOrientation) {
++            SDL_OnApplicationDidChangeStatusBarOrientation();
++        }
++    }
++}
++#endif
++
++- (void)scene:(UIScene *)scene openURLContexts:(NSSet<UIOpenURLContext *> *)contexts
++{
++    for (UIOpenURLContext *context in contexts) {
++        [[SDLUIKitDelegate sharedAppDelegate] sendDropFileForURL:context.URL];
++    }
++}
++
++@end
++
+ #endif /* SDL_VIDEO_DRIVER_UIKIT */
+ 
+ /* vi: set ts=4 sw=4 expandtab: */
+--- a/src/video/uikit/SDL_uikitwindow.m
++++ b/src/video/uikit/SDL_uikitwindow.m
+@@ -207,7 +207,24 @@
+ 
+         /* ignore the size user requested, and make a fullscreen window */
+         /* !!! FIXME: can we have a smaller view? */
+-        uiwindow = [[SDL_uikitwindow alloc] initWithFrame:data.uiscreen.bounds];
++        /* SpaghettiPad backport: attach SDL's real window to the connected scene. */
++        UIWindowScene *windowScene = nil;
++        if (@available(iOS 13.0, tvOS 13.0, *)) {
++            for (UIScene *scene in [UIApplication sharedApplication].connectedScenes) {
++                if ([scene isKindOfClass:[UIWindowScene class]] &&
++                    [(UIWindowScene *)scene screen] == data.uiscreen &&
++                    [scene.session.role isEqualToString:UIWindowSceneSessionRoleApplication]) {
++                    windowScene = (UIWindowScene *)scene;
++                    break;
++                }
++            }
++        }
++        if (windowScene) {
++            uiwindow = [[SDL_uikitwindow alloc] initWithWindowScene:windowScene];
++            uiwindow.frame = windowScene.coordinateSpace.bounds;
++        } else {
++            uiwindow = [[SDL_uikitwindow alloc] initWithFrame:data.uiscreen.bounds];
++        }
+ 
+         /* put the window on an external display if appropriate. */
+         if (data.uiscreen != [UIScreen mainScreen]) {
+--- a/src/video/uikit/SDL_uikitmessagebox.m
++++ b/src/video/uikit/SDL_uikitmessagebox.m
+@@ -99,7 +99,22 @@
+     }
+ 
+     if (window == nil || window.rootViewController == nil) {
+-        alertwindow = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
++        /* SpaghettiPad backport: first-run alerts also need an application scene. */
++        UIWindowScene *windowScene = nil;
++        if (@available(iOS 13.0, tvOS 13.0, *)) {
++            for (UIScene *scene in [UIApplication sharedApplication].connectedScenes) {
++                if ([scene isKindOfClass:[UIWindowScene class]] &&
++                    [scene.session.role isEqualToString:UIWindowSceneSessionRoleApplication]) {
++                    windowScene = (UIWindowScene *)scene;
++                    break;
++                }
++            }
++        }
++        alertwindow = windowScene ? [[UIWindow alloc] initWithWindowScene:windowScene]
++                                  : [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
++        if (windowScene) {
++            alertwindow.frame = windowScene.coordinateSpace.bounds;
++        }
+         alertwindow.rootViewController = [UIViewController new];
+         alertwindow.windowLevel = UIWindowLevelAlert;
+ 
+--- a/src/video/uikit/SDL_uikitvideo.h
++++ b/src/video/uikit/SDL_uikitvideo.h
+@@ -33,6 +33,11 @@
+ 
+ @end
+ 
++/* SpaghettiPad backport: SDK 27 requires scene-aware orientation. */
++#if !TARGET_OS_TV
++UIInterfaceOrientation UIKit_GetInterfaceOrientation(void);
++#endif
++
+ CGRect UIKit_ComputeViewFrame(SDL_Window *window, UIScreen *screen);
+ 
+ #endif /* __OBJC__ */
+--- a/src/video/uikit/SDL_uikitvideo.m
++++ b/src/video/uikit/SDL_uikitvideo.m
+@@ -194,6 +194,24 @@
+     return [[UIDevice currentDevice].systemVersion doubleValue] >= version;
+ }
+ 
++#if !TARGET_OS_TV
++/* SpaghettiPad backport, informed by SDL upstream 114aca1727c7. */
++UIInterfaceOrientation UIKit_GetInterfaceOrientation(void)
++{
++    for (UIScene *scene in [UIApplication sharedApplication].connectedScenes) {
++        if ([scene isKindOfClass:[UIWindowScene class]] && [scene.session.role isEqualToString:UIWindowSceneSessionRoleApplication]) {
++            UIWindowScene *windowScene=(UIWindowScene *)scene;
++#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 270000
++            if (@available(iOS 27.0, *)) return windowScene.effectiveGeometry.interfaceOrientation;
++#endif
++            return windowScene.interfaceOrientation;
++        }
++    }
++    return [UIApplication sharedApplication].statusBarOrientation;
++}
++
++#endif
++
+ CGRect UIKit_ComputeViewFrame(SDL_Window *window, UIScreen *screen)
+ {
+     SDL_WindowData *data = (__bridge SDL_WindowData *) window->driverdata;
+@@ -220,7 +238,7 @@
+      * https://bugzilla.libsdl.org/show_bug.cgi?id=3505
+      * https://bugzilla.libsdl.org/show_bug.cgi?id=3465
+      * https://forums.developer.apple.com/thread/65337 */
+-    orient = [UIApplication sharedApplication].statusBarOrientation;
++    orient = UIKit_GetInterfaceOrientation();
+     landscape = UIInterfaceOrientationIsLandscape(orient) ||
+                     !(UIKit_GetSupportedOrientations(window) & (UIInterfaceOrientationMaskPortrait | UIInterfaceOrientationMaskPortraitUpsideDown));
+     fullscreen = CGRectEqualToRect(screen.bounds, frame);
+--- a/src/video/uikit/SDL_uikitmodes.m
++++ b/src/video/uikit/SDL_uikitmodes.m
+@@ -355,7 +355,7 @@
+ {
+ #if !TARGET_OS_TV
+     if (uiscreen == [UIScreen mainScreen]) {
+-        return UIInterfaceOrientationIsLandscape([UIApplication sharedApplication].statusBarOrientation);
++        return UIInterfaceOrientationIsLandscape(UIKit_GetInterfaceOrientation());
+     } else
+ #endif /* !TARGET_OS_TV */
+     {
+@@ -525,7 +525,7 @@
+ #if !TARGET_OS_TV
+ void SDL_OnApplicationDidChangeStatusBarOrientation(void)
+ {
+-    BOOL isLandscape = UIInterfaceOrientationIsLandscape([UIApplication sharedApplication].statusBarOrientation);
++    BOOL isLandscape = UIInterfaceOrientationIsLandscape(UIKit_GetInterfaceOrientation());
+     SDL_VideoDisplay *display = SDL_GetDisplay(0);
+ 
+     if (display) {
+@@ -550,7 +550,7 @@
+             currentmode->h = height;
+         }
+ 
+-        switch ([UIApplication sharedApplication].statusBarOrientation) {
++        switch (UIKit_GetInterfaceOrientation()) {
+         case UIInterfaceOrientationPortrait:
+             orientation = SDL_ORIENTATION_PORTRAIT;
+             break;
