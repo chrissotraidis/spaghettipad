@@ -12,6 +12,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--padmint-source', type=Path, required=True)
     parser.add_argument('--work', type=Path, required=True)
+    parser.add_argument('--expected-host', required=True,
+                        choices=('windows-x86_64', 'linux-x86_64', 'windows-arm64', 'linux-arm64'))
     args = parser.parse_args()
     sys.path.insert(0, str(args.padmint_source.resolve()))
     from padmint import tools
@@ -20,8 +22,8 @@ def main():
     work.mkdir(parents=True, exist_ok=True)
     os.environ['PADMINT_HOME'] = str(work / 'padmint-home')
     host = host_id()
-    if host not in ('windows-x86_64', 'linux-x86_64'):
-        parser.error('this CI probe is for native Windows x64/Linux x64')
+    if host != args.expected_host:
+        parser.error(f'expected native {args.expected_host}, but Python reports {host}')
     names = ['llvm', 'libcxx', 'apple-libc', 'apple-xnu', 'apple-libpthread',
              'apple-libmalloc', 'apple-libplatform', 'apple-availability']
     tools.install(names, host)

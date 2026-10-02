@@ -15,13 +15,30 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        include:
+          - os: ubuntu-latest
+            host: linux-x86_64
+            architecture: x64
+            python: '3.11'
+          - os: windows-latest
+            host: windows-x86_64
+            architecture: x64
+            python: '3.11'
+          - os: ubuntu-24.04-arm
+            host: linux-arm64
+            architecture: arm64
+            python: '3.13'
+          - os: windows-11-arm
+            host: windows-arm64
+            architecture: arm64
+            python: '3.13'
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: ${{ matrix.python }}
+          architecture: ${{ matrix.architecture }}
       - name: Fetch pinned PadMint tool installer
         uses: actions/checkout@v4
         with:
@@ -32,5 +49,5 @@ jobs:
       - name: Compile and link the private module on the native host
         run: >-
           python scripts/ci-ios-game-module.py --padmint-source padmint-tools
-          --work "${{ runner.temp }}/module probe"
+          --work "${{ runner.temp }}/module probe" --expected-host "${{ matrix.host }}"
       # This is compile/link evidence, not device acceptance. Do not upload binaries.

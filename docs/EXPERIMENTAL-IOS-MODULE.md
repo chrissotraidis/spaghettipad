@@ -83,6 +83,11 @@ Apple open-source headers. Native Windows x64/Linux x64 CI has compiled and link
 all 282 files using LLVM 21.1.8. Packaged PadMint integration and actual runtime
 loading remain required before offering this to players.
 
+The CI matrix also requests native Windows ARM64 and Linux ARM64 builds and
+checks that Python reports the expected host before installing tools. Those
+results are pending. Linux ARM64 CI does not establish Android/Termux operation,
+phone storage requirements or complete player IPA generation.
+
 Compilation and linking use response files so paths with spaces and large object
 lists do not depend on shell quoting or host command-line length limits. Each
 attempt retains commands, dependency files and diagnostics in its own directory.
