@@ -15,7 +15,7 @@ import zipfile
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def write_package(root, app, output, signed):
+def write_package(root, app, output, signed, dependency_root=None):
     """Serialize an already audited app; this is not an app/signature verifier."""
     info = plistlib.loads((app / "Info.plist").read_bytes())
     version, build = info.get("CFBundleShortVersionString"), info.get("CFBundleVersion")
@@ -57,12 +57,23 @@ def write_package(root, app, output, signed):
         if path.is_symlink() or not path.is_file() or not path.stat().st_size:
             raise ValueError("Required notice is missing: " + name)
         entries[name] = (path.read_bytes(), stat.S_IFREG | 0o644)
-    for directory in (root / "sources/spaghettikart", root / "build-ios/_deps"):
+    notice_roots = [(root / "sources/spaghettikart", "sources/spaghettikart")]
+    if dependency_root is None:
+        notice_roots.append((root / "build-ios/_deps", "build-ios/_deps"))
+    else:
+        if dependency_root.is_symlink() or not dependency_root.is_dir():
+            raise ValueError("Dependency notice directory is missing or is a link")
+        notice_roots.append((dependency_root, "dependencies"))
+    for directory, prefix in notice_roots:
+        count = 0
         for path in sorted(directory.rglob("*")):
             if (path.is_file() and not path.is_symlink()
                     and path.name.upper().startswith(("LICENSE", "COPYING", "NOTICE"))):
-                entries["ThirdPartyLicenses/" + path.relative_to(root).as_posix()] = (
+                entries["ThirdPartyLicenses/" + prefix + "/" + path.relative_to(directory).as_posix()] = (
                     path.read_bytes(), stat.S_IFREG | 0o644)
+                count += 1
+        if dependency_root is not None and directory == dependency_root and not count:
+            raise ValueError("Dependency notice directory contains no notices")
 
     output.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.NamedTemporaryFile(dir=output.parent, suffix=".partial", delete=False) as temporary:
@@ -88,11 +99,16 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("app", nargs="?", type=Path, default=ROOT / "build-ios/Release-iphoneos/SpaghettiPad.app")
     parser.add_argument("output", nargs="?", type=Path)
+    parser.add_argument("--dependency-root", type=Path,
+                        help="Dependency source/build directory to collect notices from (default: build-ios/_deps)")
     args = parser.parse_args()
     app = args.app if args.app.is_absolute() else ROOT / args.app
     output = args.output
     if output is not None and not output.is_absolute():
         output = ROOT / output
+    dependency_root = args.dependency_root
+    if dependency_root is not None and not dependency_root.is_absolute():
+        dependency_root = ROOT / dependency_root
     try:
         required = os.environ.get("REQUIRE_SIGNED", "0")
         if required not in ("0", "1"):
@@ -101,7 +117,7 @@ def main():
         # Keep every existing platform, resource and signature check. This audit
         # still needs macOS; portable serialization alone does not enable a host.
         subprocess.run([str(ROOT / "scripts/audit-ios-app.sh"), str(app)], env=env, check=True)
-        output = write_package(ROOT, app, output, required == "1")
+        output = write_package(ROOT, app, output, required == "1", dependency_root)
     except (ValueError, OSError, subprocess.CalledProcessError, plistlib.InvalidFileException) as error:
         parser.exit(1, f"IPA packaging: {error}\n")
     print(f"Packaged IPA: {output}")

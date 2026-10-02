@@ -79,8 +79,9 @@ before running the header assembler. The source fetcher does not install them.
 The module compiler does not
 verify all dependency/header contents or download them; it requires the prepared
 inputs above. The initial local experiment used LLVM 22, libc++ 21.1.8 and pinned
-Apple open-source headers. Native Windows/Linux and packaged PadMint validation
-remain required before offering this to players.
+Apple open-source headers. Native Windows x64/Linux x64 CI has compiled and linked
+all 282 files using LLVM 21.1.8. Packaged PadMint integration and actual runtime
+loading remain required before offering this to players.
 
 Compilation and linking use response files so paths with spaces and large object
 lists do not depend on shell quoting or host command-line length limits. Each
@@ -111,3 +112,14 @@ signing and actual device loading are still required. The dedicated CI checks th
 runtime build, existing app audit and required exports without publishing an app.
 Passing those checks does not establish module loading or gameplay. Do not replace
 normal player instructions or distribute a runtime on this evidence alone.
+
+When packaging a privately assembled runtime app, pass its dependency directory
+so notices come from the matching build rather than the default monolithic build:
+
+```sh
+scripts/package-ios.sh "$PRIVATE_APP" "$PRIVATE_IPA" \
+  --dependency-root build-ios-runtime/_deps
+```
+
+The selected directory must exist and contain notices. This only selects notice
+inputs; it does not insert the module, sign the bundle or verify runtime loading.

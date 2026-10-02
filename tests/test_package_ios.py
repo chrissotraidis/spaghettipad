@@ -103,6 +103,25 @@ class PackageTests(unittest.TestCase):
             package.write_package(self.root, self.app, self.app / "nested/output.ipa", False)
         self.assertFalse((self.app / "nested").exists())
 
+    def test_separate_dependency_notices_and_invalid_root_preserve_output(self):
+        with tempfile.TemporaryDirectory(prefix="runtime dependencies ") as temporary:
+            dependencies = Path(temporary)
+            notice = dependencies / "runtime-lib/LICENSE.txt"
+            notice.parent.mkdir()
+            notice.write_bytes(b"runtime dependency notice")
+            package.write_package(self.root, self.app, self.output, False, dependencies)
+            before = self.output.read_bytes()
+            with zipfile.ZipFile(self.output) as archive:
+                self.assertEqual(archive.read("ThirdPartyLicenses/dependencies/runtime-lib/LICENSE.txt"),
+                                 notice.read_bytes())
+                self.assertNotIn("ThirdPartyLicenses/build-ios/_deps/lib/LICENSE.txt", archive.namelist())
+                self.assertIn("ThirdPartyLicenses/sources/spaghettikart/LICENSE", archive.namelist())
+            notice.unlink()
+            for invalid in (dependencies, dependencies / "missing"):
+                with self.subTest(directory=invalid), self.assertRaisesRegex(ValueError, "notice directory"):
+                    package.write_package(self.root, self.app, self.output, False, invalid)
+                self.assertEqual(self.output.read_bytes(), before)
+
 
 if __name__ == "__main__":
     unittest.main()
