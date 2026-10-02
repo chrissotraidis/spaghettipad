@@ -43,7 +43,26 @@ python3 scripts/build-ios-game-module.py \
   --output "$PRIVATE_OUTPUT" --jobs 4
 ```
 
-Input provisioning is not yet automated by this repository. The command does not
+The header assembly step is available separately:
+
+```sh
+python3 scripts/prepare-ios-module-headers.py \
+  --kartpad-source "$KARTPAD_SOURCE" --output "$NEW_OPEN_HEADERS"
+```
+
+It reuses KartPad's hash-checked SDK assembler and helper headers. Supply a KartPad
+checkout containing those reviewed files and the source directories installed by
+PadMint in `PADMINT_LIBCXX`, `PADMINT_APPLE_LIBC`, `PADMINT_APPLE_XNU`,
+`PADMINT_APPLE_LIBPTHREAD`, `PADMINT_APPLE_LIBMALLOC`, `PADMINT_APPLE_LIBPLATFORM`
+and `PADMINT_APPLE_AVAILABILITY`. The wrapper fetches two additional headers from
+immutable Apple open-source revisions and checks all 20 added headers against
+their expected installed hashes. It retains origin, digest and license records in
+`SOURCES.json` and refuses to overwrite an existing output directory. Its output
+reproduced all 1,915 files of the locally validated sysroot byte-for-byte, excluding
+the expanded provenance report.
+
+Fetching the prerequisite source trees is not yet automated by this repository.
+The module compiler does not
 verify all dependency/header contents or download them; it requires the prepared
 inputs above. The initial local experiment used LLVM 22, libc++ 21.1.8 and pinned
 Apple open-source headers. Native Windows/Linux and packaged PadMint validation

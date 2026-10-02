@@ -1,0 +1,131 @@
+{
+  "kartpad_files": {
+    "builder/kartpad_builder/ios_sdk.py": "8f8235b14c75e519d4dab2827d6f329dcaab5ad56db015c8b575f36b2177e5b6",
+    "builder/kartpad_builder/errors.py": "780351671a8133675ac7bca78c612ed414777140dd3daace1d0fb9c07281d71b",
+    "builder/ios-sdk/include/TargetConditionals.h": "257c6f62f5b1b74c07a3cbabf45e33ee418e1761e7bb376d6cf8c00dcc06c821",
+    "builder/ios-sdk/include/fenv.h": "47c1f7067cfc92866937499740e88b5736d95ff14273acb30fc9118c3a60f77f",
+    "builder/ios-sdk/include/math.h": "ef131f2fe1dda97f0f72ea375e36b9bf62de9c1f3b85d18e6446d8a296da5ea0"
+  },
+  "additional_headers": [
+    {
+      "file": "usr/include/assert.h",
+      "sha256": "e357fa44a55a715cc0dc0bac94569c3fa69e211279561b34347c8e2026267f9f",
+      "from": "libc:include/assert.h",
+      "license": "BSD-4-Clause-UC"
+    },
+    {
+      "file": "usr/include/_assert.h",
+      "sha256": "a448dbcce05868865553f523ccfcd059eee4dad6fb2f066addff48c4778d83d6",
+      "from": "libc:include/_assert.h",
+      "license": "BSD-4-Clause-UC"
+    },
+    {
+      "file": "usr/include/_static_assert.h",
+      "sha256": "8b2be61bd4bc65c9ad62a661a98165a34414ce962aff97e563f876ea2efa42c3",
+      "from": "libc:include/_static_assert.h",
+      "license": "APSL-2.0"
+    },
+    {
+      "file": "usr/include/inttypes.h",
+      "sha256": "d5fbab3ef6097275a1d35768976eea152fe8fa8b73159d3b49697d6de3cd05d9",
+      "from": "libc:include/inttypes.h",
+      "license": "APSL-2.0"
+    },
+    {
+      "file": "usr/include/_inttypes.h",
+      "sha256": "636d27850c5d995bad2bc1e8ca0bde1ccca16977a81498e8bf71f8acc45ecd5f",
+      "from": "libc:_inttypes.h",
+      "license": "APSL-2.0"
+    },
+    {
+      "file": "usr/include/sys/stat.h",
+      "sha256": "dd8154be80f467ba57d4edaa7c6617bd32db54bfebdda892b390f9b0364fe488",
+      "from": "xnu:sys/stat.h",
+      "license": "APSL-2.0"
+    },
+    {
+      "file": "usr/include/fcntl.h",
+      "sha256": "289f3be20c07d8eae5589f43994cfdb5fb33b3b099a6aee67f63e00d90039a8f",
+      "from": "libc:fcntl.h",
+      "license": "APSL-2.0"
+    },
+    {
+      "file": "usr/include/sys/fcntl.h",
+      "sha256": "2fcbb983c2775053c3e14b8a0164d12d08d6dee4709b4f3a9f7d21354ea5e798",
+      "from": "xnu:sys/fcntl.h",
+      "license": "APSL-2.0"
+    },
+    {
+      "file": "usr/include/sys/unistd.h",
+      "sha256": "5d5dccb886d6ecfd7678949d27859f9d7d4a2094328e4374941b753388c58b69",
+      "from": "xnu:sys/unistd.h",
+      "license": "APSL-2.0"
+    },
+    {
+      "file": "usr/include/sys/select.h",
+      "sha256": "e6501f5479116b740fd0099210e63c22a58d24b0ee2554e7135b39a4dd856516",
+      "from": "xnu:sys/select.h",
+      "license": "APSL-2.0"
+    },
+    {
+      "file": "usr/include/sys/_select.h",
+      "sha256": "23e013274b46f4eb46aae8492206ed2862ea6c998e28e793427f38a5e499bb6d",
+      "from": "xnu:sys/_select.h",
+      "license": "APSL-2.0"
+    },
+    {
+      "file": "usr/include/gethostuuid.h",
+      "sha256": "4f0730fa6a81d7681d4fe190d6971deff3ec294f1fca828e5798f38984159b0f",
+      "from": "xnu:libsyscall/wrappers/gethostuuid.h@ac9718fb1af618d5ce8678d0dc6e8a58f252216f",
+      "license": "APSL-2.0"
+    },
+    {
+      "file": "usr/include/memory.h",
+      "sha256": "55679ae8d56fa432458fb4fc59fde49d4c4bbe506ecbdf5b4cb06d001204d5ac",
+      "from": "libc:include/memory.h",
+      "license": "BSD-4-Clause-UC"
+    },
+    {
+      "file": "usr/include/secure/_stdio.h",
+      "sha256": "964683106e28773c6181e519d08d007a4bfa0fcc6768482c32b89068522fb974",
+      "from": "libc:include/secure/_stdio.h",
+      "license": "APSL-2.0"
+    },
+    {
+      "file": "usr/include/secure/_strings.h",
+      "sha256": "d635b58e48cb88db18226bab8a3588505d07dcae8820d2244902242f9406c65e",
+      "from": "libc:include/secure/_strings.h",
+      "license": "APSL-2.0"
+    },
+    {
+      "file": "usr/include/strings.h",
+      "sha256": "fedc79f933c3cd6065c26dc8ea07b8f4b2b2d3364727fa48615e293d131b453c",
+      "from": "libc:include/strings.h",
+      "license": "APSL-2.0"
+    },
+    {
+      "file": "usr/include/secure/_common.h",
+      "sha256": "b1d2144ca87b151923029abde3e69b2430f2b39304837e2183b9019fc50a6e96",
+      "from": "libc:include/secure/_common.h",
+      "license": "APSL-2.0"
+    },
+    {
+      "file": "usr/include/secure/_string.h",
+      "sha256": "b385df81155a073b34179daafd919c3ffdec6266a817bd737238bb3eca5cc099",
+      "from": "libc:secure/_string.h",
+      "license": "APSL-2.0"
+    },
+    {
+      "file": "usr/include/sys/time.h",
+      "sha256": "863406e0dbf0b08d6bf8558026207496e292c4c3698f0a85da6706316e6a1ba5",
+      "from": "xnu:sys/time.h",
+      "license": "APSL-2.0"
+    },
+    {
+      "file": "usr/include/dlfcn.h",
+      "sha256": "1cb2a8a0509d0429d0f983e8ab794a569eb69d17eb0c99696f76667310817d33",
+      "from": "dyld:include/dlfcn.h@fd8d0c4d52320ebf64db34f3cb280310d905c5ae",
+      "license": "APSL-2.0"
+    }
+  ]
+}
