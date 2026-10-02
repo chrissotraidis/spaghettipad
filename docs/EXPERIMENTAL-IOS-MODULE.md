@@ -108,7 +108,24 @@ using explicit archive roots, and loads `Frameworks/SpaghettiGame.dylib` with
 immediate symbol resolution. Missing/incompatible modules produce a startup error.
 
 This runtime app alone cannot play a game. Module insertion, complete bundle
-signing and actual device loading are still required. The dedicated CI checks the
+signing and actual device loading are still required. Create a separate private
+app from the runtime and compiled module:
+
+```sh
+python3 scripts/assemble-ios-module-app.py \
+  --runtime build-ios-runtime/Release-iphoneos/SpaghettiPad.app \
+  --module "$PRIVATE_OUTPUT/SpaghettiGame.dylib" --output "$PRIVATE_APP" \
+  --llvm-readobj "$LLVM/bin/llvm-readobj" --llvm-nm "$LLVM/bin/llvm-nm"
+```
+
+On Windows, use the LLVM executables' `.exe` names. The command checks arm64/iOS
+15.0 metadata, the required runtime exports and the module's SDL_main export. It
+copies both inputs into a fresh app directory, refuses existing output/signing
+material and verifies the copied module bytes. These structural checks do not
+resolve every import, prove source provenance or execute the loader. Run the
+existing Mac app audit and complete bundle signing before device installation.
+
+The dedicated CI checks the
 runtime build, existing app audit and required exports without publishing an app.
 Passing those checks does not establish module loading or gameplay. Do not replace
 normal player instructions or distribute a runtime on this evidence alone.

@@ -22,6 +22,7 @@ jobs:
           python-version: '3.11'
       - run: python -B -m unittest discover -s tests -p test_port_archive.py -v
       - run: python -B -m unittest discover -s tests -p test_package_ios.py -v
+      - run: python -B -m unittest discover -s tests -p test_module_assembly.py -v
       - name: Read maintained engine pin
         id: engine
         run: >-
