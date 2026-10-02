@@ -8,6 +8,7 @@ import plistlib
 import re
 import stat
 import subprocess
+import sys
 import tempfile
 import zipfile
 
@@ -101,6 +102,8 @@ def main():
     parser.add_argument("output", nargs="?", type=Path)
     parser.add_argument("--dependency-root", type=Path,
                         help="Dependency source/build directory to collect notices from (default: build-ios/_deps)")
+    parser.add_argument("--experimental-module-tools", type=Path,
+                        help="LLVM bin directory for private unsigned module-app packaging; never verifies signing")
     args = parser.parse_args()
     app = args.app if args.app.is_absolute() else ROOT / args.app
     output = args.output
@@ -114,9 +117,20 @@ def main():
         if required not in ("0", "1"):
             raise ValueError("REQUIRE_SIGNED must be 0 or 1")
         env = dict(os.environ, REQUIRE_SIGNED=required, REQUIRE_UNSIGNED="0" if required == "1" else "1")
-        # Keep every existing platform, resource and signature check. This audit
-        # still needs macOS; portable serialization alone does not enable a host.
-        subprocess.run([str(ROOT / "scripts/audit-ios-app.sh"), str(app)], env=env, check=True)
+        if args.experimental_module_tools is not None:
+            if required == "1":
+                raise ValueError("Experimental module packaging cannot verify signed apps; use the Mac audit")
+            if dependency_root is None:
+                raise ValueError("Experimental module packaging requires an explicit dependency notice root")
+            suffix = ".exe" if os.name == "nt" else ""
+            llvm = args.experimental_module_tools.absolute()
+            subprocess.run([sys.executable, str(ROOT / "scripts/audit-ios-module-app.py"), str(app),
+                            "--llvm-readobj", str(llvm / ("llvm-readobj" + suffix)),
+                            "--llvm-nm", str(llvm / ("llvm-nm" + suffix))], env=env, check=True)
+        else:
+            # Standard/signed packaging retains the existing Mac platform and
+            # signing audit. The explicit experimental route is unsigned only.
+            subprocess.run([str(ROOT / "scripts/audit-ios-app.sh"), str(app)], env=env, check=True)
         output = write_package(ROOT, app, output, required == "1", dependency_root)
     except (ValueError, OSError, subprocess.CalledProcessError, plistlib.InvalidFileException) as error:
         parser.exit(1, f"IPA packaging: {error}\n")

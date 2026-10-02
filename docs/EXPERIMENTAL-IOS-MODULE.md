@@ -143,7 +143,7 @@ pinned hashes, and rejects game data and provisioning/signature files. It does
 not authenticate signatures or establish complete import compatibility, source
 provenance, device loading or gameplay. It has been exercised locally against a
 real private app and deliberately invalid copies; native-host execution remains
-to be verified. The packaging command still requires the existing Mac app audit.
+to be verified. Standard and signed packaging still require the Mac app audit.
 
 Native module CI also exercises this auditor against an explicitly synthetic
 Mach-O runtime and the compiled module, then checks five deliberately invalid
@@ -166,3 +166,18 @@ scripts/package-ios.sh "$PRIVATE_APP" "$PRIVATE_IPA" \
 
 The selected directory must exist and contain notices. This only selects notice
 inputs; it does not insert the module, sign the bundle or verify runtime loading.
+
+For experimental private packaging without Mac tools, select the portable audit
+explicitly and provide the directory containing the matching source/dependency
+notices (for example, the complete fetched module-input directory):
+
+```sh
+python3 scripts/package-ios.py "$PRIVATE_APP" "$PRIVATE_IPA" \
+  --experimental-module-tools "$LLVM/bin" --dependency-root "$MODULE_INPUTS"
+```
+
+This mode refuses `REQUIRE_SIGNED=1` and does not authenticate signatures. It
+requires a prebuilt runtime, runs the portable module-app audit before writing,
+and preserves existing output on rejection. The runtime still requires an Apple
+SDK build, and the resulting private IPA still needs complete signing and device
+validation. This is a developer route, not a promoted PadMint player recipe.

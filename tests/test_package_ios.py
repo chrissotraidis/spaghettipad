@@ -98,6 +98,25 @@ class PackageTests(unittest.TestCase):
             self.assertEqual(archive.read("Payload/SpaghettiPad.app/_CodeSignature/CodeResources"),
                              b"synthetic signature")
 
+    def test_experimental_route_cannot_bypass_signed_or_failed_audit(self):
+        argv = ["package-ios.py", str(self.app), str(self.output),
+                "--experimental-module-tools", str(self.root / "llvm"),
+                "--dependency-root", str(self.root / "build-ios/_deps")]
+        with mock.patch("sys.argv", argv), mock.patch.dict(package.os.environ, REQUIRE_SIGNED="1"), \
+                mock.patch.object(package.subprocess, "run") as audit, \
+                mock.patch.object(package, "write_package") as write:
+            with self.assertRaises(SystemExit):
+                package.main()
+            audit.assert_not_called()
+            write.assert_not_called()
+        with mock.patch("sys.argv", argv), mock.patch.dict(package.os.environ, REQUIRE_SIGNED="0"), \
+                mock.patch.object(package.subprocess, "run", side_effect=package.subprocess.CalledProcessError(1, "audit")) as audit, \
+                mock.patch.object(package, "write_package") as write:
+            with self.assertRaises(SystemExit):
+                package.main()
+            self.assertTrue(audit.call_args.args[0][1].endswith("audit-ios-module-app.py"))
+            write.assert_not_called()
+
     def test_output_inside_app_is_rejected(self):
         with self.assertRaisesRegex(ValueError, "inside the application"):
             package.write_package(self.root, self.app, self.app / "nested/output.ipa", False)

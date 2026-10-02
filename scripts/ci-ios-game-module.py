@@ -49,7 +49,8 @@ def main():
                       'sha256': result['sha256'], 'device_loading_verified': False}))
     subprocess.run([sys.executable, str(scripts.parent / 'tests/check_native_module_audit.py'),
                     '--source', str(inputs / 'source'), '--module', str(output / 'SpaghettiGame.dylib'),
-                    '--llvm', str(llvm), '--work', str(work / 'synthetic-audit-fixture')], env=env, check=True)
+                    '--llvm', str(llvm), '--work', str(work / 'synthetic-audit-fixture'),
+                    '--notice-root', str(inputs)], env=env, check=True)
     # Keep generated game code on the ephemeral runner. No artifact upload.
 
 

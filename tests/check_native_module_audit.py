@@ -8,13 +8,15 @@ import re
 import runpy
 import shutil
 import subprocess
+import sys
+import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    for name in ('source', 'module', 'llvm', 'work'):
+    for name in ('source', 'module', 'llvm', 'work', 'notice-root'):
         parser.add_argument('--' + name, type=Path, required=True)
     args = parser.parse_args()
     args.work.mkdir(parents=True, exist_ok=False)
@@ -73,7 +75,16 @@ def main():
             else:
                 path.write_bytes(before)
     check()
+    ipa = args.work / 'synthetic-private.ipa'
+    subprocess.run([sys.executable, str(ROOT / 'scripts/package-ios.py'), str(app), str(ipa),
+                    '--experimental-module-tools', str(args.llvm),
+                    '--dependency-root', str(args.notice_root)], check=True)
+    with zipfile.ZipFile(ipa) as archive:
+        assert archive.testzip() is None
+        for name in ('SpaghettiPad', 'Frameworks/SpaghettiGame.dylib', 'Info.plist'):
+            assert archive.read('Payload/SpaghettiPad.app/' + name) == (app / name).read_bytes()
     print(json.dumps({'synthetic_runtime': True, 'rejection_cases_passed': len(cases),
+                      'private_ipa_bytes_verified': True,
                       'device_loading_verified': False}))
 
 
