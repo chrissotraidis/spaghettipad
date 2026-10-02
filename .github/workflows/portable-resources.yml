@@ -1,0 +1,30 @@
+name: Portable resource archive
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  resources:
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -B -m unittest discover -s tests -p test_port_archive.py -v
+      - name: Fetch exact maintained resource source
+        uses: actions/checkout@v4
+        with:
+          repository: chrissotraidis/SpaghettiKart
+          ref: d545ba9ca6a22ca73a328893f6b9e274f99853a2
+          path: resource-source
+          sparse-checkout: assets
+          persist-credentials: false
+      - name: Build and verify actual clean resource archive
+        run: python scripts/build-port-archive.py resource-source/assets "resource output/spaghetti.o2r"
+      - name: Verify repeat build preserves the archive
+        run: python scripts/build-port-archive.py resource-source/assets "resource output/spaghetti.o2r"

@@ -21,9 +21,8 @@ esac
 if [ ! -e "$ROOT/sources/spaghettikart/.git" ]; then
     "$ROOT/scripts/clone-sources.sh"
 fi
-if [ ! -s "$ROOT/build-oracle/spaghetti.o2r" ]; then
-    "$ROOT/scripts/build-oracle.sh"
-fi
+python3 "$ROOT/scripts/build-port-archive.py" "$ROOT/sources/spaghettikart/assets" \
+    "${SPAGHETTIPAD_PORT_ARCHIVE:-$ROOT/build-oracle/spaghetti.o2r}"
 
 if [ "$MODE" = "simulator" ]; then
     BUILD_DIR="${SPAGHETTIPAD_SIM_BUILD_DIR:-$ROOT/build-ios-sim}"
