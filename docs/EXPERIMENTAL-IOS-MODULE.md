@@ -80,8 +80,8 @@ The module compiler does not
 verify all dependency/header contents or download them; it requires the prepared
 inputs above. The initial local experiment used LLVM 22, libc++ 21.1.8 and pinned
 Apple open-source headers. Native Windows x64/Linux x64 CI has compiled and linked
-all 282 files using LLVM 21.1.8. Packaged PadMint integration and actual runtime
-loading remain required before offering this to players.
+all 282 files using LLVM 21.1.8. Packaged PadMint integration and device validation
+of those native-host outputs remain required before offering this to players.
 
 Native Windows ARM64 and Linux ARM64 CI also compiled and linked all 282 files.
 The matrix checks that Python reports the expected host before installing tools.
@@ -130,6 +130,14 @@ material and verifies the copied module bytes. These structural checks do not
 resolve every import, prove source provenance or execute the loader. Run the
 existing Mac app audit and complete bundle signing before device installation.
 
+A separate private iPhone 14 probe using the Mac-built open-header module passed
+the signed-app audit and reached the rendered intro and automatic single-screen
+and split-screen race demos. This establishes loading and demo rendering for
+that module. Player-controlled racing, audio, save/relaunch behavior and loading
+of Windows/Linux-built modules remain unverified. The probe also logged CPU item
+table warnings during versus demos and a texture-format error; these observations
+still need comparison with the normal build.
+
 An additional portable structural/resource check is available for the private
 assembled app:
 
@@ -142,8 +150,11 @@ It checks device metadata, runtime/module symbols, required resources and their
 pinned hashes, and rejects game data and provisioning/signature files. It does
 not authenticate signatures or establish complete import compatibility, source
 provenance, device loading or gameplay. It has been exercised locally against a
-real private app and deliberately invalid copies; native-host execution remains
-to be verified. Standard and signed packaging still require the Mac app audit.
+real private app and deliberately invalid copies. Native Windows and Linux x64
+and ARM64 execution passed in [run 36981077062](https://github.com/chrissotraidis/spaghettipad/actions/runs/36981077062),
+including all five rejection cases and byte-verified private IPA packaging with
+the synthetic runtime described below. Standard and signed packaging still
+require the Mac app audit.
 
 Native module CI also exercises this auditor against an explicitly synthetic
 Mach-O runtime and the compiled module, then checks five deliberately invalid
