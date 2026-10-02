@@ -50,6 +50,7 @@ fi
 
 cmake -S "$SOURCE_DIR" -B "$BUILD_DIR" -GXcode \
     -DCMAKE_SYSTEM_NAME=iOS \
+    -DCMAKE_PROJECT_SDL2_INCLUDE="$ROOT/cmake/SDL2SceneLifecycle.cmake" \
     -DCMAKE_C_FLAGS="-ffile-prefix-map=$ROOT=." \
     -DCMAKE_CXX_FLAGS="-ffile-prefix-map=$ROOT=." \
     -DCMAKE_OBJCXX_FLAGS="-ffile-prefix-map=$ROOT=." \

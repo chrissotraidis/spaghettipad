@@ -99,9 +99,15 @@ downloaded, mirrored, or redistributed by this project.
 
 ## Install status
 
+Version 0.2.1 fixes the SDK 27 launch crash and black game image by updating
+SDL's scene startup and orientation handling. The final build was checked on
+physical iPadOS 27 and iOS 26.6.2 devices. Existing IPAs need a rebuild; see the
+[SDK 27 investigation and validation](docs/IOS27_STARTUP.md). PadMint selects the
+latest public release, so check that it selects 0.2.1 before rebuilding.
+
 | Option | Status | What to do |
 |---|---|---|
-| Make your own IPA with PadMint | **Available** | On a Mac, [PadMint](https://github.com/chrissotraidis/padmint/releases/latest) builds SpaghettiPad from this repository's latest release and saves an unsigned IPA; install it with AltStore Classic, SideStore or Sideloadly. See [Get started](#get-started). |
+| Make your own IPA with PadMint | **Available** | On an Apple Silicon Mac with Xcode, [PadMint](https://github.com/chrissotraidis/padmint/releases/latest) builds SpaghettiPad from this repository's latest release and saves an unsigned IPA; install it with AltStore Classic, SideStore or Sideloadly. See [Get started](#get-started). |
 | Local iPhone/iPad build | **Available now** | Build and sign with your own Apple development team by following [Build from source](docs/BUILDING.md). |
 | Simulator | **Available now** | Use it for development and UI testing. It cannot replace physical-device acceptance. |
 | App Store / TestFlight | **Not announced** | No App Store listing or public TestFlight exists. |
@@ -124,7 +130,18 @@ complete tilt-driven Grand Prix remain explicit validation gates.
 
 ## Get started
 
-**The easy way:** on a Mac with Xcode, install the build libraries once:
+**Build computer:** SpaghettiPad's PadMint recipe currently supports an
+**Apple Silicon Mac (M1 or newer) with full Xcode and the iOS platform installed**.
+The Xcode command-line tools alone are not enough. Intel Macs are not currently
+listed as supported build hosts in the recipe.
+
+PadMint itself runs on Windows and Linux too, but its experimental iPhone/iPad
+build path on those systems is for KartPad. SpaghettiPad currently has no
+supported Windows, Linux, or phone-only build path. A Windows sideloading tool
+can install an IPA you already built; it does not compile SpaghettiPad. If you
+cannot access a compatible Mac, the current personal-build route is unavailable.
+
+**The easy way:** on that Mac, install the build libraries once:
 
 ```sh
 brew install cmake ninja pkgconf sdl2 glew nlohmann-json libpng libzip \
@@ -141,7 +158,7 @@ publish no app: the app is compiled from the SpaghettiKart decompilation, so you
 
 You need:
 
-- a Mac with Xcode and its command-line tools;
+- an Apple Silicon Mac with full Xcode, its iOS platform and command-line tools;
 - [Homebrew](https://brew.sh);
 - an Apple ID configured in Xcode for physical-device signing; and
 - your own legally acquired Mario Kart 64 **US 1.0, big-endian `.z64`** ROM.
@@ -341,7 +358,7 @@ experiment pending its own hardware evidence.
 | Saves and updates | Preview 4's signed source build was installed in place on a physical iPad; readback hashes matched for the game archive, texture pack, saves, config, and controller/touch preferences |
 | Controllers | Engine-managed SDL2 stale-handle reconciliation and stable four-port ownership pass deterministic regression tests; physical Bluetooth, wired, natural-sleep, mapping, and multiplayer sessions remain |
 | Tilt | The persisted motion-to-stick path, recentering, touch priority, and foreground recalibration pass Simulator tests; physical feel and a tilt GP remain |
-| Packaging | Preview 6 is version 0.1.0 build 6 and packages as a deterministic, audited, ROM-free unsigned IPA with SHA-256 `a746fafe4dac460c5427acb81a361eb5f560df45a0550cd39f4a545977c4c0bb` |
+| Packaging | Version 0.2.1 build 8 passes the unsigned app and package audits; exact local validation hashes and hardware results are in [SDK 27 validation](docs/IOS27_STARTUP.md). No compiled app is supplied by the current source-only release. |
 | CI | Hosted checks compile and package the unsigned iPhoneOS app without uploading the personal-use IPA; ROM-free does not mean cleared for publication |
 
 The project deliberately keeps build, Simulator, process, and physical-device

@@ -39,6 +39,12 @@ rg -q '^[[:space:]]*platform IOS$' <<<"$BUILD_METADATA" ||
 rg -q 'minos 15\.0' <<<"$BUILD_METADATA" ||
     fail "application does not target iOS 15.0"
 
+[ "$(/usr/libexec/PlistBuddy -c 'Print :UIApplicationSceneManifest:UISceneConfigurations:UIWindowSceneSessionRoleApplication:0:UISceneDelegateClassName' "$INFO")" = \
+    "SDLUIKitSceneDelegate" ] || fail "SDL application scene configuration is missing"
+SCENE_SYMBOLS="$(xcrun nm -j "$BINARY")"
+rg -q '_OBJC_CLASS_\$_SDLUIKitSceneDelegate' <<<"$SCENE_SYMBOLS" || \
+    fail "SDL scene delegate is not linked; reconfigure with scripts/configure-ios.sh"
+
 [ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleDisplayName' "$INFO")" = \
     "SpaghettiPad" ] || fail "unexpected display name"
 [ "$(/usr/libexec/PlistBuddy -c 'Print :MinimumOSVersion' "$INFO")" = \
