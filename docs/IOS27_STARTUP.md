@@ -124,8 +124,10 @@ linked-SDK and scene-evidence check, but that static check cannot repair an
 already-built IPA or replace runtime testing. It is merged in PadMint source;
 its next normal PadMint release will distribute the check.
 
-PadMint builds this project's latest public release. A source-only 0.2.1 release
-is therefore required before the default PadMint selection receives this fix.
-The existing public 0.2.0 release still supplies the old startup code. Existing
-installed IPAs must be rebuilt and re-signed. No compiled app or game data should
-be published; the recipe retains `public_binaries: false`.
+The source-only v0.2.1 release is published as of October 2, 2026. PadMint
+selects the latest public release, so confirm that it selects v0.2.1 or later
+before rebuilding. Version 0.2.0 still contains the old startup code.
+Existing installed IPAs must be rebuilt and re-signed; updating PadMint alone
+does not change them. Install the update with the same signing account and
+bundle identifier to preserve the existing app container. The recipe retains
+`public_binaries: false`; no compiled app or game data is supplied by v0.2.1.
