@@ -21,6 +21,7 @@ jobs:
         with:
           python-version: '3.11'
       - run: python -B -m unittest discover -s tests -p test_port_archive.py -v
+      - run: python -B -m unittest discover -s tests -p test_package_ios.py -v
       - name: Fetch exact maintained resource source
         uses: actions/checkout@v4
         with:
