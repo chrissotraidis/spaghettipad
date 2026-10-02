@@ -4,6 +4,7 @@ on:
     paths:
       - '.github/workflows/experimental-ios-module.yml'
       - 'scripts/*ios*module*'
+      - 'tests/check_native_module_audit.py'
       - 'sources.lock.json'
       - 'sources/spaghettikart'
   workflow_dispatch:

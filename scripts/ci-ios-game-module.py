@@ -47,6 +47,9 @@ def main():
     assert len(result['compiles']) == 282 and result['link']['exit_code'] == 0
     print(json.dumps({'host': host, 'translation_units': len(result['compiles']),
                       'sha256': result['sha256'], 'device_loading_verified': False}))
+    subprocess.run([sys.executable, str(scripts.parent / 'tests/check_native_module_audit.py'),
+                    '--source', str(inputs / 'source'), '--module', str(output / 'SpaghettiGame.dylib'),
+                    '--llvm', str(llvm), '--work', str(work / 'synthetic-audit-fixture')], env=env, check=True)
     # Keep generated game code on the ephemeral runner. No artifact upload.
 
 

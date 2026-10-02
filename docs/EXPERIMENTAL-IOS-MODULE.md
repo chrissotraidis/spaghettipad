@@ -145,6 +145,12 @@ provenance, device loading or gameplay. It has been exercised locally against a
 real private app and deliberately invalid copies; native-host execution remains
 to be verified. The packaging command still requires the existing Mac app audit.
 
+Native module CI also exercises this auditor against an explicitly synthetic
+Mach-O runtime and the compiled module, then checks five deliberately invalid
+variants. The synthetic symbols only test inspection/rejection behavior; they
+are not working runtime implementations and cannot establish app compatibility.
+No synthetic app or game module is uploaded.
+
 The dedicated CI checks the
 runtime build, existing app audit and required exports without publishing an app.
 Passing those checks does not establish module loading or gameplay. Do not replace
