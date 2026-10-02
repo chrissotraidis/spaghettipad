@@ -1,0 +1,36 @@
+name: Experimental iOS game module
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/experimental-ios-module.yml'
+      - 'scripts/*ios*module*'
+      - 'sources.lock.json'
+      - 'sources/spaghettikart'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  module:
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Fetch pinned PadMint tool installer
+        uses: actions/checkout@v4
+        with:
+          repository: chrissotraidis/padmint
+          ref: 02bb1deaf70fa43c94979a1f3f6dd9bb43a26ba9
+          path: padmint-tools
+          persist-credentials: false
+      - name: Compile and link the private module on the native host
+        run: >-
+          python scripts/ci-ios-game-module.py --padmint-source padmint-tools
+          --work "${{ runner.temp }}/module probe"
+      # This is compile/link evidence, not device acceptance. Do not upload binaries.

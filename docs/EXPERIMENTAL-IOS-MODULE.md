@@ -32,6 +32,19 @@ Pass explicit paths for:
 - `--clang` and `--linker`: LLVM clang and ld64.lld executable paths.
 - `--output`: a separate private directory outside every source/toolchain input.
 
+Fetch the pinned engine/runtime/dependency inputs into a new directory:
+
+```sh
+python3 scripts/fetch-ios-module-inputs.py --output "$NEW_MODULE_INPUTS"
+```
+
+The resulting directories are `source`, `runtime`, `torch`, `dependencies`,
+`dependencies/imgui-src`, `sdl-compat` and `kartpad`. The fetcher checks Git
+revisions, preserves LF source bytes, applies the maintained ImGui patch and
+verifies downloaded headers and the generated iOS `zipconf.h` by digest. It
+refuses an existing output directory. Failed setup is retained in a separate
+temporary directory with `fetch.log`; no existing input tree is modified.
+
 Example after preparing those inputs:
 
 ```sh
@@ -61,7 +74,8 @@ their expected installed hashes. It retains origin, digest and license records i
 reproduced all 1,915 files of the locally validated sysroot byte-for-byte, excluding
 the expanded provenance report.
 
-Fetching the prerequisite source trees is not yet automated by this repository.
+LLVM and the Apple open-source/libc++ trees still need to be installed by PadMint
+before running the header assembler. The source fetcher does not install them.
 The module compiler does not
 verify all dependency/header contents or download them; it requires the prepared
 inputs above. The initial local experiment used LLVM 22, libc++ 21.1.8 and pinned
