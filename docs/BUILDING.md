@@ -7,12 +7,17 @@ than reset. The unmodified oracle has its own ignored source checkout.
 
 ## Requirements
 
-- macOS with Xcode and its command-line tools
+- an Apple Silicon Mac (M1 or newer) with full Xcode, its iOS platform and command-line tools
 - [Homebrew](https://brew.sh)
 - for physical-device installation: an Apple development team, a unique bundle
   identifier, and a registered iPhone or iPad
 - for gameplay after installation: your own legally acquired Mario Kart 64
   US 1.0 big-endian `.z64`
+
+The PadMint recipe declares only `macos-arm64` as an experimental build host.
+Windows, Linux, Intel Macs and phone-only builds are not currently supported by
+that recipe. PadMint's Windows/Linux iOS support for KartPad does not extend to
+SpaghettiPad. Sideloading an existing IPA and compiling one are separate steps.
 
 Install the host build dependencies:
 
@@ -50,20 +55,20 @@ Torch's build-time ZIP timestamps.
 
 ## Version and identity
 
-The defaults are:
+The defaults come from [`version.json`](../version.json):
 
 | Field | Value |
 |---|---|
-| App version | `0.1.0` |
-| Build number | `3` |
+| App version | `0.2.1` |
+| Build number | `8` |
 | Bundle identifier | `com.chrissotraidis.spaghettipad` |
 | Minimum OS | iOS/iPadOS 15.0 |
 
 Override them only for a deliberate build:
 
 ```sh
-SPAGHETTIPAD_VERSION=0.1.0 \
-SPAGHETTIPAD_BUILD_NUMBER=3 \
+SPAGHETTIPAD_VERSION=0.2.1 \
+SPAGHETTIPAD_BUILD_NUMBER=8 \
 BUNDLE_ID=com.yourname.spaghettipad \
 scripts/build-ios.sh --device
 ```
