@@ -45,7 +45,9 @@ def write_package(root, app, output, signed, dependency_root=None):
                 raise ValueError("Application link escapes the bundle")
             entries["Payload/SpaghettiPad.app/" + relative] = (target.encode(), stat.S_IFLNK | 0o777)
         elif path.is_file():
-            mode = 0o755 if relative == "SpaghettiPad" or path.stat().st_mode & 0o111 else 0o644
+            # Windows and ZIP extraction may not preserve POSIX execute bits.
+            executable = relative in ("SpaghettiPad", "Frameworks/SpaghettiGame.dylib")
+            mode = 0o755 if executable or path.stat().st_mode & 0o111 else 0o644
             entries["Payload/SpaghettiPad.app/" + relative] = (path.read_bytes(), stat.S_IFREG | mode)
     if "Payload/SpaghettiPad.app/SpaghettiPad" not in entries:
         raise ValueError("Application executable is missing")

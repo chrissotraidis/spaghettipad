@@ -83,6 +83,10 @@ def main():
         assert archive.testzip() is None
         for name in ('SpaghettiPad', 'Frameworks/SpaghettiGame.dylib', 'Info.plist'):
             assert archive.read('Payload/SpaghettiPad.app/' + name) == (app / name).read_bytes()
+        for name in ('SpaghettiPad', 'Frameworks/SpaghettiGame.dylib'):
+            member = archive.getinfo('Payload/SpaghettiPad.app/' + name)
+            assert member.create_system == 3
+            assert member.external_attr >> 16 == 0o100755
     print(json.dumps({'synthetic_runtime': True, 'rejection_cases_passed': len(cases),
                       'private_ipa_bytes_verified': True,
                       'device_loading_verified': False}))

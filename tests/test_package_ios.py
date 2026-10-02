@@ -50,6 +50,18 @@ class PackageTests(unittest.TestCase):
         self.write()
         self.assertEqual(self.output.read_bytes(), before)
 
+    def test_module_permissions_do_not_depend_on_host_execute_bits(self):
+        module = self.app / "Frameworks/SpaghettiGame.dylib"
+        module.parent.mkdir()
+        module.write_bytes(b"synthetic module")
+        module.chmod(0o644)
+        self.write()
+        with zipfile.ZipFile(self.output) as archive:
+            member = archive.getinfo("Payload/SpaghettiPad.app/Frameworks/SpaghettiGame.dylib")
+            self.assertEqual(member.create_system, 3)
+            self.assertEqual(member.external_attr >> 16, stat.S_IFREG | 0o755)
+            self.assertEqual(archive.read(member), module.read_bytes())
+
     def test_missing_notice_and_game_data_preserve_existing_output(self):
         self.write()
         before = self.output.read_bytes()
