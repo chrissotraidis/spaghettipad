@@ -83,9 +83,9 @@ Apple open-source headers. Native Windows x64/Linux x64 CI has compiled and link
 all 282 files using LLVM 21.1.8. Packaged PadMint integration and actual runtime
 loading remain required before offering this to players.
 
-The CI matrix also requests native Windows ARM64 and Linux ARM64 builds and
-checks that Python reports the expected host before installing tools. Those
-results are pending. Linux ARM64 CI does not establish Android/Termux operation,
+Native Windows ARM64 and Linux ARM64 CI also compiled and linked all 282 files.
+The matrix checks that Python reports the expected host before installing tools.
+Linux ARM64 CI does not establish Android/Termux operation,
 phone storage requirements or complete player IPA generation.
 
 Compilation and linking use response files so paths with spaces and large object
@@ -129,6 +129,21 @@ copies both inputs into a fresh app directory, refuses existing output/signing
 material and verifies the copied module bytes. These structural checks do not
 resolve every import, prove source provenance or execute the loader. Run the
 existing Mac app audit and complete bundle signing before device installation.
+
+An additional portable structural/resource check is available for the private
+assembled app:
+
+```sh
+python3 scripts/audit-ios-module-app.py "$PRIVATE_APP" \
+  --llvm-readobj "$LLVM/bin/llvm-readobj" --llvm-nm "$LLVM/bin/llvm-nm"
+```
+
+It checks device metadata, runtime/module symbols, required resources and their
+pinned hashes, and rejects game data and provisioning/signature files. It does
+not authenticate signatures or establish complete import compatibility, source
+provenance, device loading or gameplay. It has been exercised locally against a
+real private app and deliberately invalid copies; native-host execution remains
+to be verified. The packaging command still requires the existing Mac app audit.
 
 The dedicated CI checks the
 runtime build, existing app audit and required exports without publishing an app.
