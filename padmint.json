@@ -9,12 +9,10 @@
     {
       "type": "n64-rom",
       "formats": [
-        "z64",
-        "n64",
-        "v64"
+        "z64"
       ],
       "when": "in-app",
-      "description": "Your own supported Mario Kart 64 ROM, chosen in the app. The build does not read it."
+      "description": "Your own legally acquired Mario Kart 64 US 1.0 big-endian .z64 ROM. Copy it into the SpaghettiPad folder under On My iPhone or On My iPad in Files, then return to the app and tap Rescan. The build does not read it."
     }
   ],
   "targets": {

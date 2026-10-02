@@ -1,0 +1,43 @@
+name: Portable resource archive
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  resources:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Preserve pinned source bytes on Windows
+        run: |
+          git config --global core.autocrlf false
+          git config --global core.eol lf
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -B -m unittest discover -s tests -p test_port_archive.py -v
+      - run: python -B -m unittest discover -s tests -p test_package_ios.py -v
+      - run: python -B -m unittest discover -s tests -p test_module_assembly.py -v
+      - name: Read maintained engine pin
+        id: engine
+        run: >-
+          python -c "import json, os;
+          pin = next(c['commit'] for c in json.load(open('sources.lock.json'))['components'] if c['path'] == 'sources/spaghettikart');
+          open(os.environ['GITHUB_OUTPUT'], 'a').write('commit=' + pin + '\n')"
+      - name: Fetch exact maintained resource source
+        uses: actions/checkout@v4
+        with:
+          repository: chrissotraidis/SpaghettiKart
+          ref: ${{ steps.engine.outputs.commit }}
+          path: resource-source
+          sparse-checkout: assets
+          persist-credentials: false
+      - name: Build and verify actual clean resource archive
+        run: python scripts/build-port-archive.py resource-source/assets "resource output/spaghetti.o2r"
+      - name: Verify repeat build preserves the archive
+        run: python scripts/build-port-archive.py resource-source/assets "resource output/spaghetti.o2r"

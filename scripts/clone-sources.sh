@@ -3,6 +3,8 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 python3 "$ROOT/scripts/check-source-pins.py" --allow-missing
-git -C "$ROOT" submodule update --init sources/spaghettikart
-git -C "$ROOT/sources/spaghettikart" submodule update --init libultraship torch
+# Preserve pinned resource/patch bytes even when the host defaults to CRLF.
+# This affects new checkouts only; existing source edits are not rewritten.
+git -c core.autocrlf=false -c core.eol=lf -C "$ROOT" submodule update --init sources/spaghettikart
+git -c core.autocrlf=false -c core.eol=lf -C "$ROOT/sources/spaghettikart" submodule update --init libultraship torch
 python3 "$ROOT/scripts/check-source-pins.py"

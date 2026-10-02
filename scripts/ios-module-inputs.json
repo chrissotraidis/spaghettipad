@@ -1,0 +1,75 @@
+{
+  "repositories": {
+    "source": {
+      "url": "https://github.com/chrissotraidis/SpaghettiKart.git",
+      "commit": "683e96df1e0e8c6fd9da2e8c2e6d19e8ce37a5fd"
+    },
+    "runtime": {
+      "url": "https://github.com/chrissotraidis/libultraship.git",
+      "commit": "bd9c2dde3f92bb260f49350048c261a02050023f"
+    },
+    "torch": {
+      "url": "https://github.com/HarbourMasters/Torch",
+      "commit": "2d474ddb8da8b213fbdbb49d0273ce31fa955f35"
+    },
+    "dependencies/nlohmann_json-src": {
+      "url": "https://github.com/nlohmann/json.git",
+      "commit": "55f93686c01528224f448c19128836e7df245f72"
+    },
+    "dependencies/spdlog-src": {
+      "url": "https://github.com/gabime/spdlog.git",
+      "commit": "486b55554f11c9cccc913e11a87085b2a91f706f"
+    },
+    "dependencies/imgui-src": {
+      "url": "https://github.com/ocornut/imgui.git",
+      "commit": "4806a1924ff6181180bf5e4b8b79ab4394118875"
+    },
+    "dependencies/tinyxml2-src": {
+      "url": "https://github.com/leethomason/tinyxml2.git",
+      "commit": "9148bdf719e997d1f474be6bcc7943881046dba1"
+    },
+    "dependencies/sdl2-src": {
+      "url": "https://github.com/libsdl-org/SDL.git",
+      "commit": "5d249570393f7a37e037abf22cd6012a4cc56a71"
+    },
+    "dependencies/libzip-src": {
+      "url": "https://github.com/nih-at/libzip.git",
+      "commit": "6f8a0cdd24a0dc6cce9dac4a7679da784ab124ea"
+    },
+    "dependencies/tomlplusplus-src": {
+      "url": "https://github.com/marzer/tomlplusplus.git",
+      "commit": "30172438cee64926dc41fdd9c11fb3ba5b2ba9de"
+    },
+    "dependencies/yaml-cpp-src": {
+      "url": "https://github.com/jbeder/yaml-cpp.git",
+      "commit": "2f86d13775d119edbb69af52e5f566fd65c6953b"
+    },
+    "dependencies/threadpool-src": {
+      "url": "https://github.com/bshoshany/thread-pool.git",
+      "commit": "097aa718f25d44315cadb80b407144ad455ee4f9"
+    },
+    "kartpad": {
+      "url": "https://github.com/chrissotraidis/kartpad.git",
+      "commit": "9f973c4ecc46284edfba06eb7dede67f629eb4c5",
+      "sparse": [
+        "builder/kartpad_builder",
+        "builder/ios-sdk"
+      ]
+    }
+  },
+  "files": {
+    "dependencies/stb/stb_image.h": {
+      "url": "https://raw.githubusercontent.com/nothings/stb/0bc88af4de5fb022db643c2d8e549a0927749354/stb_image.h",
+      "sha256": "c54b15a689e6a1f32c75e2ec23afa442e3e0e37e894b73c1974d08679b20dd5c"
+    },
+    "dependencies/semver/semver.hpp": {
+      "url": "https://raw.githubusercontent.com/Neargye/semver/ccbbfdf2f862a48498d37d5955743a5082ee49bf/include/semver.hpp",
+      "sha256": "af2c0c53124dc7f52c58a7205e458ad3efbac2f61ce55addf9c8f94338a04182"
+    },
+    "dependencies/sse2neon/sse2neon.h": {
+      "url": "https://raw.githubusercontent.com/DLTcollab/sse2neon/3b70b3727edc9a151c113814129258c3423a771c/sse2neon.h",
+      "sha256": "fab5e1be095ce8db9d2ab0c1fe0b2c6f2a34657b43ce83688e8c84224806df38"
+    }
+  },
+  "zipconf_sha256": "abd582dd80efbc04dc7282463ed32955103769e2162344a1578aaf6e4ec0c447"
+}

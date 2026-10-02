@@ -1,0 +1,41 @@
+name: Experimental iOS module runtime
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/experimental-ios-runtime.yml'
+      - 'ios/**'
+      - 'scripts/build-ios.sh'
+      - 'scripts/configure-ios.sh'
+      - 'sources.lock.json'
+      - 'sources/spaghettikart'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  runtime:
+    runs-on: macos-15
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install build dependencies
+        run: >-
+          brew install cmake ninja pkgconf sdl2 glew nlohmann-json libpng
+          libzip tinyxml2 libogg libvorbis opus opusfile sdl2_net ripgrep
+      - name: Build and audit the unsigned module host
+        env:
+          SPAGHETTIPAD_RUNTIME_ONLY: 'ON'
+        run: scripts/build-ios.sh --device
+      - name: Verify required runtime exports
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import subprocess
+          expected = set(Path('ios/runtime-exports.txt').read_text().splitlines())
+          binary = 'build-ios-runtime/Release-iphoneos/SpaghettiPad.app/SpaghettiPad'
+          actual = set(subprocess.check_output(['xcrun', 'nm', '-gUj', binary], text=True).splitlines())
+          missing = expected - actual
+          assert not missing, 'Missing runtime exports: ' + ', '.join(sorted(missing))
+          print('Verified required runtime exports:', len(expected))
+          print('Runtime build only; module loading and device gameplay unverified.')
+          PY
+      # No runtime or personal game-code artifact is uploaded while releases are paused.
