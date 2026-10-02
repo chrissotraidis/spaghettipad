@@ -359,7 +359,7 @@ experiment pending its own hardware evidence.
 | Controllers | Engine-managed SDL2 stale-handle reconciliation and stable four-port ownership pass deterministic regression tests; physical Bluetooth, wired, natural-sleep, mapping, and multiplayer sessions remain |
 | Tilt | The persisted motion-to-stick path, recentering, touch priority, and foreground recalibration pass Simulator tests; physical feel and a tilt GP remain |
 | Packaging | Version 0.2.1 build 8 passes the unsigned app and package audits; exact local validation hashes and hardware results are in [SDK 27 validation](docs/IOS27_STARTUP.md). No compiled app is supplied by the current source-only release. |
-| CI | Repository safety and the ROM-free unsigned iPhoneOS build/package workflow pass on hosted GitHub Actions |
+| CI | Hosted checks compile and package the unsigned iPhoneOS app without uploading the personal-use IPA; ROM-free does not mean cleared for publication |
 
 The project deliberately keeps build, Simulator, process, and physical-device
 evidence separate. The [remaining-work ledger](docs/remaining-work.md) records

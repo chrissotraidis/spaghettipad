@@ -18,6 +18,12 @@ case "$MODE" in
         ;;
 esac
 
+BUILD_JOBS="${IOS_BUILD_JOBS:-${CMAKE_BUILD_PARALLEL_LEVEL:-4}}"
+if [[ ! "$BUILD_JOBS" =~ ^[1-9][0-9]*$ ]]; then
+    echo "IOS_BUILD_JOBS or CMAKE_BUILD_PARALLEL_LEVEL must be a positive integer with no leading zeroes" >&2
+    exit 1
+fi
+
 if [ ! -e "$ROOT/sources/spaghettikart/.git" ]; then
     "$ROOT/scripts/clone-sources.sh"
 fi
@@ -35,7 +41,7 @@ fi
 
 if [ "$MODE" = "simulator" ]; then
     cmake --build "$BUILD_DIR" --config Release --target Spaghettify \
-        --parallel "${IOS_BUILD_JOBS:-4}" -- CODE_SIGNING_ALLOWED=NO
+        --parallel "$BUILD_JOBS" -- CODE_SIGNING_ALLOWED=NO
     echo
     echo "Simulator app:"
     echo "  $BUILD_DIR/Release-iphonesimulator/SpaghettiPad.app"
@@ -48,7 +54,7 @@ if [ -d "$APP" ]; then
 fi
 
 set -- cmake --build "$BUILD_DIR" --config Release --target Spaghettify \
-    --parallel "${IOS_BUILD_JOBS:-4}" -- -destination generic/platform=iOS
+    --parallel "$BUILD_JOBS" -- -destination generic/platform=iOS
 if [ -z "${DEVELOPMENT_TEAM:-}" ]; then
     set -- "$@" CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
 fi

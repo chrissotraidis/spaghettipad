@@ -65,13 +65,18 @@
         "name": "cmake",
         "version_args": [
           "--version"
-        ]
+        ],
+        "min_version": "3.24",
+        "player": true,
+        "note": "Install CMake 3.24 or newer: brew install cmake. The native Mac oracle build also needs the host libraries listed in the pkgconf setup note."
       },
       {
         "name": "ninja",
         "version_args": [
           "--version"
-        ]
+        ],
+        "player": true,
+        "note": "Install Ninja: brew install ninja"
       },
       {
         "name": "python3",
@@ -83,20 +88,35 @@
         "name": "pkgconf",
         "version_args": [
           "--version"
-        ]
+        ],
+        "player": true,
+        "note": "Native Mac oracle setup: brew install pkgconf sdl2 glew libzip nlohmann-json tinyxml2 libogg libvorbis. This check verifies pkgconf only, not library readiness."
       },
       {
         "name": "xcodebuild",
         "version_args": [
           "-version"
         ],
-        "note": "Install Xcode and its iOS platform"
+        "player": true,
+        "note": "Install full Xcode and its iOS platform (Command Line Tools alone are not enough). Complete first-launch setup, then select Xcode in Xcode > Settings > Locations > Command Line Tools."
+      },
+      {
+        "name": "xcrun",
+        "label": "Xcode iOS SDK",
+        "version_args": [
+          "--sdk",
+          "iphoneos",
+          "--show-sdk-path"
+        ],
+        "player": true,
+        "note": "Install full Xcode and its iOS platform (Command Line Tools alone are not enough). Complete first-launch setup, then select Xcode in Xcode > Settings > Locations > Command Line Tools."
       },
       {
         "name": "rg",
         "version_args": [
           "--version"
         ],
+        "player": true,
         "note": "ripgrep, used by the packaging checks: brew install ripgrep"
       }
     ]

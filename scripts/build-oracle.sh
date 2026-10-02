@@ -6,7 +6,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 SOURCE_DIR="$ROOT/sources/oracle"
 BUILD_DIR="$ROOT/build-oracle"
 EXPECTED_SPAGHETTIKART="5b28472d477bab101dee2a0f469fe2aee2c58a01"
-BUILD_JOBS="${ORACLE_BUILD_JOBS:-4}"
+BUILD_JOBS="${ORACLE_BUILD_JOBS:-${CMAKE_BUILD_PARALLEL_LEVEL:-4}}"
 EXPECTED_STB_SHA256="c54b15a689e6a1f32c75e2ec23afa442e3e0e37e894b73c1974d08679b20dd5c"
 # Restore the reviewed header after upstream CMake downloads mutable master.
 SSE2NEON_PIN="8f03de354e8a87426b94dadd57dbd55b544810c3"
@@ -29,6 +29,10 @@ verify_download() {
         fail "$label does not match its expected SHA-256"
 }
 
+if [[ ! "$BUILD_JOBS" =~ ^[1-9][0-9]*$ ]]; then
+    fail "ORACLE_BUILD_JOBS or CMAKE_BUILD_PARALLEL_LEVEL must be a positive integer with no leading zeroes"
+fi
+
 [ -e "$SOURCE_DIR/.git" ] || "$ROOT/scripts/clone-oracle-sources.sh"
 [ "$(git -C "$SOURCE_DIR" rev-parse HEAD)" = "$EXPECTED_SPAGHETTIKART" ] ||
     fail "SpaghettiKart is not at the planned revision"
@@ -41,10 +45,6 @@ for command in cmake ninja curl; do
     command -v "$command" >/dev/null ||
         fail "required command is unavailable: $command"
 done
-case "$BUILD_JOBS" in
-    ''|*[!0-9]*|0) fail "ORACLE_BUILD_JOBS must be a positive integer" ;;
-esac
-
 cmake -S "$SOURCE_DIR" -B "$BUILD_DIR" -GNinja \
     -DCMAKE_BUILD_TYPE=Release \
     -DENABLE_SCRIPTING=OFF
