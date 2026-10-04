@@ -13,6 +13,7 @@
   <img alt="Bluetooth controller routing" src="https://img.shields.io/badge/controllers-Bluetooth%20routing-34C759">
   <img alt="Enhanced texture pack support" src="https://img.shields.io/badge/textures-HD%20pack%20support-B65FCF">
   <img alt="Physical iPhone and iPad tested" src="https://img.shields.io/badge/physical%20iPhone%20%2F%20iPad-tested-30D158">
+  <a href="https://github.com/chrissotraidis/padmint"><img alt="Build SpaghettiPad with PadMint" src="https://img.shields.io/badge/PadMint-build%20your%20own-3EB489"></a>
   <a href="https://discord.gg/xwHfUD2bxW"><img alt="Join the SpaghettiPad Discord" src="https://img.shields.io/badge/Discord-Join%20the%20server-5865F2?logo=discord&amp;logoColor=white"></a>
   <img alt="ROM not included" src="https://img.shields.io/badge/game%20data-not%20included-FF453A">
 </p>
@@ -38,6 +39,14 @@ uniformly licensed open-source distribution.
 The [source-maintenance handoff](docs/SOURCE_MAINTENANCE.md) records the current
 maintained source workflow, exact component pins, remaining release-source
 qualification, and scoped rights notices.
+
+> [!NOTE]
+> **AI disclosure:** SpaghettiPad uses substantial AI assistance for code,
+> tests, documentation, debugging and maintenance. Some support replies and
+> maintenance tasks are automated. There is no audited percentage of
+> AI-generated code. Build, test and device records describe what was checked.
+> This disclosure concerns SpaghettiPad's workflow, not the authorship of its
+> upstream projects.
 
 ## Built for racing on glass
 
@@ -493,6 +502,17 @@ Nintendo material or third-party texture packs.
 Generated source trees, builds, artifacts, ROMs, ROM-derived archives, texture
 packs, device evidence, and signing identifiers are ignored and must never be
 committed.
+
+## Community and support
+
+[Join the Discord](https://discord.gg/xwHfUD2bxW) for help and news. It is one
+community for SpaghettiPad and its sibling projects, such as KartPad, BlueWake
+and MeleePad: ask about setup, building with PadMint, and installing, share how
+it runs on your device, and hear about new releases first.
+
+Found a bug? [Open an
+issue](https://github.com/chrissotraidis/spaghettipad/issues) with your device,
+its OS version, and the steps that led to it.
 
 ## Credits and legal
 
