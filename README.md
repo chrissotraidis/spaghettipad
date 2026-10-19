@@ -18,8 +18,6 @@
   <img alt="ROM not included" src="https://img.shields.io/badge/game%20data-not%20included-FF453A">
 </p>
 
-![SpaghettiPad racing on Toad's Turnpike with full touch controls on a physical iPad](docs/screenshots/ipad-race-highway.jpg)
-
 SpaghettiPad packages the full
 [SpaghettiKart](https://github.com/HarbourMasters/SpaghettiKart) source port
 as a native iOS/iPadOS app. It brings Mario Kart 64 to the screen in your
@@ -30,7 +28,7 @@ enhanced visuals.
 This repository contains the mobile integration, pinned maintained sources, and
 reproducible build scripts. It does **not** contain Mario Kart 64, a ROM,
 extractable or playable Nintendo game assets, a playable ROM-derived archive,
-or MK64 Reloaded. Gameplay screenshots are retained as documentation. Read
+or MK64 Reloaded. Read
 the scoped [rights and licensing boundary](RIGHTS_AND_LICENSES.md); it does
 not relicense SpaghettiKart, its dependencies, texture packs, or game
 material. This is a source-available integration repository, not a single,
@@ -59,30 +57,7 @@ Touch is not painted over the whole display: empty space still belongs to the
 game, the settings menu hides the race controls while open, and the persistent
 `•••` button always provides a way back.
 
-## Current screenshots
-
-<table>
-  <tr>
-    <td width="50%">
-      <img src="docs/screenshots/ipad-race-triple-shells.jpg" alt="SpaghettiPad racing with triple red shells and the full touch controller">
-    </td>
-    <td width="50%">
-      <img src="docs/screenshots/ipad-race-jungle-hd.jpg" alt="SpaghettiPad racing through DK's Jungle Parkway with enhanced textures">
-    </td>
-  </tr>
-  <tr>
-    <td align="center"><strong>Every race control, within reach</strong><br>Hold A, steer with full analog input, drift with R, and fire items from either Z.</td>
-    <td align="center"><strong>Enhanced tracks, native workflow</strong><br>Import a compatible HD pack through Files and switch between original and enhanced graphics in-app.</td>
-  </tr>
-</table>
-
-These are current physical-iPad captures using locally supplied game data.
-The ROM and optional texture pack used to create them are not part of this
-repository.
-
 ## Local multiplayer is part of the port
-
-![Four-player Mario Kart 64 character selection running in SpaghettiPad on iPad](docs/screenshots/ipad-four-player-select.jpg)
 
 SpaghettiPad carries four N64 controller ports, deterministic connection-order
 assignment, and SpaghettiKart's split-screen modes into the native iOS build.
@@ -491,7 +466,6 @@ Nintendo material or third-party texture packs.
 | [`scripts/package-ios.sh`](scripts/package-ios.sh) | Audited unsigned/signed IPA packaging |
 | [`scripts/check-repo-safety.sh`](scripts/check-repo-safety.sh) | Tracked-asset, history, patch, script, and documentation gate |
 | [`patches/`](patches/) | Historical patch mapping; ordinary builds use maintained source commits |
-| [`docs/screenshots/README.md`](docs/screenshots/README.md) | Physical-device and Simulator screenshot catalog |
 | [`docs/BUILDING.md`](docs/BUILDING.md) | Full build, signing, and package-audit guide |
 | [`docs/INSTALL_IPA.md`](docs/INSTALL_IPA.md) | Unsigned developer-preview installation boundary |
 | [`docs/HARDWARE_ACCEPTANCE.md`](docs/HARDWARE_ACCEPTANCE.md) | Physical-device validation workflow |
