@@ -91,7 +91,7 @@ latest public release, so check that it selects 0.2.1 before rebuilding.
 
 | Option | Status | What to do |
 |---|---|---|
-| Make your own IPA with PadMint | **Available** | On an Apple Silicon Mac with Xcode, [PadMint](https://github.com/chrissotraidis/padmint/releases/latest) builds SpaghettiPad from this repository's latest release and saves an unsigned IPA; install it with AltStore Classic, SideStore or Sideloadly. See [Get started](#get-started). |
+| Make your own IPA with PadMint | **Available** | On an Apple Silicon Mac with Xcode, or on [GitHub's free Mac](https://github.com/chrissotraidis/padmint#no-mac-build-on-githubs-mac) without one, [PadMint](https://github.com/chrissotraidis/padmint/releases/latest) builds SpaghettiPad from this repository's latest release and saves an unsigned IPA; install it with AltStore Classic, SideStore or Sideloadly. See [Get started](#get-started). |
 | Local iPhone/iPad build | **Available now** | Build and sign with your own Apple development team by following [Build from source](docs/BUILDING.md). |
 | Simulator | **Available now** | Use it for development and UI testing. It cannot replace physical-device acceptance. |
 | App Store / TestFlight | **Not announced** | No App Store listing or public TestFlight exists. |
@@ -119,11 +119,10 @@ complete tilt-driven Grand Prix remain explicit validation gates.
 The Xcode command-line tools alone are not enough. Intel Macs are not currently
 listed as supported build hosts in the recipe.
 
-PadMint itself runs on Windows and Linux too, but its experimental iPhone/iPad
-build path on those systems is for KartPad. SpaghettiPad currently has no
-supported Windows, Linux, or phone-only build path. A Windows sideloading tool
-can install an IPA you already built; it does not compile SpaghettiPad. If you
-cannot access a compatible Mac, the current personal-build route is unavailable.
+**No Mac?** You can build the iPhone and iPad app on GitHub's free Mac from Windows,
+Linux or any computer with a web browser: follow
+[PadMint's steps](https://github.com/chrissotraidis/padmint#no-mac-build-on-githubs-mac),
+then install the IPA with a sideloading tool such as Sideloadly.
 
 **The easy way:** on that Mac, install the build libraries once:
 
@@ -398,7 +397,7 @@ distribute a maintainer development profile.
 <details>
 <summary><strong>Where is the IPA?</strong></summary>
 
-There is no public IPA: SpaghettiPad is compiled from the SpaghettiKart decompilation, so PadMint builds your own on an Apple Silicon Mac. See [Get started](#get-started).
+There is no public IPA: SpaghettiPad is compiled from the SpaghettiKart decompilation, so PadMint builds your own on an Apple Silicon Mac or on GitHub's free Mac. See [Get started](#get-started).
 </details>
 
 <details>
