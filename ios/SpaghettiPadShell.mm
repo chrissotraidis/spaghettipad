@@ -48,6 +48,10 @@ static std::atomic_bool sTouchControlsMenuVisible(false);
 static std::atomic_bool sTouchStickActive(false);
 static std::atomic_bool sGameplayActive(false);
 static BOOL sTouchControlsDesired;
+// Saved "Auto-hide Touch Controls with Controller" (on unless the player saved
+// a choice) and libultraship's report that a usable controller owns Player 1.
+static std::atomic_bool sTouchAutoHide(true);
+static std::atomic_bool sPlayerOneControllerReady(false);
 static BOOL sLegacyTouchControls;
 static BOOL sLayoutEditorRequested;
 static BOOL sLayoutEditorActive;
@@ -1599,20 +1603,11 @@ static void SpaghettiPad_EnsureLandscape(UIWindow* window, int attempt) {
     }
 }
 
-static BOOL SpaghettiPad_HasPhysicalController(void) {
-#if TARGET_OS_SIMULATOR
-    // Virtual test controllers exercise the physical-controller policy without
-    // changing device builds. The normal touch controller does not count.
-    return !sSimulatorTestControllers.empty();
-#else
-    int joystickCount = SDL_NumJoysticks();
-    for (int index = 0; index < joystickCount; ++index) {
-        if (!SDL_JoystickIsVirtual(index) && SDL_IsGameController(index)) {
-            return YES;
-        }
-    }
-    return NO;
-#endif
+// Touch drives Player 1. libultraship's controller slots decide who owns
+// Player 1; the touch controller and Simulator test controllers flow through
+// the same reconciliation, so the shell keeps no separate controller scan.
+static BOOL SpaghettiPad_TouchAutoHidden(void) {
+    return sTouchAutoHide.load() && sPlayerOneControllerReady.load();
 }
 
 #if TARGET_OS_SIMULATOR
@@ -1733,15 +1728,18 @@ static void SpaghettiPad_ApplyTouchControlsState(void) {
     }
 
     SpaghettiPad_InstallMenuButton(window);
-    BOOL hasPhysicalController = SpaghettiPad_HasPhysicalController();
-    if (hasPhysicalController) {
+    // Parking the virtual controller hands Player 1 to the physical one. When
+    // the player keeps touch (auto-hide off or Show Touch Controls), the touch
+    // controller stays attached and libultraship feeds it to Player 1 too.
+    BOOL autoHidden = SpaghettiPad_TouchAutoHidden();
+    if (autoHidden) {
         SpaghettiPad_DetachVirtualController();
     } else {
         SpaghettiPad_AttachVirtualController();
     }
     BOOL shouldHide = !sTouchControlsDesired ||
         sTouchControlsMenuVisible.load() ||
-        hasPhysicalController;
+        autoHidden;
     if (shouldHide) {
         [sTouchOverlay endLayoutEditing];
         SpaghettiPad_ReleaseVisibleInputs();
@@ -1896,7 +1894,7 @@ void SpaghettiPad_InitializeTouchControls(void) {
                         SpaghettiPad_ApplyTouchControlsState();
                     }];
     }
-    if (!SpaghettiPad_HasPhysicalController()) {
+    if (!SpaghettiPad_TouchAutoHidden()) {
         SpaghettiPad_AttachVirtualController();
     }
 }
@@ -1905,6 +1903,44 @@ void SpaghettiPad_SetTouchControlsEnabled(int enabled) {
     dispatch_async(dispatch_get_main_queue(), ^{
         sTouchControlsDesired = enabled != 0;
         SpaghettiPad_ApplyTouchControlsState();
+    });
+}
+
+void SpaghettiPad_SetTouchAutoHide(int enabled) {
+    sTouchAutoHide.store(enabled != 0);
+    dispatch_async(dispatch_get_main_queue(), ^{
+        SpaghettiPad_ApplyTouchControlsState();
+    });
+}
+
+void SpaghettiPad_SetPlayerOneControllerReady(int ready) {
+    bool isReady = ready != 0;
+    if (sPlayerOneControllerReady.exchange(isReady) == isReady) {
+        return;
+    }
+    dispatch_async(dispatch_get_main_queue(), ^{
+        SDL_Log("[SpaghettiPad] player 1 controller ready=%d", isReady ? 1 : 0);
+        SpaghettiPad_ApplyTouchControlsState();
+    });
+}
+
+int SpaghettiPad_GameplayTouchHidden(void) {
+    return !sTouchControlsDesired || SpaghettiPad_TouchAutoHidden() ? 1 : 0;
+}
+
+// "Show Touch Controls": re-attaches the virtual controller and restores the
+// overlay now, even with a controller still connected. Auto-hide stays off
+// until the player turns it back on; controller slots are untouched.
+void SpaghettiPad_ShowTouchControls(void) {
+    sTouchAutoHide.store(false);
+    dispatch_async(dispatch_get_main_queue(), ^{
+        sTouchControlsDesired = YES;
+        SpaghettiPad_ApplyTouchControlsState();
+        if (sTouchControlsMenuVisible.load()) {
+            SpaghettiPad_PushKey(SDL_SCANCODE_ESCAPE, YES);
+            SpaghettiPad_PushKey(SDL_SCANCODE_ESCAPE, NO);
+        }
+        SDL_Log("[SpaghettiPad] show touch controls");
     });
 }
 
