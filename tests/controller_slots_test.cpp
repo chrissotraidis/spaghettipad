@@ -58,5 +58,24 @@ int main() {
     assert(slots.InstanceForSlot(1) == 404);
     assert(IsNeutral(ReadPlayer(slots, 0, { { 404, held } })));
 
+    // Touch auto-hide follows Player 1: with player 1's controller gone, the
+    // remaining player 2 controller does not move into player 1, so touch is
+    // restored for player 1 instead of being hidden by player 2.
+    assert(slots.InstanceForSlot(0) == SpaghettiPadControllerSlots::kUnassigned);
+
+    // Reconciliation order with the touch controller (instance 900): alone it
+    // owns player 1; once an external controller appears, touch is excluded
+    // from the slot candidates, so its slot is released and the external
+    // controller takes player 1 while touch keeps feeding player 1 unslotted.
+    SpaghettiPadControllerSlots withTouch;
+    assert(withTouch.Assign(900) == 0);
+    released = withTouch.ReleaseMissing({ 505 });
+    assert(released.size() == 1 && released[0].second == 900);
+    assert(withTouch.Assign(505) == 0);
+    assert(!withTouch.SlotFor(900).has_value());
+    // Show Touch Controls re-attaches touch without changing any slot.
+    released = withTouch.ReleaseMissing({ 505 });
+    assert(released.empty() && withTouch.InstanceForSlot(0) == 505);
+
     return 0;
 }
