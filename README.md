@@ -61,8 +61,9 @@ game, the settings menu hides the race controls while open, and the persistent
 
 SpaghettiPad carries four N64 controller ports, deterministic connection-order
 assignment, and SpaghettiKart's split-screen modes into the native iOS build.
-The touch controller parks itself when hardware controllers are present and
-returns after the last one disconnects.
+The touch controller parks itself while a usable hardware controller owns
+player 1 and returns when player 1's controller disconnects; a controller on
+another player never hides player 1's touch controls.
 
 Four-player selection is working, and two-player split-screen rendering has
 been exercised. Full physical-controller Grand Prix, VS, battle, reconnect,
@@ -266,9 +267,13 @@ the next free slot without moving player 1.
 Reconciliation runs at startup, controller add/remove/remap events, foreground
 resume, and a bounded active check. Gameplay receives only attached,
 identity-matching handles; releasing stale ownership leaves neutral input. When
-a physical controller is detected, the touch gameplay overlay parks so it does
-not send duplicate player-1 input; it returns after the last controller
-disconnects. Existing mappings and preferences are not reset, and SDL is not
+a usable controller (left stick plus A, B and Start) owns player 1 and
+**Settings › Controls › Auto-hide Touch Controls with Controller** is on (the
+default until you change it), the touch overlay and its virtual controller park;
+they return when player 1's controller disconnects. **Show Touch Controls** in
+the same panel re-attaches the virtual controller and restores the overlay with
+the controller still connected: touch then feeds player 1 alongside it without
+taking a player slot, and auto-hide stays off until you turn it back on. Existing mappings and preferences are not reset, and SDL is not
 blindly restarted.
 
 The default extended-gamepad layout is:
