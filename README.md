@@ -88,7 +88,7 @@ Version 0.2.1 fixes the SDK 27 launch crash and black game image by updating
 SDL's scene startup and orientation handling. The final build was checked on
 physical iPadOS 27 and iOS 26.6.2 devices. Existing IPAs need a rebuild; see the
 [SDK 27 investigation and validation](docs/IOS27_STARTUP.md). PadMint selects the
-latest public release, so check that it selects 0.2.1 before rebuilding.
+latest public release, so check that it selects 0.2.1 or newer before rebuilding.
 
 | Option | Status | What to do |
 |---|---|---|
