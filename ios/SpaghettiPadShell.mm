@@ -17,6 +17,10 @@
 
 #include "SpaghettiPadTouchControls.h"
 
+extern "C" bool SpaghettiPad_IsIPad() {
+    return UIDevice.currentDevice.userInterfaceIdiom == UIUserInterfaceIdiomPad;
+}
+
 #ifndef SPAGHETTIPAD_TOUCH_KEYBOARD_FALLBACK
 #define SPAGHETTIPAD_TOUCH_KEYBOARD_FALLBACK 0
 #endif
