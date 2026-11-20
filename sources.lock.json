@@ -3,14 +3,14 @@
     {
       "path": "sources/spaghettikart",
       "repository": "https://github.com/chrissotraidis/SpaghettiKart.git",
-      "commit": "7f246a7ba0ef977ec1eb25bb58659bace5d2f0e8",
+      "commit": "fb77bfac92475f3ecf8003e250833fae8d18808e",
       "upstream": "https://github.com/HarbourMasters/SpaghettiKart",
       "base": "5b28472d477bab101dee2a0f469fe2aee2c58a01"
     },
     {
       "path": "sources/spaghettikart/libultraship",
       "repository": "https://github.com/chrissotraidis/libultraship.git",
-      "commit": "d4186cdcb11e5e9fb500859fa495d4794c545e06",
+      "commit": "485442e5c9a624e6c65e8b54d2a17ab3c22edb5a",
       "upstream": "https://github.com/Kenix3/libultraship",
       "base": "f5c3843fe937320b64ff754fa6bf71b13ff5e7a1"
     },
